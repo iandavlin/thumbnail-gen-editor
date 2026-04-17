@@ -1,0 +1,16 @@
+[Unit]
+Description=Thumbnails editor server
+After=network.target
+
+[Service]
+Type=simple
+User=ec2-user
+WorkingDirectory=/home/ec2-user/thumbnails-app
+Environment=HOST=0.0.0.0
+Environment=PORT=3333
+ExecStart=/usr/bin/node serve.js
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

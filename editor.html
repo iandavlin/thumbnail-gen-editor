@@ -1,0 +1,3968 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Thumbnail Editor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Jost:wght@400;700&family=Lato:wght@400;700&family=Montserrat:wght@400;700&family=Open+Sans:wght@400;700&family=Oswald:wght@400;700&family=Playfair+Display:wght@400;700&family=Poppins:wght@400;700&family=Raleway:wght@400;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #1a1a1a; color: #e0e0e0; display: flex; height: 100vh; overflow: hidden; }
+
+  /* Sidebar */
+  #sidebar { width: 280px; background: #242424; border-right: 1px solid #333; display: flex; flex-direction: column; flex-shrink: 0; }
+  #sidebar h2 { padding: 12px 16px; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: #888; border-bottom: 1px solid #333; }
+
+  /* Layers panel */
+  #layers-panel { flex: 1; overflow-y: auto; }
+  .layer-item { display: flex; align-items: center; gap: 8px; padding: 8px 16px; cursor: pointer; border-bottom: 1px solid #2a2a2a; font-size: 13px; user-select: none; }
+  .layer-item:hover { background: #2e2e2e; }
+  .layer-item.selected { background: #3a3a5a; }
+  .layer-item .layer-icon { width: 20px; text-align: center; font-size: 14px; flex-shrink: 0; }
+  .layer-item .layer-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .layer-item .layer-actions { display: flex; gap: 4px; }
+  .layer-item .layer-actions button { background: none; border: none; color: #888; cursor: pointer; font-size: 14px; padding: 2px 4px; border-radius: 3px; }
+  .layer-item .layer-actions button:hover { color: #fff; background: #444; }
+  .layer-item .layer-actions button.active { color: #7aa2f7; }
+  .layer-item.hidden-layer { opacity: 0.4; }
+  .layer-item.group-child { padding-left: 32px; background: #1e1e2e; border-left: 2px solid #555; }
+  .layer-item.group-child:hover { background: #282840; }
+  .layer-item .expand-toggle { cursor: pointer; font-size: 10px; margin-right: 2px; color: #888; user-select: none; }
+  .layer-item .expand-toggle:hover { color: #fff; }
+
+  /* Layer reorder buttons */
+  #layer-controls { padding: 6px 8px; border-bottom: 1px solid #333; display: flex; flex-wrap: wrap; gap: 3px; }
+  #layer-controls button { padding: 4px 6px; background: #333; border: 1px solid #444; color: #ccc; border-radius: 4px; cursor: pointer; font-size: 11px; white-space: nowrap; }
+  #layer-controls button:hover { background: #444; color: #fff; }
+
+  /* Properties panel */
+  #properties-panel { border-top: 1px solid #333; max-height: 50vh; overflow-y: auto; }
+  #properties-panel h2 { position: sticky; top: 0; background: #242424; z-index: 1; }
+  .prop-group { padding: 8px 16px; }
+  .prop-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .prop-row label { width: 32px; font-size: 11px; color: #888; text-transform: uppercase; flex-shrink: 0; }
+  .prop-row input { flex: 1; background: #333; border: 1px solid #444; color: #e0e0e0; padding: 4px 6px; border-radius: 3px; font-size: 12px; }
+  .prop-row input[type="number"] { width: 60px; }
+  .prop-row input[type="color"] { width: 32px; height: 24px; padding: 0; border: none; cursor: pointer; }
+  .prop-row input[type="range"] { -webkit-appearance: none; appearance: none; height: 6px; background: #444; border-radius: 3px; border: none; outline: none; cursor: pointer; flex: 1; padding: 0; }
+  .prop-row input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; background: #7aa2f7; border: 2px solid #222; cursor: pointer; }
+  .prop-row input[type="range"]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 50%; background: #7aa2f7; border: 2px solid #222; cursor: pointer; }
+  .opa-val { width: 36px; text-align: center; font-size: 11px; color: #aaa; flex-shrink: 0; }
+
+  /* Main area */
+  #main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+  /* Toolbar */
+  #toolbar { height: 48px; background: #242424; border-bottom: 1px solid #333; display: flex; align-items: center; padding: 0 16px; gap: 8px; flex-shrink: 0; }
+  #toolbar button, #toolbar select { padding: 6px 12px; background: #333; border: 1px solid #444; color: #ccc; border-radius: 4px; cursor: pointer; font-size: 12px; }
+  #toolbar button:hover { background: #444; color: #fff; }
+  #toolbar .sep { width: 1px; height: 24px; background: #444; margin: 0 4px; }
+  #toolbar .group { display: flex; align-items: center; gap: 4px; }
+  #toolbar label { font-size: 12px; color: #888; }
+  #toolbar select { background: #333; }
+
+  /* Canvas area */
+  #canvas-area { flex: 1; display: flex; align-items: center; justify-content: center; overflow: hidden; background: #111; position: relative; }
+  #canvas-wrapper {
+    position: relative;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.5);
+    /* Checkerboard indicates transparent (alpha) background */
+    background-color: #2a2a2a;
+    background-image:
+      linear-gradient(45deg, #3a3a3a 25%, transparent 25%),
+      linear-gradient(-45deg, #3a3a3a 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, #3a3a3a 75%),
+      linear-gradient(-45deg, transparent 75%, #3a3a3a 75%);
+    background-size: 20px 20px;
+    background-position: 0 0, 0 10px, 10px -10px, -10px 0;
+  }
+  #canvas-wrapper canvas { background: transparent !important; }
+  .canvas-container { background: transparent !important; }
+
+  /* Snap guides rendered on canvas by fabric */
+
+  /* Export modal */
+  #export-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; align-items: center; justify-content: center; }
+  #export-modal.show { display: flex; }
+  #export-modal .modal { background: #2a2a2a; border: 1px solid #444; border-radius: 8px; padding: 24px; width: 400px; }
+  #export-modal h3 { margin-bottom: 16px; }
+  #export-modal .row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+  #export-modal label { width: 80px; font-size: 13px; color: #aaa; }
+  #export-modal input, #export-modal select { flex: 1; padding: 6px 8px; background: #333; border: 1px solid #444; color: #e0e0e0; border-radius: 4px; font-size: 13px; }
+  #export-modal .actions { display: flex; gap: 8px; margin-top: 16px; justify-content: flex-end; }
+  #export-modal .actions button { padding: 8px 20px; border-radius: 4px; border: 1px solid #444; cursor: pointer; font-size: 13px; }
+  #export-modal .actions .btn-primary { background: #7aa2f7; color: #111; border-color: #7aa2f7; font-weight: 600; }
+  #export-modal .actions .btn-cancel { background: #333; color: #ccc; }
+  #quality-display { width: 40px; text-align: center; color: #aaa; font-size: 13px; }
+
+  /* Add element modal */
+  #add-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; align-items: center; justify-content: center; }
+  #add-modal.show { display: flex; }
+  #add-modal .modal { background: #2a2a2a; border: 1px solid #444; border-radius: 8px; padding: 24px; width: 360px; }
+  #add-modal h3 { margin-bottom: 16px; }
+  #add-modal .add-options { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  #add-modal .add-option { padding: 12px 8px; background: #333; border: 1px solid #444; border-radius: 6px; text-align: center; cursor: pointer; font-size: 12px; }
+  #add-modal .add-option:hover { background: #444; border-color: #7aa2f7; }
+  #add-modal .add-option .icon { font-size: 22px; display: block; margin-bottom: 4px; }
+
+  /* Brand color picker */
+  .color-field { display: flex; align-items: center; gap: 4px; flex: 1; }
+  .color-field input[type="color"] { width: 28px; height: 24px; padding: 0; border: none; cursor: pointer; flex-shrink: 0; }
+  .color-field .hex-input { width: 68px; background: #333; border: 1px solid #444; color: #e0e0e0; padding: 3px 5px; border-radius: 3px; font-size: 11px; font-family: monospace; }
+  .brand-swatches { display: flex; gap: 2px; flex-wrap: wrap; margin-top: 2px; }
+  .brand-swatch { width: 16px; height: 16px; border-radius: 3px; cursor: pointer; border: 1px solid rgba(255,255,255,0.15); transition: transform 0.1s; }
+  .brand-swatch:hover { transform: scale(1.3); border-color: #fff; z-index: 1; }
+
+  /* Shadow controls */
+  .shadow-toggle { display: flex; align-items: center; gap: 6px; }
+  .shadow-toggle input[type="checkbox"] { margin: 0; }
+  .shadow-fields { margin-top: 4px; }
+  .shadow-fields .prop-row { margin-bottom: 4px; }
+
+  /* Tabs bar */
+  #tabs-bar { display: flex; align-items: center; background: #1e1e1e; border-bottom: 1px solid #333; padding: 0 8px; height: 36px; flex-shrink: 0; overflow-x: auto; gap: 2px; }
+  .tab { display: flex; align-items: center; gap: 6px; padding: 6px 12px; background: #2a2a2a; border: 1px solid #333; border-bottom: none; border-radius: 6px 6px 0 0; cursor: pointer; font-size: 12px; color: #888; white-space: nowrap; user-select: none; max-width: 200px; }
+  .tab:hover { background: #333; color: #ccc; }
+  .tab.active { background: #333; color: #e0e0e0; border-color: #555; }
+  .tab .tab-name { overflow: hidden; text-overflow: ellipsis; }
+  .tab .tab-close { font-size: 14px; color: #666; cursor: pointer; padding: 0 2px; border-radius: 2px; line-height: 1; }
+  .tab .tab-close:hover { color: #ff6b6b; background: #442222; }
+  .tab.tab-add { padding: 6px 10px; font-size: 16px; color: #888; font-weight: 600; background: #242424; }
+  .tab.tab-add:hover { color: #7aa2f7; background: #2f2f2f; }
+
+  /* Right-click context menu */
+  #context-menu { display: none; position: fixed; z-index: 200; background: #2a2a2a; border: 1px solid #444; border-radius: 6px; padding: 4px 0; min-width: 180px; box-shadow: 0 4px 16px rgba(0,0,0,0.5); }
+  #context-menu.show { display: block; }
+  #context-menu .ctx-item { padding: 6px 16px; font-size: 12px; color: #ccc; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+  #context-menu .ctx-item:hover { background: #3a3a5a; color: #fff; }
+  #context-menu .ctx-item .shortcut { color: #666; font-size: 11px; margin-left: 16px; }
+  #context-menu .ctx-sep { height: 1px; background: #333; margin: 4px 0; }
+  #context-menu .ctx-item.disabled { color: #555; cursor: default; }
+  #context-menu .ctx-item.disabled:hover { background: transparent; color: #555; }
+
+  /* Status bar */
+  #statusbar { height: 28px; background: #242424; border-top: 1px solid #333; display: flex; align-items: center; padding: 0 16px; font-size: 11px; color: #666; gap: 16px; flex-shrink: 0; }
+</style>
+</head>
+<body>
+
+<!-- Sidebar: Layers + Properties -->
+<div id="sidebar">
+  <h2>Layers</h2>
+  <div id="layer-controls">
+    <button onclick="moveLayer('up')" title="Move Up">&#9650;</button>
+    <button onclick="moveLayer('down')" title="Move Down">&#9660;</button>
+    <button onclick="duplicateLayer()" title="Duplicate (Ctrl+D)">&#10697;</button>
+    <button onclick="deleteLayer()" title="Delete">&#10005;</button>
+    <button onclick="groupSelected()" title="Group (Ctrl+G)">Grp</button>
+    <button onclick="ungroupSelected()" title="Ungroup (Ctrl+Shift+G)">Ungrp</button>
+    <button onclick="linkAsBannerGroup()" title="Link polygon+text as Banner Group">&#128279; Link</button>
+  </div>
+  <div id="layers-panel"></div>
+
+  <div id="properties-panel">
+    <h2>Properties</h2>
+    <div id="props-content" class="prop-group">
+      <p style="color:#666; font-size:12px; padding:8px 0;">Select an element</p>
+    </div>
+  </div>
+</div>
+
+<!-- Main area -->
+<div id="main">
+  <div id="toolbar">
+    <div class="group">
+      <label>Preset:</label>
+      <select id="preset-select" onchange="loadPreset(this.value)">
+        <option value="">-- Load preset --</option>
+        <option value="16x9">16:9 (1280x720)</option>
+        <option value="1x1">1:1 (800x800)</option>
+      </select>
+    </div>
+    <div class="sep"></div>
+    <button onclick="showAddModal()">+ Add Element</button>
+    <div class="sep"></div>
+    <div class="group">
+      <label>Snap:</label>
+      <input type="checkbox" id="snap-toggle" checked onchange="snapEnabled=this.checked">
+    </div>
+    <div class="group">
+      <label>Grid:</label>
+      <input type="number" id="snap-grid" value="10" min="1" max="50" style="width:50px" onchange="snapGrid=+this.value">
+    </div>
+    <div class="sep"></div>
+    <div class="group">
+      <label>Zoom:</label>
+      <button onclick="setZoom(zoom-0.1)">-</button>
+      <span id="zoom-display" style="font-size:12px;color:#aaa;min-width:40px;text-align:center">100%</span>
+      <button onclick="setZoom(zoom+0.1)">+</button>
+      <button onclick="setZoom(1)">Fit</button>
+    </div>
+    <div style="flex:1"></div>
+    <button onclick="loadJSON()">Load JSON(s)</button>
+    <button onclick="saveJSON()">Save JSON</button>
+    <div class="sep"></div>
+    <button onclick="showExportModal()" style="background:#7aa2f7;color:#111;font-weight:600;border-color:#7aa2f7">Export</button>
+  </div>
+
+  <div id="tabs-bar"></div>
+  <div id="canvas-area">
+    <div id="canvas-wrapper">
+      <canvas id="c"></canvas>
+    </div>
+  </div>
+
+  <div id="statusbar">
+    <span id="status-size">1280 x 720</span>
+    <span id="status-pos">X: 0 Y: 0</span>
+    <span id="status-selection">No selection</span>
+  </div>
+</div>
+
+<!-- Export Modal -->
+<div id="export-modal">
+  <div class="modal">
+    <h3>Export Image</h3>
+    <div class="row">
+      <label>Format:</label>
+      <select id="export-format">
+        <option value="webp">WebP</option>
+        <option value="jpeg">JPEG</option>
+        <option value="png">PNG</option>
+      </select>
+    </div>
+    <div class="row">
+      <label>Quality:</label>
+      <input type="range" id="export-quality" min="10" max="100" value="85" oninput="document.getElementById('quality-display').textContent=this.value+'%'">
+      <span id="quality-display">85%</span>
+    </div>
+    <div class="row">
+      <label>Scale:</label>
+      <select id="export-scale">
+        <option value="1">1x</option>
+        <option value="2" selected>2x (retina)</option>
+        <option value="3">3x</option>
+      </select>
+    </div>
+    <div class="actions">
+      <button class="btn-cancel" onclick="hideExportModal()">Cancel</button>
+      <button class="btn-primary" onclick="doExport()">Export</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Element Modal -->
+<div id="add-modal">
+  <div class="modal">
+    <h3>Add Element</h3>
+    <div class="add-options">
+      <div class="add-option" onclick="addText(); hideAddModal();">
+        <span class="icon">T</span>Text
+      </div>
+      <div class="add-option" onclick="addRect(); hideAddModal();">
+        <span class="icon">&#9632;</span>Rectangle
+      </div>
+      <div class="add-option" onclick="addRoundedRect(); hideAddModal();">
+        <span class="icon" style="font-size:20px">&#9644;</span>Rounded Rect
+      </div>
+      <div class="add-option" onclick="addCircle(); hideAddModal();">
+        <span class="icon">&#9679;</span>Circle
+      </div>
+      <div class="add-option" onclick="addPill(); hideAddModal();">
+        <span class="icon" style="font-size:18px">&#9898;</span>Pill
+      </div>
+      <div class="add-option" onclick="addTriangle(); hideAddModal();">
+        <span class="icon">&#9650;</span>Triangle
+      </div>
+      <div class="add-option" onclick="addArrow(); hideAddModal();">
+        <span class="icon">&#10148;</span>Arrow
+      </div>
+      <div class="add-option" onclick="addBannerCombo(); hideAddModal();">
+        <span class="icon" style="font-size:18px">&#127988;</span>Banner
+      </div>
+      <div class="add-option" onclick="addAngledBanner(); hideAddModal();">
+        <span class="icon" style="font-size:16px">&#11153;</span>Angled Banner
+      </div>
+      <div class="add-option" onclick="addChevron(); hideAddModal();">
+        <span class="icon">&#10095;</span>Chevron
+      </div>
+      <div class="add-option" onclick="addDiamond(); hideAddModal();">
+        <span class="icon">&#9670;</span>Diamond
+      </div>
+      <div class="add-option" onclick="addFrame(); hideAddModal();">
+        <span class="icon" style="font-size:18px">&#9634;</span>Frame
+      </div>
+      <div class="add-option" onclick="addImageFromFile(); hideAddModal();">
+        <span class="icon">&#128247;</span>Image
+      </div>
+    </div>
+    <div class="actions" style="margin-top:16px">
+      <button class="btn-cancel" onclick="hideAddModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Hidden file inputs -->
+<input type="file" id="image-input" accept="image/*" style="display:none">
+<input type="file" id="json-input" accept=".json" multiple style="display:none">
+
+<!-- Context Menu -->
+<div id="context-menu"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+<script>
+// --- Font List ---
+const FONTS = ['Jost','Arial','Helvetica','Georgia','Times New Roman','Courier New','Verdana','Impact','Trebuchet MS','Palatino','Garamond','Oswald','Montserrat','Roboto','Poppins','Lato','Open Sans','Raleway','Playfair Display','Bebas Neue'];
+
+// --- Brand Palette ---
+const BRAND = [
+  { name: 'Gold',        hex: '#ECB351' },
+  { name: 'Gold Light',  hex: '#F1DE83' },
+  { name: 'Green Pale',  hex: '#D4E0B8' },
+  { name: 'Green Light', hex: '#C2D5AA' },
+  { name: 'Green Mid',   hex: '#A8BE8B' },
+  { name: 'Green Sage',  hex: '#97A97C' },
+  { name: 'Green Dark',  hex: '#87986A' },
+  { name: 'Coral',       hex: '#FE6B4F' },
+  { name: 'Dark',        hex: '#2B2318' },
+  { name: 'Offwhite',    hex: '#FAF6EE' },
+  { name: 'White',       hex: '#FFFFFF' },
+];
+
+// Build a color picker widget: native picker + hex input + brand swatches
+// prop: the fabric property to set (e.g. 'fill')
+// currentVal: current hex color
+// Returns HTML string
+function brandColorPicker(prop, currentVal) {
+  const hex6 = toHex6(currentVal || '#000000');
+  const uid = 'cp_' + prop + '_' + Math.random().toString(36).slice(2,8);
+  let html = `<div class="color-field">`;
+  html += `<input type="color" id="${uid}_native" value="${hex6}" onchange="colorPickerChanged('${prop}', this.value, '${uid}')">`;
+  html += `<input type="text" class="hex-input" id="${uid}_hex" value="${hex6}" onchange="colorPickerHexChanged('${prop}', this.value, '${uid}')" spellcheck="false">`;
+  html += `</div>`;
+  html += `<div class="brand-swatches">`;
+  for (const c of BRAND) {
+    html += `<div class="brand-swatch" style="background:${c.hex}" title="${c.name} (${c.hex})" onclick="colorPickerChanged('${prop}', '${c.hex}', '${uid}')"></div>`;
+  }
+  html += `</div>`;
+  return html;
+}
+
+function colorPickerChanged(prop, val, uid) {
+  setObjProp(prop, val);
+  const native = document.getElementById(uid + '_native');
+  const hexInput = document.getElementById(uid + '_hex');
+  if (native) native.value = toHex6(val);
+  if (hexInput) hexInput.value = toHex6(val);
+}
+
+function colorPickerHexChanged(prop, val, uid) {
+  // Normalize: add # if missing
+  let hex = val.trim();
+  if (!hex.startsWith('#')) hex = '#' + hex;
+  // Validate
+  if (/^#[0-9a-fA-F]{6}$/.test(hex)) {
+    colorPickerChanged(prop, hex, uid);
+  } else if (/^#[0-9a-fA-F]{3}$/.test(hex)) {
+    const full = '#' + hex[1]+hex[1] + hex[2]+hex[2] + hex[3]+hex[3];
+    colorPickerChanged(prop, full, uid);
+  }
+}
+
+// --- State ---
+let canvas;
+let zoom = 1;
+let snapEnabled = true;
+let snapGrid = 10;
+let canvasW = 1280, canvasH = 720;
+const SNAP_THRESHOLD = 10;
+const GUIDE_COLOR = '#ff4488';
+
+// --- Tabs ---
+let tabs = []; // { id, name, canvasW, canvasH, canvasJSON }
+let activeTabId = null;
+let tabIdCounter = 0;
+
+function createTab(name, w, h) {
+  const id = ++tabIdCounter;
+  tabs.push({ id, name, canvasW: w, canvasH: h, canvasJSON: null });
+  return id;
+}
+
+function saveCurrentTabState() {
+  if (!activeTabId || !canvas) return;
+  const tab = tabs.find(t => t.id === activeTabId);
+  if (!tab) return;
+  clearGuidelines();
+  canvas.discardActiveObject();
+  canvas.requestRenderAll();
+  tab.canvasJSON = canvas.toJSON(['_customName', 'lockUniScaling', 'lockMovementX', 'lockMovementY', 'lockScalingX', 'lockScalingY', 'lockRotation', '_bannerLeftEnd', '_bannerRightEnd', '_bannerNotchL', '_bannerNotchR', '_bannerFlareL', '_bannerFlareR', '_isBannerGroup','_isHitboxGroup','_isFrame','_frameOffset','_framePadT','_framePadR','_framePadB','_framePadL', '_padL', '_padR', '_padT', '_padB', 'paintFirst','_shadowSpread','_spreadStrokeBackup','_frameThickness','_frameRadius','_padLinked','_cornerRadius','_innerShadow']);
+  tab.canvasW = canvasW;
+  tab.canvasH = canvasH;
+}
+
+function switchToTab(id) {
+  if (id === activeTabId) return;
+  saveCurrentTabState();
+  const tab = tabs.find(t => t.id === id);
+  if (!tab) return;
+  activeTabId = id;
+  initCanvas(tab.canvasW, tab.canvasH);
+  undoStack = [];
+  redoStack = [];
+  if (tab.canvasJSON) {
+    canvas.loadFromJSON(tab.canvasJSON, function() {
+      // Sync canvasBg globals from loaded background
+      const bgStr = canvas.backgroundColor || '#2B2318';
+      const rgbaM = /^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)(?:\s*,\s*([\d.]+))?\s*\)$/i.exec(bgStr);
+      if (rgbaM) {
+        canvasBgColor = '#' + ((1<<24) | (+rgbaM[1]<<16) | (+rgbaM[2]<<8) | +rgbaM[3]).toString(16).slice(1);
+        canvasBgAlpha = rgbaM[4] !== undefined ? +rgbaM[4] : 1;
+      } else {
+        canvasBgColor = bgStr;
+        canvasBgAlpha = 1;
+      }
+      reattachBehaviors();
+      refreshLayers();
+      saveUndo(); // initial state
+    });
+  }
+  renderTabs();
+}
+
+function closeTab(id, evt) {
+  if (evt) evt.stopPropagation();
+  const idx = tabs.findIndex(t => t.id === id);
+  if (idx === -1) return;
+  tabs.splice(idx, 1);
+  if (tabs.length === 0) {
+    activeTabId = null;
+    initCanvas(1280, 720);
+    renderTabs();
+    return;
+  }
+  if (activeTabId === id) {
+    const newIdx = Math.min(idx, tabs.length - 1);
+    activeTabId = null; // prevent double-save
+    switchToTab(tabs[newIdx].id);
+  }
+  renderTabs();
+}
+
+function renderTabs() {
+  const bar = document.getElementById('tabs-bar');
+  bar.innerHTML = '';
+  tabs.forEach(tab => {
+    const div = document.createElement('div');
+    div.className = 'tab' + (tab.id === activeTabId ? ' active' : '');
+    div.innerHTML = `<span class="tab-name">${tab.name}</span><span class="tab-close" onclick="closeTab(${tab.id}, event)">&times;</span>`;
+    div.addEventListener('click', () => switchToTab(tab.id));
+    bar.appendChild(div);
+  });
+  // "+" button to add a new tab
+  const addBtn = document.createElement('div');
+  addBtn.className = 'tab tab-add';
+  addBtn.title = 'New tab';
+  addBtn.textContent = '+';
+  addBtn.addEventListener('click', addTab);
+  bar.appendChild(addBtn);
+}
+
+function addTab() {
+  saveCurrentTabState();
+  const w = canvasW || 1280;
+  const h = canvasH || 720;
+  const bg = (canvas && canvas.backgroundColor) || '#2B2318';
+  const id = Date.now() + Math.floor(Math.random() * 1000);
+  const name = 'Untitled ' + (tabs.length + 1);
+  // Seed an empty canvas JSON so the new tab loads at the requested size + bg
+  const seed = { version: fabric.version, objects: [], background: bg, width: w, height: h };
+  tabs.push({ id, name, canvasW: w, canvasH: h, canvasJSON: seed });
+  activeTabId = null; // prevent switchToTab from saving into the previous tab again
+  switchToTab(id);
+}
+
+// --- Init ---
+function initCanvas(w, h) {
+  canvasW = w;
+  canvasH = h;
+  if (canvas) canvas.dispose();
+
+  canvas = new fabric.Canvas('c', {
+    width: w,
+    height: h,
+    backgroundColor: '#2B2318',
+    preserveObjectStacking: true,
+    selection: true,
+  });
+
+  canvas.on('object:moving', onObjectMoving);
+  canvas.on('object:scaling', onObjectScaling);
+  canvas.on('selection:created', onSelectionChanged);
+  canvas.on('selection:updated', onSelectionChanged);
+  canvas.on('selection:cleared', onSelectionCleared);
+  canvas.on('object:modified', (e) => {
+    // Bake scale into width/height for rounded rects so corner radius stays
+    // visually circular instead of stretching with scaleX/scaleY.
+    const o = e && e.target;
+    if (o && o.type === 'rect' && (o.rx || o.ry) && !o._isFrame) {
+      const newW = Math.max(1, o.width * o.scaleX);
+      const newH = Math.max(1, o.height * o.scaleY);
+      o.set({ width: newW, height: newH, scaleX: 1, scaleY: 1 });
+      o.setCoords();
+    }
+    saveUndo(); refreshLayers(); updateProps();
+  });
+  canvas.on('mouse:move', onMouseMove);
+  canvas.on('text:changed', () => { saveUndo(); refreshLayers(); });
+
+  document.getElementById('status-size').textContent = `${w} x ${h}`;
+  setZoom(1);
+  refreshLayers();
+}
+
+// --- Snap Guides ---
+let guidelines = [];
+
+function clearGuidelines() {
+  guidelines.forEach(g => canvas.remove(g));
+  guidelines = [];
+}
+
+function addGuideline(points) {
+  const line = new fabric.Line(points, {
+    stroke: GUIDE_COLOR,
+    strokeWidth: 1,
+    strokeDashArray: [3, 3],
+    selectable: false,
+    evented: false,
+    excludeFromExport: true,
+    _isGuideline: true,
+  });
+  canvas.add(line);
+  guidelines.push(line);
+}
+
+// --- Grid snapping ---
+// Snap object position (on move) and scaled bounds (on resize) to a fixed grid
+// based on the canvas resolution. Simpler and more predictable than edge-detect.
+function snapVal(v) {
+  const g = Math.max(1, snapGrid || 10);
+  return Math.round(v / g) * g;
+}
+
+function onObjectMoving(e) {
+  if (!snapEnabled) return;
+  clearGuidelines();
+  const obj = e.target;
+  obj.setCoords();
+  const b = obj.getBoundingRect(true, true);
+  // Snap the bounding-box top-left to the grid, then apply the delta to obj.left/top
+  const tgtL = snapVal(b.left);
+  const tgtT = snapVal(b.top);
+  const dx = tgtL - b.left;
+  const dy = tgtT - b.top;
+  if (dx !== 0) obj.set('left', obj.left + dx);
+  if (dy !== 0) obj.set('top', obj.top + dy);
+  obj.setCoords();
+  // Guide lines on the snapped edges
+  addGuideline([tgtL, 0, tgtL, canvasH]);
+  addGuideline([0, tgtT, canvasW, tgtT]);
+  const nb = obj.getBoundingRect(true, true);
+  addGuideline([nb.left + nb.width, 0, nb.left + nb.width, canvasH]);
+  addGuideline([0, nb.top + nb.height, canvasW, nb.top + nb.height]);
+  updateProps();
+}
+
+// ---- Image crop controls ----
+// Corners = uniform scale (proportional). Sides = crop (adjust cropX/cropY +
+// width/height in source pixels). No single-axis scaling.
+function makeImageCropAction(edge) {
+  return function(eventData, transform, x, y) {
+    const t = transform.target;
+    const el = t._element || t._originalElement;
+    if (!el) return false;
+    const natW = el.naturalWidth || el.width;
+    const natH = el.naturalHeight || el.height;
+    const localPoint = fabric.util.transformPoint(
+      new fabric.Point(x, y),
+      fabric.util.invertTransform(t.calcTransformMatrix())
+    );
+    const w = t.width, h = t.height;
+    const cropX = t.cropX || 0, cropY = t.cropY || 0;
+    const angle = (t.angle || 0) * Math.PI / 180;
+    const cos = Math.cos(angle), sin = Math.sin(angle);
+    const MIN = 10;
+    if (edge === 'mr') {
+      const newW = Math.max(MIN, Math.min(natW - cropX, localPoint.x + w / 2));
+      t.set({ width: newW });
+    } else if (edge === 'ml') {
+      const newW = Math.max(MIN, Math.min(natW, w / 2 - localPoint.x));
+      const delta = w - newW;
+      const newCropX = Math.max(0, Math.min(natW - newW, cropX + delta));
+      t.left += delta * t.scaleX * cos;
+      t.top += delta * t.scaleX * sin;
+      t.set({ width: newW, cropX: newCropX });
+    } else if (edge === 'mb') {
+      const newH = Math.max(MIN, Math.min(natH - cropY, localPoint.y + h / 2));
+      t.set({ height: newH });
+    } else if (edge === 'mt') {
+      const newH = Math.max(MIN, Math.min(natH, h / 2 - localPoint.y));
+      const delta = h - newH;
+      const newCropY = Math.max(0, Math.min(natH - newH, cropY + delta));
+      t.left += -delta * t.scaleY * sin;
+      t.top += delta * t.scaleY * cos;
+      t.set({ height: newH, cropY: newCropY });
+    }
+    t.setCoords();
+    // Keep corner-radius clipPath sized to new crop bounds
+    if (t._cornerRadius && t._cornerRadius > 0) {
+      setImageCornerRadiusOn(t, t._cornerRadius);
+    }
+    return true;
+  };
+}
+
+function setImageCornerRadiusOn(img, r) {
+  r = Math.max(0, +r || 0);
+  img._cornerRadius = r;
+  if (r <= 0) { img.clipPath = null; return; }
+  const w = img.width, h = img.height;
+  const rr = Math.min(r, w / 2, h / 2);
+  img.clipPath = new fabric.Rect({
+    left: -w / 2, top: -h / 2,
+    width: w, height: h,
+    rx: rr, ry: rr,
+    originX: 'left', originY: 'top',
+    absolutePositioned: false,
+  });
+  img.dirty = true;
+}
+
+function setImageCornerRadius(r) {
+  const img = canvas.getActiveObject();
+  if (!img || img.type !== 'image') return;
+  r = Math.max(0, +r || 0);
+  img._cornerRadius = r;
+  if (r <= 0) {
+    img.clipPath = null;
+  } else {
+    const w = img.width, h = img.height;
+    const rr = Math.min(r, w / 2, h / 2);
+    img.clipPath = new fabric.Rect({
+      left: -w / 2, top: -h / 2,
+      width: w, height: h,
+      rx: rr, ry: rr,
+      originX: 'left', originY: 'top',
+      absolutePositioned: false,
+    });
+  }
+  img.dirty = true;
+  canvas.requestRenderAll();
+  saveUndo();
+}
+
+function setupImageControls(img) {
+  // Uniform (proportional) scaling on corners
+  img.lockUniScaling = true;
+  img.centeredScaling = false;
+  // Clone default controls so we keep corners + rotation
+  img.controls = Object.assign({}, fabric.Object.prototype.controls);
+  const mk = (xRel, yRel, edge, cursor) => new fabric.Control({
+    x: xRel, y: yRel,
+    offsetX: 0, offsetY: 0,
+    actionName: 'crop',
+    cursorStyle: cursor,
+    actionHandler: makeImageCropAction(edge),
+    render: fabric.controlsUtils.renderSquareControl || function(ctx, left, top, styleOverride, fabricObject) {
+      const size = 10;
+      ctx.save();
+      ctx.fillStyle = '#3b82f6';
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 1;
+      ctx.fillRect(left - size/2, top - size/2, size, size);
+      ctx.strokeRect(left - size/2, top - size/2, size, size);
+      ctx.restore();
+    },
+  });
+  img.controls.ml = mk(-0.5, 0, 'ml', 'ew-resize');
+  img.controls.mr = mk(0.5, 0, 'mr', 'ew-resize');
+  img.controls.mt = mk(0, -0.5, 'mt', 'ns-resize');
+  img.controls.mb = mk(0, 0.5, 'mb', 'ns-resize');
+}
+
+function onObjectScaling(e) {
+  if (!snapEnabled) { clearGuidelines(); updateProps(); return; }
+  clearGuidelines();
+  const obj = e.target;
+  obj.setCoords();
+  const b = obj.getBoundingRect(true, true);
+  // Snap the edge being dragged to the grid. Which corner/edge is active
+  // is in e.transform.corner (e.g. 'tl', 'br', 'mr', 'mb', ...).
+  const corner = (e.transform && e.transform.corner) || '';
+  const left = b.left, top = b.top, right = b.left + b.width, bottom = b.top + b.height;
+  let newL = left, newT = top, newR = right, newB = bottom;
+  if (corner.includes('l')) newL = snapVal(left);
+  if (corner.includes('r')) newR = snapVal(right);
+  if (corner.includes('t')) newT = snapVal(top);
+  if (corner.includes('b')) newB = snapVal(bottom);
+  const newW = Math.max(1, newR - newL);
+  const newH = Math.max(1, newB - newT);
+  // Apply by adjusting scaleX/scaleY and left/top so the snapped edges line up.
+  // Use the ratio of new bounds to current bounds to scale the existing scale.
+  const sxMul = newW / b.width;
+  const syMul = newH / b.height;
+  obj.set({
+    scaleX: obj.scaleX * sxMul,
+    scaleY: obj.scaleY * syMul,
+    left: obj.left + (newL - left),
+    top: obj.top + (newT - top),
+  });
+  obj.setCoords();
+  // Guides on the snapped edges
+  if (corner.includes('l')) addGuideline([newL, 0, newL, canvasH]);
+  if (corner.includes('r')) addGuideline([newR, 0, newR, canvasH]);
+  if (corner.includes('t')) addGuideline([0, newT, canvasW, newT]);
+  if (corner.includes('b')) addGuideline([0, newB, canvasW, newB]);
+  updateProps();
+}
+
+// --- Layers ---
+const expandedGroups = new Set(); // track which groups are expanded by object ref id
+
+// Canvas background pseudo-layer state
+let canvasBgSelected = false;
+let canvasBgColor = '#2B2318';
+let canvasBgAlpha = 1;
+
+function getColorAlpha(c) {
+  if (!c) return 1;
+  const m = /rgba?\(\s*\d+\s*,\s*\d+\s*,\s*\d+(?:\s*,\s*([\d.]+))?\s*\)/i.exec(c);
+  if (m) return m[1] !== undefined ? +m[1] : 1;
+  return 1;
+}
+function getColorHex(c) {
+  if (!c) return '#000000';
+  const m = /rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i.exec(c);
+  if (m) return '#' + ((1<<24) | (+m[1]<<16) | (+m[2]<<8) | +m[3]).toString(16).slice(1);
+  return c;
+}
+function colorWithAlpha(c, a) {
+  const hex = getColorHex(c);
+  return a >= 1 ? hex : hexToRgba(hex, a);
+}
+function strokeOpacityRow(prop, alpha) {
+  return alphaRow('BOpa', prop, alpha);
+}
+function alphaRow(label, prop, alpha) {
+  const pct = Math.round((alpha === undefined ? 1 : alpha) * 100);
+  return `<div class="prop-row"><label>${label}</label>` +
+    `<input type="range" min="0" max="100" value="${pct}" oninput="setObjProp('${prop}', +this.value/100)">` +
+    `<input type="number" min="0" max="100" value="${pct}" style="width:42px;flex:none" onchange="setObjProp('${prop}', +this.value/100)">` +
+    '<span style="font-size:11px;color:#666">%</span></div>';
+}
+function hexToRgba(hex, a) {
+  const m = /^#?([0-9a-fA-F]{6})$/.exec(hex || '');
+  if (!m) return hex;
+  const n = parseInt(m[1], 16);
+  return 'rgba(' + ((n>>16)&255) + ',' + ((n>>8)&255) + ',' + (n&255) + ',' + a + ')';
+}
+function applyCanvasBg() {
+  canvas.backgroundColor = canvasBgAlpha >= 1 ? canvasBgColor : hexToRgba(canvasBgColor, canvasBgAlpha);
+  canvas.requestRenderAll();
+}
+function selectCanvasBg() {
+  canvasBgSelected = true;
+  canvas.discardActiveObject();
+  canvas.requestRenderAll();
+  refreshLayers();
+  updateProps();
+}
+
+function getLayerIcon(obj) {
+  if (obj.type === 'textbox' || obj.type === 'i-text' || obj.type === 'text') return 'T';
+  if (obj.type === 'image') return '\u{1F5BC}';
+  if (obj.type === 'rect') return '\u25A0';
+  if (obj.type === 'circle') return '\u25CF';
+  if (obj.type === 'triangle') return '\u25B2';
+  if (obj.type === 'polygon') return '\u2B23';
+  if (obj.type === 'rect' && obj._isFrame) return '\u{1F5BC}';
+  if (obj.type === 'group' && obj._isBannerGroup) return '\u{1F3F7}';
+  if (obj.type === 'group' && obj._isHitboxGroup) return '\u{1F517}';
+  if (obj.type === 'group') return '\u{1F4C1}';
+  return '?';
+}
+
+function getLayerName(obj) {
+  if (obj._customName) return obj._customName;
+  if (obj.type === 'textbox' || obj.type === 'i-text' || obj.type === 'text') return obj.text?.substring(0, 20) || 'Text';
+  if (obj.type === 'image') return 'Image';
+  if (obj.type === 'rect') return 'Rectangle';
+  if (obj.type === 'circle') return 'Circle';
+  if (obj.type === 'triangle') return 'Triangle';
+  if (obj.type === 'polygon') return 'Polygon';
+  if (obj.type === 'group') return 'Group (' + (obj._objects ? obj._objects.length : 0) + ')';
+  return obj.type || 'Object';
+}
+
+function layerClickHandler(obj, evt) {
+  if (evt.ctrlKey || evt.shiftKey) {
+    const active = canvas.getActiveObject();
+    if (!active) {
+      canvas.setActiveObject(obj);
+    } else if (active.type === 'activeSelection') {
+      if (active.contains(obj)) {
+        active.removeWithUpdate(obj);
+        if (active._objects.length === 1) {
+          canvas.setActiveObject(active._objects[0]);
+        } else if (active._objects.length === 0) {
+          canvas.discardActiveObject();
+        }
+      } else {
+        active.addWithUpdate(obj);
+      }
+    } else if (active === obj) {
+      canvas.discardActiveObject();
+    } else {
+      const sel = new fabric.ActiveSelection([active, obj], { canvas: canvas });
+      canvas.setActiveObject(sel);
+    }
+  } else {
+    canvas.setActiveObject(obj);
+  }
+  canvas.requestRenderAll();
+  refreshLayers();
+  updateProps();
+}
+
+function buildLayerRow(obj, idx, active, isChild, groupObj, childIdx) {
+  const div = document.createElement('div');
+  // For group children, highlight if the parent group is selected
+  const isSelected = isChild
+    ? (groupObj === active)
+    : (obj === active || (active && active.type === 'activeSelection' && active.contains && active.contains(obj)));
+  let cls = 'layer-item' + (isSelected ? ' selected' : '') + (obj.visible === false ? ' hidden-layer' : '');
+  if (isChild) cls += ' group-child';
+  div.className = cls;
+  div.dataset.index = idx;
+
+  const icon = getLayerIcon(obj);
+  const name = getLayerName(obj);
+
+  let expandBtn = '';
+  if (obj.type === 'group' && obj._objects && obj._objects.length > 0) {
+    const gid = obj.__uid || (obj.__uid = Math.random().toString(36).slice(2));
+    const isExpanded = expandedGroups.has(gid);
+    expandBtn = `<span class="expand-toggle" data-gid="${gid}">${isExpanded ? '▼' : '►'}</span>`;
+  }
+
+  // For group children, add reorder buttons inline
+  let childActions = '';
+  if (isChild && groupObj && groupObj._objects) {
+    const total = groupObj._objects.length;
+    childActions = `<button onclick="moveGroupChild(${childIdx},'up'); event.stopPropagation();" title="Move Up" ${childIdx >= total - 1 ? 'disabled' : ''} style="font-size:9px;padding:1px 3px;background:#333;border:1px solid #444;color:#aaa;cursor:pointer;border-radius:2px;">▲</button>` +
+      `<button onclick="moveGroupChild(${childIdx},'down'); event.stopPropagation();" title="Move Down" ${childIdx <= 0 ? 'disabled' : ''} style="font-size:9px;padding:1px 3px;background:#333;border:1px solid #444;color:#aaa;cursor:pointer;border-radius:2px;">▼</button>`;
+  }
+
+  div.innerHTML = `
+    ${expandBtn}
+    <span class="layer-icon">${icon}</span>
+    <span class="layer-name">${name}</span>
+    <span class="layer-actions">
+      ${childActions}
+      <button onclick="toggleVisibility(${isChild ? -1 : idx}); event.stopPropagation();" title="Toggle visibility">${obj.visible !== false ? '\u{1F441}' : '\u{1F441}\u200D\u{1F5E8}'}</button>
+      <button onclick="toggleLock(${isChild ? -1 : idx}); event.stopPropagation();" title="Toggle lock" class="${obj.lockMovementX ? 'active' : ''}">\u{1F512}</button>
+    </span>
+  `;
+
+  // Expand/collapse toggle for groups
+  const toggle = div.querySelector('.expand-toggle');
+  if (toggle) {
+    toggle.addEventListener('click', (evt) => {
+      evt.stopPropagation();
+      const gid = toggle.dataset.gid;
+      if (expandedGroups.has(gid)) expandedGroups.delete(gid);
+      else expandedGroups.add(gid);
+      refreshLayers();
+    });
+  }
+
+  // For group children, clicking selects the parent group
+  if (isChild && groupObj) {
+    div.addEventListener('click', (evt) => {
+      canvas.setActiveObject(groupObj);
+      canvas.requestRenderAll();
+      refreshLayers();
+      updateProps();
+    });
+  } else {
+    div.addEventListener('click', (evt) => layerClickHandler(obj, evt));
+  }
+  return div;
+}
+
+function refreshLayers() {
+  const panel = document.getElementById('layers-panel');
+  const objects = canvas.getObjects().filter(o => !o._isGuideline);
+  const active = canvas.getActiveObject();
+
+  panel.innerHTML = '';
+  // Render top-to-bottom (highest layer first)
+  for (let i = objects.length - 1; i >= 0; i--) {
+    const obj = objects[i];
+    panel.appendChild(buildLayerRow(obj, i, active, false));
+
+    // If it's an expanded group, render children
+    if (obj.type === 'group' && obj._objects) {
+      const gid = obj.__uid || (obj.__uid = Math.random().toString(36).slice(2));
+      if (expandedGroups.has(gid)) {
+        for (let c = obj._objects.length - 1; c >= 0; c--) {
+          const child = obj._objects[c];
+          const childRow = buildLayerRow(child, i, active, true, obj, c);
+          // Override click for group children - select the group itself
+          childRow.removeEventListener && childRow.replaceWith(childRow); // noop, just clarity
+          panel.appendChild(childRow);
+        }
+      }
+    }
+  }
+
+  // Canvas pseudo-layer at bottom
+  const cRow = document.createElement('div');
+  cRow.className = 'layer-item' + (canvasBgSelected ? ' selected' : '');
+  cRow.style.borderTop = '2px solid #333';
+  cRow.innerHTML =
+    '<span class="layer-icon">\u{1F3A8}</span>' +
+    '<span class="layer-name">Canvas</span>';
+  cRow.addEventListener('click', selectCanvasBg);
+  panel.appendChild(cRow);
+}
+
+function toggleVisibility(idx) {
+  const obj = canvas.getObjects().filter(o => !o._isGuideline)[idx];
+  obj.visible = obj.visible === false ? true : false;
+  canvas.requestRenderAll();
+  refreshLayers();
+}
+
+function toggleLock(idx) {
+  const obj = canvas.getObjects().filter(o => !o._isGuideline)[idx];
+  const locked = !obj.lockMovementX;
+  obj.set({
+    lockMovementX: locked,
+    lockMovementY: locked,
+    lockScalingX: locked,
+    lockScalingY: locked,
+    lockRotation: locked,
+    hasControls: !locked,
+    selectable: !locked || true, // still selectable for properties
+  });
+  canvas.requestRenderAll();
+  refreshLayers();
+}
+
+function moveLayer(dir) {
+  const obj = canvas.getActiveObject();
+  if (!obj) return;
+  const objects = canvas.getObjects().filter(o => !o._isGuideline);
+  const idx = objects.indexOf(obj);
+  if (dir === 'up' && idx < objects.length - 1) {
+    obj.moveTo(idx + 1);
+  } else if (dir === 'down' && idx > 0) {
+    obj.moveTo(idx - 1);
+  }
+  canvas.requestRenderAll();
+  refreshLayers();
+}
+
+function duplicateLayer() {
+  const obj = canvas.getActiveObject();
+  if (!obj) return;
+  obj.clone(function(cloned) {
+    cloned.set({ left: obj.left + 20, top: obj.top + 20, _customName: (obj._customName || '') + ' copy' });
+    // Preserve banner group properties
+    if (obj._isBannerGroup) {
+      cloned._isBannerGroup = true;
+      cloned._padL = obj._padL; cloned._padR = obj._padR;
+      cloned._padT = obj._padT; cloned._padB = obj._padB;
+      cloned._bannerLeftEnd = obj._bannerLeftEnd;
+      cloned._bannerRightEnd = obj._bannerRightEnd;
+      cloned._bannerNotchL = obj._bannerNotchL;
+      cloned._bannerNotchR = obj._bannerNotchR;
+    }
+    // Preserve hitbox group properties
+    if (obj._isHitboxGroup) {
+      cloned._isHitboxGroup = true;
+      cloned._padL = obj._padL; cloned._padR = obj._padR;
+      cloned._padT = obj._padT; cloned._padB = obj._padB;
+    }
+    canvas.add(cloned);
+    canvas.setActiveObject(cloned);
+    canvas.requestRenderAll();
+    refreshLayers();
+    saveUndo();
+  });
+}
+
+function deleteLayer() {
+  const obj = canvas.getActiveObject();
+  if (!obj) return;
+  canvas.remove(obj);
+  canvas.discardActiveObject();
+  canvas.requestRenderAll();
+  refreshLayers();
+  updateProps();
+  saveUndo();
+}
+
+// --- Group / Ungroup ---
+function groupSelected() {
+  const active = canvas.getActiveObject();
+  if (!active || active.type !== 'activeSelection') return; // need multi-select
+  const group = active.toGroup();
+  group._customName = 'Group';
+  canvas.requestRenderAll();
+  refreshLayers();
+  updateProps();
+  saveUndo();
+}
+
+function ungroupSelected() {
+  const active = canvas.getActiveObject();
+  if (!active || active.type !== 'group') return;
+  const items = active.toActiveSelection();
+  canvas.requestRenderAll();
+  refreshLayers();
+  updateProps();
+  saveUndo();
+}
+
+function moveGroupChild(childIdx, dir) {
+  const group = canvas.getActiveObject();
+  if (!group || group.type !== 'group' || !group._objects) return;
+  const children = group._objects;
+  const swapIdx = dir === 'up' ? childIdx + 1 : childIdx - 1;
+  if (swapIdx < 0 || swapIdx >= children.length) return;
+  // Swap the two children
+  const tmp = children[childIdx];
+  children[childIdx] = children[swapIdx];
+  children[swapIdx] = tmp;
+  group.dirty = true;
+  canvas.requestRenderAll();
+  refreshLayers();
+  updateProps();
+  saveUndo();
+}
+
+function enterGroup() {
+  const active = canvas.getActiveObject();
+  if (!active || active.type !== 'group') return;
+  // Temporarily ungroup so user can select children, then re-group
+  const items = active.toActiveSelection();
+  canvas.discardActiveObject();
+  canvas.requestRenderAll();
+  refreshLayers();
+  updateProps();
+}
+
+// --- Properties Panel ---
+function onSelectionChanged() {
+  refreshLayers();
+  updateProps();
+  const obj = canvas.getActiveObject();
+  if (obj) {
+    document.getElementById('status-selection').textContent = `${obj._customName || obj.type} selected`;
+  }
+}
+
+function onSelectionCleared() {
+  clearGuidelines();
+  refreshLayers();
+  updateProps();
+  document.getElementById('status-selection').textContent = 'No selection';
+}
+
+function updateProps() {
+  const obj = canvas.getActiveObject();
+  const container = document.getElementById('props-content');
+  if (obj && !obj._isGuideline) canvasBgSelected = false;
+  if (canvasBgSelected && (!obj || obj._isGuideline)) {
+    const aPct = Math.round(canvasBgAlpha * 100);
+    container.innerHTML =
+      '<div style="font-size:11px;color:#7aa2f7;margin-bottom:6px;font-weight:600;">CANVAS</div>' +
+      `<div class="prop-row"><label>BG</label>${brandColorPicker('_canvasBg', canvasBgColor)}</div>` +
+      `<div class="prop-row"><label>Opa</label><input type="range" min="0" max="100" value="${aPct}" oninput="setObjProp('_canvasBgAlpha', +this.value/100)"><input type="number" min="0" max="100" value="${aPct}" style="width:42px;flex:none" onchange="setObjProp('_canvasBgAlpha', +this.value/100)"><span style="font-size:11px;color:#666">%</span></div>`;
+    return;
+  }
+  if (!obj || obj._isGuideline) {
+    container.innerHTML = '<p style="color:#666; font-size:12px; padding:8px 0;">Select an element</p>';
+    return;
+  }
+
+  const b = obj.getBoundingRect(true);
+  let html = '';
+
+  // Name
+  html += `<div class="prop-row"><label>Name</label><input type="text" value="${obj._customName || ''}" onchange="setObjProp('_customName', this.value)"></div>`;
+
+  // Position
+  html += `<div class="prop-row"><label>X</label><input type="number" value="${Math.round(obj.left)}" onchange="setObjProp('left', +this.value)">`;
+  html += `<label>Y</label><input type="number" value="${Math.round(obj.top)}" onchange="setObjProp('top', +this.value)"></div>`;
+
+  // Size + lock aspect ratio
+  const isLocked = obj.lockUniScaling !== false;
+  html += `<div class="prop-row"><label>W</label><input type="number" value="${Math.round(b.width)}" onchange="setObjSize('w', +this.value)">`;
+  html += `<button onclick="toggleAspectLock()" title="Lock aspect ratio" style="background:${isLocked ? '#7aa2f7' : '#333'};border:1px solid ${isLocked ? '#7aa2f7' : '#444'};color:${isLocked ? '#111' : '#888'};border-radius:3px;cursor:pointer;padding:2px 6px;font-size:14px;flex-shrink:0">${isLocked ? '\u{1F517}' : '\u{26D3}\uFE0F'}</button>`;
+  html += `<label>H</label><input type="number" value="${Math.round(b.height)}" onchange="setObjSize('h', +this.value)"></div>`;
+
+  // Rotation
+  html += `<div class="prop-row"><label>Rot</label><input type="number" value="${Math.round(obj.angle || 0)}" onchange="setObjProp('angle', +this.value)"></div>`;
+
+  // Opacity
+  const opaVal = Math.round((obj.opacity === undefined ? 1 : obj.opacity) * 100);
+  html += `<div class="prop-row"><label>Opa</label><input id="opa-range" type="range" min="0" max="100" value="${opaVal}" oninput="setOpacity(+this.value)"><input id="opa-num" type="number" min="0" max="100" value="${opaVal}" style="width:42px;flex:none" onchange="setOpacity(+this.value)"><span style="font-size:11px;color:#666">%</span></div>`;
+
+  // Banner Group — specialized controls
+  if (obj.type === 'group' && obj._isBannerGroup) {
+    html += '<hr style="border-color:#333;margin:8px 0">';
+    html += '<div style="font-size:11px;color:#7aa2f7;margin-bottom:6px;font-weight:600;">BANNER GROUP</div>';
+
+    const bgText = obj._objects ? obj._objects.find(o => o.type === 'textbox' || o.type === 'text' || o.type === 'i-text') : null;
+    const bgPoly = obj._objects ? obj._objects.find(o => o.type === 'polygon') : null;
+
+    if (bgText) {
+      html += `<div class="prop-row"><label>Text</label><input type="text" value="${(bgText.text||'').replace(/"/g,'&quot;')}" onchange="setBannerGroupText(this.value)"></div>`;
+      const curFont = (bgText.fontFamily || 'Arial').split(',')[0].trim();
+      html += `<div class="prop-row"><label>Font</label><select onchange="setBannerGroupFont(this.value)" style="flex:1">`;
+      FONTS.forEach(f => { html += `<option value="${f}" ${curFont===f?'selected':''}>${f}</option>`; });
+      if (!FONTS.includes(curFont)) html += `<option value="${curFont}" selected>${curFont}</option>`;
+      html += `</select></div>`;
+      html += `<div class="prop-row"><label>Size</label><input type="number" value="${bgText.fontSize||24}" onchange="setBannerGroupTextProp('fontSize', +this.value)"></div>`;
+      html += `<div class="prop-row"><label>TCol</label>${brandColorPicker('_bgTextFill', getColorHex(bgText.fill) || '#fff')}</div>`;
+      html += alphaRow('TOpa', '_bgTextFillAlpha', getColorAlpha(bgText.fill));
+      html += `<div class="prop-row"><label>Bold</label><input type="checkbox" ${bgText.fontWeight==='bold'?'checked':''} onchange="setBannerGroupTextProp('fontWeight', this.checked?'bold':'normal')">`;
+      html += `<label>Algn</label><select onchange="setBannerGroupTextProp('textAlign', this.value)">
+        <option value="left" ${bgText.textAlign==='left'?'selected':''}>Left</option>
+        <option value="center" ${bgText.textAlign==='center'?'selected':''}>Center</option>
+        <option value="right" ${bgText.textAlign==='right'?'selected':''}>Right</option>
+      </select></div>`;
+      // Text outline
+      const tStroke = bgText.stroke && bgText.strokeWidth > 0;
+      html += `<div class="prop-row"><label>Otln</label><input type="checkbox" ${tStroke?'checked':''} onchange="toggleBannerGroupTextStroke(this.checked)"> <span style="font-size:11px;color:#888">${tStroke?'On':'Off'}</span></div>`;
+      if (tStroke) {
+        html += `<div class="prop-row"><label>OCol</label>${brandColorPicker('_bgTextStroke', getColorHex(bgText.stroke) || '#000')}</div>`;
+        html += `<div class="prop-row"><label>OWid</label><input type="number" min="0.5" max="10" step="0.5" value="${bgText.strokeWidth||1}" onchange="setBannerGroupTextProp('strokeWidth', +this.value)"></div>`;
+        html += strokeOpacityRow('_bgTextStrokeAlpha', getColorAlpha(bgText.stroke));
+      }
+    }
+
+    if (bgPoly) {
+      html += `<div class="prop-row"><label>BFil</label>${brandColorPicker('_bgBannerFill', getColorHex(bgPoly.fill) || '#333')}</div>`;
+      html += alphaRow('BFOp', '_bgBannerFillAlpha', getColorAlpha(bgPoly.fill));
+      const bOpa = Math.round((bgPoly.opacity === undefined ? 1 : bgPoly.opacity) * 100);
+      html += `<div class="prop-row"><label>BOpa</label><input type="range" min="0" max="100" value="${bOpa}" oninput="setBannerGroupPolyProp('opacity', +this.value/100)"><input type="number" min="0" max="100" value="${bOpa}" style="width:42px;flex:none" onchange="setBannerGroupPolyProp('opacity', +this.value/100)"><span style="font-size:11px;color:#666">%</span></div>`;
+      const bStroke = bgPoly.stroke && bgPoly.strokeWidth > 0;
+      html += `<div class="prop-row"><label>Bdr</label><input type="checkbox" ${bStroke?'checked':''} onchange="toggleBannerGroupPolyStroke(this.checked)"> <span style="font-size:11px;color:#888">${bStroke?'On':'Off'}</span></div>`;
+      if (bStroke) {
+        html += `<div class="prop-row"><label>BCol</label>${brandColorPicker('_bgBannerStroke', getColorHex(bgPoly.stroke) || '#fff')}</div>`;
+        html += `<div class="prop-row"><label>BWid</label><input type="number" min="1" max="20" value="${bgPoly.strokeWidth||2}" onchange="setBannerGroupPolyProp('strokeWidth', +this.value)"></div>`;
+        html += strokeOpacityRow('_bgBannerStrokeAlpha', getColorAlpha(bgPoly.stroke));
+      }
+    }
+
+    // Padding controls
+    html += '<div style="font-size:11px;color:#888;margin:8px 0 4px;">Padding</div>';
+    const pL = obj._padL||10, pR = obj._padR||10, pT = obj._padT||10, pB = obj._padB||10;
+    const bgPadLinked = obj._padLinked !== false;
+    html += `<div class="prop-row"><label>PL</label><input type="number" min="0" max="200" value="${pL}" onchange="setBannerGroupPadding('L', +this.value)">`;
+    html += `<label>PR</label><input type="number" min="0" max="200" value="${pR}" onchange="setBannerGroupPadding('R', +this.value)"></div>`;
+    html += `<div class="prop-row"><label>PT</label><input type="number" min="0" max="200" value="${pT}" onchange="setBannerGroupPadding('T', +this.value)">`;
+    html += `<button onclick="toggleBannerPadLink()" title="Link padding" style="background:${bgPadLinked ? '#7aa2f7' : '#333'};border:1px solid ${bgPadLinked ? '#7aa2f7' : '#444'};color:${bgPadLinked ? '#111' : '#888'};border-radius:3px;cursor:pointer;padding:2px 6px;font-size:14px;flex-shrink:0">${bgPadLinked ? '\u{1F517}' : '\u{26D3}\uFE0F'}</button>`;
+    html += `<label>PB</label><input type="number" min="0" max="200" value="${pB}" onchange="setBannerGroupPadding('B', +this.value)"></div>`;
+
+    // Banner shape controls
+    const lEnd = obj._bannerLeftEnd || 'flat', rEnd = obj._bannerRightEnd || 'flat';
+    const nL = Math.round(obj._bannerNotchL || 20), nR = Math.round(obj._bannerNotchR || 20);
+    html += '<div style="font-size:11px;color:#888;margin:8px 0 4px;">Shape</div>';
+    html += `<div class="prop-row"><label>L End</label><select onchange="setBannerGroupEnd('left', this.value)">
+      <option value="flat" ${lEnd==='flat'?'selected':''}>Flat</option>
+      <option value="point" ${lEnd==='point'?'selected':''}>Point</option>
+      <option value="arrow" ${lEnd==='arrow'?'selected':''}>Arrow</option>
+      <option value="chevron" ${lEnd==='chevron'?'selected':''}>Chevron</option>
+      <option value="round" ${lEnd==='round'?'selected':''}>Round</option>
+      <option value="ribbon" ${lEnd==='ribbon'?'selected':''}>Ribbon</option>
+      <option value="slant-l" ${lEnd==='slant-l'?'selected':''}>Slant \u2572</option>
+      <option value="slant-r" ${lEnd==='slant-r'?'selected':''}>Slant \u2571</option>
+      <option value="scallop" ${lEnd==='scallop'?'selected':''}>Scallop</option>
+      <option value="tab" ${lEnd==='tab'?'selected':''}>Tab</option>
+    </select></div>`;
+    html += `<div class="prop-row"><label>R End</label><select onchange="setBannerGroupEnd('right', this.value)">
+      <option value="flat" ${rEnd==='flat'?'selected':''}>Flat</option>
+      <option value="point" ${rEnd==='point'?'selected':''}>Point</option>
+      <option value="arrow" ${rEnd==='arrow'?'selected':''}>Arrow</option>
+      <option value="chevron" ${rEnd==='chevron'?'selected':''}>Chevron</option>
+      <option value="round" ${rEnd==='round'?'selected':''}>Round</option>
+      <option value="ribbon" ${rEnd==='ribbon'?'selected':''}>Ribbon</option>
+      <option value="slant-l" ${rEnd==='slant-l'?'selected':''}>Slant \u2572</option>
+      <option value="slant-r" ${rEnd==='slant-r'?'selected':''}>Slant \u2571</option>
+      <option value="scallop" ${rEnd==='scallop'?'selected':''}>Scallop</option>
+      <option value="tab" ${rEnd==='tab'?'selected':''}>Tab</option>
+    </select></div>`;
+    // Notch bounds: must leave some body width. Tighten to what's actually usable.
+    const maxNotch = Math.max(8, Math.round((obj.width || 100) * 0.45));
+    html += `<div class="prop-row"><label>NL</label><input type="number" min="4" max="${maxNotch}" value="${nL}" onchange="setBannerGroupNotch('left', +this.value)">`;
+    html += `<label>NR</label><input type="number" min="4" max="${maxNotch}" value="${nR}" onchange="setBannerGroupNotch('right', +this.value)"></div>`;
+
+    // Flare (arrow-head extension beyond body) — only meaningful for 'arrow' ends
+    if (lEnd === 'arrow' || rEnd === 'arrow') {
+      const defaultFlare = Math.round((obj.height || 0) * 0.15);
+      const maxFlare = Math.max(20, Math.round((obj.height || 40) * 3));
+      const fL = Math.round(typeof obj._bannerFlareL === 'number' ? obj._bannerFlareL : defaultFlare);
+      const fR = Math.round(typeof obj._bannerFlareR === 'number' ? obj._bannerFlareR : defaultFlare);
+      html += `<div class="prop-row"><label>FL</label><input type="number" min="0" max="${maxFlare}" value="${fL}" onchange="setBannerGroupFlare('left', +this.value)" ${lEnd==='arrow'?'':'disabled'}>`;
+      html += `<label>FR</label><input type="number" min="0" max="${maxFlare}" value="${fR}" onchange="setBannerGroupFlare('right', +this.value)" ${rEnd==='arrow'?'':'disabled'}></div>`;
+    }
+
+    // Shadow (reads from polygon child)
+    if (bgPoly) {
+      const sh = bgPoly.shadow || bgPoly._savedShadow;
+      const hasSh = !!sh && (sh.offsetX || sh.offsetY || sh.blur);
+      const shColor = (sh && sh.color) || 'rgba(0,0,0,0.4)';
+      const shX = (sh && sh.offsetX) || 3;
+      const shY = (sh && sh.offsetY) || 3;
+      const shBlur = (sh && sh.blur) || 8;
+      html += '<div style="font-size:11px;color:#888;margin:8px 0 4px;">Shadow</div>';
+      html += `<div class="prop-row"><label>Shad</label><input type="checkbox" ${hasSh?'checked':''} onchange="toggleBannerGroupShadow(this.checked)"> <span style="font-size:11px;color:#888">${hasSh?'On':'Off'}</span></div>`;
+      if (hasSh) {
+        const shSpread = (bgPoly && bgPoly._shadowSpread) || 0;
+        html += `<div class="prop-row"><label>SX</label><input type="number" value="${shX}" onchange="setBannerGroupShadowProp('offsetX', +this.value)">`;
+        html += `<label>SY</label><input type="number" value="${shY}" onchange="setBannerGroupShadowProp('offsetY', +this.value)"></div>`;
+        html += `<div class="prop-row"><label>Blur</label><input type="number" min="0" value="${shBlur}" onchange="setBannerGroupShadowProp('blur', +this.value)">`;
+        html += `<label>Sprd</label><input type="number" min="0" max="100" value="${shSpread}" onchange="setBannerGroupShadowSpread(+this.value)"></div>`;
+      }
+    }
+
+    html += `<div class="prop-row" style="margin-top:8px;justify-content:center;">
+      <button onclick="ungroupSelected()" style="padding:4px 12px;background:#444;color:#ccc;border:1px solid #555;border-radius:4px;cursor:pointer;font-size:11px;">Ungroup</button>
+    </div>`;
+  }
+
+  // Hitbox Group — linked arbitrary shapes + text, auto-centered in bbox
+  else if (obj.type === 'group' && obj._isHitboxGroup) {
+    html += '<hr style="border-color:#333;margin:8px 0">';
+    html += '<div style="font-size:11px;color:#7aa2f7;margin-bottom:6px;font-weight:600;">LINKED GROUP (HITBOX)</div>';
+
+    const hgText = obj._objects ? obj._objects.find(o => o.type === 'textbox' || o.type === 'text' || o.type === 'i-text') : null;
+
+    if (hgText) {
+      html += `<div class="prop-row"><label>Text</label><input type="text" value="${(hgText.text||'').replace(/"/g,'&quot;')}" onchange="setBannerGroupText(this.value)"></div>`;
+      const curFont = (hgText.fontFamily || 'Arial').split(',')[0].trim();
+      html += `<div class="prop-row"><label>Font</label><select onchange="setBannerGroupFont(this.value)" style="flex:1">`;
+      FONTS.forEach(f => { html += `<option value="${f}" ${curFont===f?'selected':''}>${f}</option>`; });
+      if (!FONTS.includes(curFont)) html += `<option value="${curFont}" selected>${curFont}</option>`;
+      html += `</select></div>`;
+      html += `<div class="prop-row"><label>Size</label><input type="number" value="${hgText.fontSize||24}" onchange="setBannerGroupTextProp('fontSize', +this.value)"></div>`;
+      html += `<div class="prop-row"><label>TCol</label>${brandColorPicker('_bgTextFill', getColorHex(hgText.fill) || '#fff')}</div>`;
+      html += alphaRow('TOpa', '_bgTextFillAlpha', getColorAlpha(hgText.fill));
+      html += `<div class="prop-row"><label>Bold</label><input type="checkbox" ${hgText.fontWeight==='bold'?'checked':''} onchange="setBannerGroupTextProp('fontWeight', this.checked?'bold':'normal')">`;
+      html += `<label>Algn</label><select onchange="setBannerGroupTextProp('textAlign', this.value)">
+        <option value="left" ${hgText.textAlign==='left'?'selected':''}>Left</option>
+        <option value="center" ${hgText.textAlign==='center'?'selected':''}>Center</option>
+        <option value="right" ${hgText.textAlign==='right'?'selected':''}>Right</option>
+      </select></div>`;
+      const htStroke = hgText.stroke && hgText.strokeWidth > 0;
+      html += `<div class="prop-row"><label>Otln</label><input type="checkbox" ${htStroke?'checked':''} onchange="toggleBannerGroupTextStroke(this.checked)"> <span style="font-size:11px;color:#888">${htStroke?'On':'Off'}</span></div>`;
+      if (htStroke) {
+        html += `<div class="prop-row"><label>OCol</label>${brandColorPicker('_bgTextStroke', getColorHex(hgText.stroke) || '#000')}</div>`;
+        html += `<div class="prop-row"><label>OWid</label><input type="number" min="0.5" max="10" step="0.5" value="${hgText.strokeWidth||1}" onchange="setBannerGroupTextProp('strokeWidth', +this.value)"></div>`;
+        html += strokeOpacityRow('_bgTextStrokeAlpha', getColorAlpha(hgText.stroke));
+      }
+    }
+
+    // Shape styling — applies to all non-text children in the group
+    const hgShapes = obj._objects ? obj._objects.filter(o => o.type !== 'textbox' && o.type !== 'text' && o.type !== 'i-text') : [];
+    if (hgShapes.length > 0) {
+      const primary = hgShapes[0];
+      html += `<div class="prop-row"><label>SFil</label>${brandColorPicker('_hbShapeFill', getColorHex(primary.fill) || '#333333')}</div>`;
+      html += alphaRow('SFOp', '_hbShapeFillAlpha', getColorAlpha(primary.fill));
+      const hbOpa = Math.round((primary.opacity === undefined ? 1 : primary.opacity) * 100);
+      html += `<div class="prop-row"><label>SOpa</label><input type="range" min="0" max="100" value="${hbOpa}" oninput="setHitboxShapeOpacity(+this.value/100)"><input type="number" min="0" max="100" value="${hbOpa}" style="width:42px;flex:none" onchange="setHitboxShapeOpacity(+this.value/100)"><span style="font-size:11px;color:#666">%</span></div>`;
+      const hbBdr = primary.stroke && primary.strokeWidth > 0;
+      html += `<div class="prop-row"><label>Bdr</label><input type="checkbox" ${hbBdr?'checked':''} onchange="toggleHitboxShapeStroke(this.checked)"> <span style="font-size:11px;color:#888">${hbBdr?'On':'Off'}</span></div>`;
+      if (hbBdr) {
+        html += `<div class="prop-row"><label>BCol</label>${brandColorPicker('_hbShapeStroke', getColorHex(primary.stroke) || '#FFFFFF')}</div>`;
+        html += `<div class="prop-row"><label>BWid</label><input type="number" min="1" max="50" value="${primary.strokeWidth||2}" onchange="setHitboxShapeStrokeWidth(+this.value)"></div>`;
+        html += strokeOpacityRow('_hbShapeStrokeAlpha', getColorAlpha(primary.stroke));
+      }
+      if (hgShapes.length > 1) {
+        html += `<div style="font-size:11px;color:#666;margin:4px 0;">Fill/border applies to all ${hgShapes.length} shapes in this group.</div>`;
+      }
+    }
+
+    // Padding controls (based on group bounding box)
+    html += '<div style="font-size:11px;color:#888;margin:8px 0 4px;">Padding (within hitbox)</div>';
+    const hpL = obj._padL||0, hpR = obj._padR||0, hpT = obj._padT||0, hpB = obj._padB||0;
+    const hbPadLinked = obj._padLinked !== false;
+    html += `<div class="prop-row"><label>PL</label><input type="number" min="0" max="500" value="${hpL}" onchange="setBannerGroupPadding('L', +this.value)">`;
+    html += `<label>PR</label><input type="number" min="0" max="500" value="${hpR}" onchange="setBannerGroupPadding('R', +this.value)"></div>`;
+    html += `<div class="prop-row"><label>PT</label><input type="number" min="0" max="500" value="${hpT}" onchange="setBannerGroupPadding('T', +this.value)">`;
+    html += `<button onclick="toggleBannerPadLink()" title="Link padding" style="background:${hbPadLinked ? '#7aa2f7' : '#333'};border:1px solid ${hbPadLinked ? '#7aa2f7' : '#444'};color:${hbPadLinked ? '#111' : '#888'};border-radius:3px;cursor:pointer;padding:2px 6px;font-size:14px;flex-shrink:0">${hbPadLinked ? '\u{1F517}' : '\u{26D3}\uFE0F'}</button>`;
+    html += `<label>PB</label><input type="number" min="0" max="500" value="${hpB}" onchange="setBannerGroupPadding('B', +this.value)"></div>`;
+
+    html += `<div class="prop-row" style="margin-top:4px;justify-content:center;">
+      <button onclick="ungroupSelected()" style="padding:4px 12px;background:#444;color:#ccc;border:1px solid #555;border-radius:4px;cursor:pointer;font-size:11px;">Ungroup</button>
+    </div>`;
+  }
+
+  // Group actions (non-banner, non-hitbox groups)
+  else if (obj.type === 'group') {
+    html += '<hr style="border-color:#333;margin:8px 0">';
+    const childCount = obj._objects ? obj._objects.length : 0;
+    html += `<div class="prop-row" style="justify-content:center;gap:8px;">
+      <span style="font-size:12px;color:#aaa;">${childCount} items</span>
+      <button onclick="ungroupSelected()" style="padding:4px 12px;background:#7aa2f7;color:#111;border:none;border-radius:4px;cursor:pointer;font-size:12px;font-weight:600;">Ungroup</button>
+    </div>`;
+    // Show children list with reorder buttons
+    if (obj._objects && obj._objects.length > 0) {
+      const gid = obj.__uid || (obj.__uid = Math.random().toString(36).slice(2));
+      if (!expandedGroups.has(gid)) expandedGroups.add(gid); // auto-expand when selected
+      html += `<div style="margin-top:6px;font-size:11px;color:#888;">Children (drag to reorder):</div>`;
+      for (let ci = obj._objects.length - 1; ci >= 0; ci--) {
+        const ch = obj._objects[ci];
+        const chName = ch._customName || ch.type || 'Object';
+        const chIcon = getLayerIcon(ch);
+        html += `<div style="display:flex;align-items:center;gap:4px;padding:2px 0;font-size:12px;">
+          <button onclick="moveGroupChild(${ci},'up')" style="background:#333;border:1px solid #444;color:#aaa;cursor:pointer;padding:1px 4px;border-radius:2px;font-size:10px;" ${ci >= obj._objects.length - 1 ? 'disabled' : ''}>▲</button>
+          <button onclick="moveGroupChild(${ci},'down')" style="background:#333;border:1px solid #444;color:#aaa;cursor:pointer;padding:1px 4px;border-radius:2px;font-size:10px;" ${ci <= 0 ? 'disabled' : ''}>▼</button>
+          <span>${chIcon}</span>
+          <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${chName}</span>
+        </div>`;
+      }
+    }
+  }
+  if (obj.type === 'activeSelection') {
+    html += '<hr style="border-color:#333;margin:8px 0">';
+    const selCount = obj._objects ? obj._objects.length : 0;
+    html += `<div class="prop-row" style="justify-content:center;gap:8px;">
+      <span style="font-size:12px;color:#aaa;">${selCount} selected</span>
+      <button onclick="groupSelected()" style="padding:4px 12px;background:#7aa2f7;color:#111;border:none;border-radius:4px;cursor:pointer;font-size:12px;font-weight:600;">Group</button>
+    </div>`;
+  }
+
+  // Type-specific
+  if (obj.type === 'textbox' || obj.type === 'i-text' || obj.type === 'text') {
+    html += '<hr style="border-color:#333;margin:8px 0">';
+    html += `<div class="prop-row"><label>Text</label><input type="text" value="${(obj.text || '').replace(/"/g, '&quot;')}" onchange="setObjProp('text', this.value)"></div>`;
+    const curFontRaw = obj.fontFamily || 'Arial';
+    const curFont = curFontRaw.split(',')[0].trim(); // strip CSS fallbacks like ", sans-serif"
+    const fonts = FONTS;
+    html += `<div class="prop-row"><label>Font</label><select onchange="changeFont(this.value)" style="flex:1">`;
+    fonts.forEach(f => { html += `<option value="${f}" ${curFont===f?'selected':''}>${f}</option>`; });
+    if (!fonts.includes(curFont)) {
+      html += `<option value="${curFont}" selected>${curFont}</option>`;
+    }
+    html += `</select></div>`;
+    html += `<div class="prop-row"><label>Size</label><input type="number" value="${obj.fontSize || 24}" onchange="setObjProp('fontSize', +this.value)"></div>`;
+    html += `<div class="prop-row"><label>Col</label>${brandColorPicker('fill', getColorHex(obj.fill) || '#ffffff')}</div>`;
+    html += alphaRow('FOpa', '_fillAlpha', getColorAlpha(obj.fill));
+    html += `<div class="prop-row"><label>Bold</label><input type="checkbox" ${obj.fontWeight === 'bold' ? 'checked' : ''} onchange="setObjProp('fontWeight', this.checked ? 'bold' : 'normal')">`;
+    html += `<label>Algn</label><select onchange="setObjProp('textAlign', this.value)">
+      <option value="left" ${obj.textAlign==='left'?'selected':''}>Left</option>
+      <option value="center" ${obj.textAlign==='center'?'selected':''}>Center</option>
+      <option value="right" ${obj.textAlign==='right'?'selected':''}>Right</option>
+    </select></div>`;
+    // Text stroke/outline
+    const textHasStroke = obj.stroke && obj.strokeWidth > 0;
+    html += `<div class="prop-row"><label>Otln</label><input type="checkbox" ${textHasStroke ? 'checked' : ''} onchange="toggleStroke(this.checked)"> <span style="font-size:11px;color:#888">${textHasStroke ? 'On' : 'Off'}</span></div>`;
+    if (textHasStroke) {
+      html += `<div class="prop-row"><label>OCol</label>${brandColorPicker('stroke', getColorHex(obj.stroke) || '#000000')}</div>`;
+      html += `<div class="prop-row"><label>OWid</label><input type="number" min="0.5" max="10" step="0.5" value="${obj.strokeWidth || 1}" onchange="setObjProp('strokeWidth', +this.value)"></div>`;
+      html += strokeOpacityRow('_strokeAlpha', getColorAlpha(obj.stroke));
+    }
+  }
+
+  // Frame — specialized controls (replaces generic rect controls for this element)
+  if (obj.type === 'rect' && obj._isFrame) {
+    html += '<hr style="border-color:#333;margin:8px 0">';
+    html += '<div style="font-size:11px;color:#7aa2f7;margin-bottom:6px;font-weight:600;">FRAME</div>';
+    // Migrate legacy _frameOffset to per-edge if not present
+    if (obj._framePadT === undefined && obj._frameOffset !== undefined) {
+      obj._framePadT = obj._framePadR = obj._framePadB = obj._framePadL = obj._frameOffset;
+    }
+    const fpT = obj._framePadT || 0;
+    const fpR = obj._framePadR || 0;
+    const fpB = obj._framePadB || 0;
+    const fpL = obj._framePadL || 0;
+    const padLinked = obj._padLinked !== false;
+    html += '<div style="font-size:11px;color:#888;margin:4px 0;">Padding from canvas edge</div>';
+    html += `<div class="prop-row"><label>PT</label><input type="number" min="0" max="2000" value="${fpT}" onchange="setFramePad('T', +this.value)">`;
+    html += `<label>PR</label><input type="number" min="0" max="2000" value="${fpR}" onchange="setFramePad('R', +this.value)"></div>`;
+    html += `<div class="prop-row"><label>PB</label><input type="number" min="0" max="2000" value="${fpB}" onchange="setFramePad('B', +this.value)">`;
+    html += `<button onclick="togglePadLink()" title="Link padding" style="background:${padLinked ? '#7aa2f7' : '#333'};border:1px solid ${padLinked ? '#7aa2f7' : '#444'};color:${padLinked ? '#111' : '#888'};border-radius:3px;cursor:pointer;padding:2px 6px;font-size:14px;flex-shrink:0">${padLinked ? '\u{1F517}' : '\u{26D3}\uFE0F'}</button>`;
+    html += `<label>PL</label><input type="number" min="0" max="2000" value="${fpL}" onchange="setFramePad('L', +this.value)"></div>`;
+    html += `<div class="prop-row" style="margin:4px 0;justify-content:center;">
+      <button onclick="snapFrameToCanvas()" style="padding:4px 10px;background:#7aa2f7;color:#111;border:none;border-radius:4px;cursor:pointer;font-size:11px;font-weight:600;">Snap to Canvas Edge</button>
+    </div>`;
+    html += `<div class="prop-row"><label>Thk</label><input type="number" min="0" max="100" step="0.5" value="${obj._frameThickness||0}" onchange="setFrameThickness(+this.value)"></div>`;
+    html += `<div class="prop-row"><label>Rad</label><input type="number" min="0" max="500" value="${obj._frameRadius||0}" onchange="setFrameRadius(+this.value)"></div>`;
+    // Partial-frame controls. Any deviation from "all on + 100% comp" forces
+    // flat corners (radius only applies in the classic full-frame fast path).
+    const sT = obj._frameTop !== false, sR = obj._frameRight !== false;
+    const sB = obj._frameBottom !== false, sL = obj._frameLeft !== false;
+    const cTL = obj._frameTL !== false, cTR = obj._frameTR !== false;
+    const cBR = obj._frameBR !== false, cBL = obj._frameBL !== false;
+    const comp = obj._frameCompleteness === undefined ? 100 : obj._frameCompleteness;
+    const pillBtn = (on, fn, arg, label) =>
+      `<button onclick="${fn}('${arg}')" style="flex:1;padding:4px 0;background:${on?'#7aa2f7':'#333'};color:${on?'#111':'#888'};border:1px solid ${on?'#7aa2f7':'#444'};border-radius:3px;cursor:pointer;font-size:11px;font-weight:600;">${label}</button>`;
+    html += `<div style="font-size:11px;color:#888;margin:4px 0 2px;">Sides</div>`;
+    html += `<div class="prop-row" style="gap:4px;">${pillBtn(sT,'toggleFrameSide','T','Top')}${pillBtn(sR,'toggleFrameSide','R','Right')}${pillBtn(sB,'toggleFrameSide','B','Bottom')}${pillBtn(sL,'toggleFrameSide','L','Left')}</div>`;
+    html += `<div style="font-size:11px;color:#888;margin:6px 0 2px;">Corners</div>`;
+    html += `<div class="prop-row" style="gap:4px;">${pillBtn(cTL,'toggleFrameCorner','TL','TL')}${pillBtn(cTR,'toggleFrameCorner','TR','TR')}${pillBtn(cBR,'toggleFrameCorner','BR','BR')}${pillBtn(cBL,'toggleFrameCorner','BL','BL')}</div>`;
+    html += `<div class="prop-row"><label>Len</label>` +
+      `<input type="range" min="0" max="100" value="${comp}" oninput="setFrameCompleteness(+this.value)">` +
+      `<input type="number" min="0" max="100" value="${comp}" style="width:48px;flex:none" onchange="setFrameCompleteness(+this.value)">` +
+      `<span style="font-size:11px;color:#666">%</span></div>`;
+    html += `<div class="prop-row"><label>Col</label>${brandColorPicker('stroke', getColorHex(obj.stroke) || '#87986A')}</div>`;
+    html += strokeOpacityRow('_strokeAlpha', getColorAlpha(obj.stroke));
+    html += `<div class="prop-row"><label>Fill</label>${brandColorPicker('fill', getColorHex(obj.fill) || '#000000')}</div>`;
+    html += alphaRow('FOpa', '_fillAlpha', getColorAlpha(obj.fill));
+    html += `<div style="font-size:11px;color:#666;margin:4px 0;">Frame follows canvas edges — use padding fields, not X/Y/W/H above.</div>`;
+  }
+  else if (obj.type === 'image') {
+    html += '<hr style="border-color:#333;margin:8px 0">';
+    html += `<div class="prop-row"><label>Rad</label><input type="number" min="0" max="2000" value="${obj._cornerRadius || 0}" onchange="setImageCornerRadius(+this.value)"></div>`;
+  }
+  else if (obj.type === 'rect' || obj.type === 'circle' || obj.type === 'triangle' || obj.type === 'polygon') {
+    html += '<hr style="border-color:#333;margin:8px 0">';
+    html += `<div class="prop-row"><label>Fill</label>${brandColorPicker('fill', getColorHex(obj.fill) || '#333333')}</div>`;
+    html += alphaRow('FOpa', '_fillAlpha', getColorAlpha(obj.fill));
+    if (obj.type === 'rect') {
+      html += `<div class="prop-row"><label>Rad</label><input type="number" value="${obj.rx || 0}" onchange="setObjProp('rx', +this.value); setObjProp('ry', +this.value)"></div>`;
+    }
+    // Banner shape controls (for polygons with _bannerLeftEnd or any polygon)
+    if (obj.type === 'polygon') {
+      const lEnd = obj._bannerLeftEnd || 'flat';
+      const rEnd = obj._bannerRightEnd || 'flat';
+      const nL = Math.round(obj._bannerNotchL || 20);
+      const nR = Math.round(obj._bannerNotchR || 20);
+      html += `<div class="prop-row"><label>L End</label><select onchange="setBannerEnd('left', this.value)">
+        <option value="flat" ${lEnd==='flat'?'selected':''}>Flat</option>
+        <option value="point" ${lEnd==='point'?'selected':''}>Point</option>
+        <option value="arrow" ${lEnd==='arrow'?'selected':''}>Arrow</option>
+        <option value="chevron" ${lEnd==='chevron'?'selected':''}>Chevron</option>
+        <option value="round" ${lEnd==='round'?'selected':''}>Round</option>
+        <option value="ribbon" ${lEnd==='ribbon'?'selected':''}>Ribbon</option>
+        <option value="slant-l" ${lEnd==='slant-l'?'selected':''}>Slant \u2572</option>
+        <option value="slant-r" ${lEnd==='slant-r'?'selected':''}>Slant \u2571</option>
+        <option value="scallop" ${lEnd==='scallop'?'selected':''}>Scallop</option>
+        <option value="tab" ${lEnd==='tab'?'selected':''}>Tab</option>
+      </select></div>`;
+      html += `<div class="prop-row"><label>R End</label><select onchange="setBannerEnd('right', this.value)">
+        <option value="flat" ${rEnd==='flat'?'selected':''}>Flat</option>
+        <option value="point" ${rEnd==='point'?'selected':''}>Point</option>
+        <option value="arrow" ${rEnd==='arrow'?'selected':''}>Arrow</option>
+        <option value="chevron" ${rEnd==='chevron'?'selected':''}>Chevron</option>
+        <option value="round" ${rEnd==='round'?'selected':''}>Round</option>
+        <option value="ribbon" ${rEnd==='ribbon'?'selected':''}>Ribbon</option>
+        <option value="slant-l" ${rEnd==='slant-l'?'selected':''}>Slant \u2572</option>
+        <option value="slant-r" ${rEnd==='slant-r'?'selected':''}>Slant \u2571</option>
+        <option value="scallop" ${rEnd==='scallop'?'selected':''}>Scallop</option>
+        <option value="tab" ${rEnd==='tab'?'selected':''}>Tab</option>
+      </select></div>`;
+      html += `<div class="prop-row"><label>NL</label><input type="number" min="0" max="200" value="${nL}" onchange="setBannerNotch('left', +this.value)">`;
+      html += `<label>NR</label><input type="number" min="0" max="200" value="${nR}" onchange="setBannerNotch('right', +this.value)"></div>`;
+    }
+    // Border / Stroke
+    const hasStroke = obj.stroke && obj.strokeWidth > 0;
+    html += `<div class="prop-row"><label>Bdr</label><input type="checkbox" ${hasStroke ? 'checked' : ''} onchange="toggleStroke(this.checked)"> <span style="font-size:11px;color:#888">${hasStroke ? 'On' : 'Off'}</span></div>`;
+    if (hasStroke) {
+      html += `<div class="prop-row"><label>BCol</label>${brandColorPicker('stroke', getColorHex(obj.stroke) || '#FFFFFF')}</div>`;
+      html += `<div class="prop-row"><label>BWid</label><input type="number" min="1" max="50" value="${obj.strokeWidth || 2}" onchange="setObjProp('strokeWidth', +this.value)"></div>`;
+      html += strokeOpacityRow('_strokeAlpha', getColorAlpha(obj.stroke));
+    }
+    // One-shot: add a centered text on top and auto-link (banner group if polygon, hitbox otherwise)
+    html += `<div class="prop-row" style="margin-top:8px;justify-content:center;">
+      <button onclick="addTextAndLinkToShape()" style="padding:4px 12px;background:#7aa2f7;color:#111;border:none;border-radius:4px;cursor:pointer;font-size:11px;font-weight:600;">+ Link Text</button>
+    </div>`;
+  }
+
+  // --- Shadow (all element types) ---
+  html += '<hr style="border-color:#333;margin:8px 0">';
+  const sh = obj.shadow || obj._savedShadow;
+  const hasShadow = !!sh && (sh.offsetX || sh.offsetY || sh.blur);
+  const shColor = (sh && sh.color) ? sh.color : '#000000';
+  const shX = (sh && sh.offsetX) || 0;
+  const shY = (sh && sh.offsetY) || 0;
+  const shBlur = (sh && sh.blur) || 6;
+
+  html += `<div class="prop-row shadow-toggle"><label>Shad</label><input type="checkbox" ${hasShadow ? 'checked' : ''} onchange="toggleShadow(this.checked)"> <span style="font-size:11px;color:#888">${hasShadow ? 'On' : 'Off'}</span></div>`;
+  if (hasShadow) {
+    html += `<div class="shadow-fields">`;
+    html += `<div class="prop-row"><label>SX</label><input type="number" value="${shX}" onchange="setShadowProp('offsetX', +this.value)">`;
+    html += `<label>SY</label><input type="number" value="${shY}" onchange="setShadowProp('offsetY', +this.value)"></div>`;
+    const shSpread = obj._shadowSpread || 0;
+    html += `<div class="prop-row"><label>Blur</label><input type="number" min="0" value="${shBlur}" onchange="setShadowProp('blur', +this.value)">`;
+    html += `<label>Sprd</label><input type="number" min="0" max="100" value="${shSpread}" onchange="setShadowSpread(+this.value)"></div>`;
+    html += `<div class="prop-row"><label>SCol</label>${brandColorPicker('_shadowColor', shColor)}</div>`;
+    html += `</div>`;
+  }
+
+  // --- Inner Shadow (rect, including frames) ---
+  if (obj.type === 'rect') {
+    const hasInner = !!obj._innerShadow;
+    const is = obj._innerShadow || {};
+    html += '<hr style="border-color:#333;margin:8px 0">';
+    const linked = !!(is && is._linked);
+    html += `<div class="prop-row"><label>InShd</label><input type="checkbox" ${hasInner ? 'checked' : ''} onchange="toggleInnerShadow(this.checked)"> <span style="font-size:11px;color:#888">${hasInner ? 'On' : 'Off'}</span>`;
+    if (hasInner) {
+      html += ` <button type="button" title="Link all 4 edges" onclick="toggleInnerShadowLink()" style="margin-left:6px;padding:2px 6px;background:${linked ? '#C8A868' : '#333'};color:${linked ? '#000' : '#ccc'};border:1px solid #555;border-radius:3px;cursor:pointer">${linked ? '🔗' : '🔓'}</button>`;
+    }
+    html += `</div>`;
+    if (hasInner) {
+      html += `<div class="prop-row"><label>LX</label><input type="number" value="${is.lx||0}" onchange="setInnerShadowProp('lx', +this.value)">`;
+      html += `<label>RX</label><input type="number" value="${is.rx||0}" onchange="setInnerShadowProp('rx', +this.value)"></div>`;
+      html += `<div class="prop-row"><label>UY</label><input type="number" value="${is.uy||0}" onchange="setInnerShadowProp('uy', +this.value)">`;
+      html += `<label>DY</label><input type="number" value="${is.dy||0}" onchange="setInnerShadowProp('dy', +this.value)"></div>`;
+      html += `<div class="prop-row"><label>IBlur</label><input type="number" min="0" value="${is.blur||0}" onchange="setInnerShadowProp('blur', +this.value)"></div>`;
+      html += `<div class="prop-row"><label>ICol</label><input type="color" value="${(is.color||'#000000').replace(/rgba?\([^)]*\)/,'#000000')}" onchange="setInnerShadowProp('color', this.value)"></div>`;
+    }
+  }
+
+  container.innerHTML = html;
+}
+
+// --- Banner shape editing ---
+function rebuildBannerPoints(obj) {
+  if (!obj || obj.type !== 'polygon') return;
+  const leftEnd = obj._bannerLeftEnd || 'flat';
+  const rightEnd = obj._bannerRightEnd || 'flat';
+  const nL = obj._bannerNotchL || 20;
+  const nR = obj._bannerNotchR || 20;
+  // Get current bounding box to determine w/h
+  const bounds = obj.getBoundingRect(true);
+  const pxW = bounds.width / (obj.scaleX || 1);
+  const pxH = bounds.height / (obj.scaleY || 1);
+
+  const pts = [];
+  if (leftEnd === 'arrow') {
+    pts.push({ x: nL, y: 0 });
+  } else {
+    pts.push({ x: 0, y: 0 });
+  }
+  if (rightEnd === 'arrow') {
+    pts.push({ x: pxW - nR, y: 0 });
+    pts.push({ x: pxW, y: pxH / 2 });
+    pts.push({ x: pxW - nR, y: pxH });
+  } else if (rightEnd === 'chevron') {
+    pts.push({ x: pxW, y: 0 });
+    pts.push({ x: pxW - nR, y: pxH / 2 });
+    pts.push({ x: pxW, y: pxH });
+  } else {
+    pts.push({ x: pxW, y: 0 });
+    pts.push({ x: pxW, y: pxH });
+  }
+  if (leftEnd === 'arrow') {
+    pts.push({ x: nL, y: pxH });
+    pts.push({ x: 0, y: pxH / 2 });
+  } else if (leftEnd === 'chevron') {
+    pts.push({ x: 0, y: pxH });
+    pts.push({ x: nL, y: pxH / 2 });
+  } else {
+    pts.push({ x: 0, y: pxH });
+  }
+
+  // Replace polygon: Fabric.js v5 caches polygon dims, so we must
+  // remove old and create new polygon to get proper rendering
+  const newPoly = new fabric.Polygon(pts, {
+    left: obj.left,
+    top: obj.top,
+    fill: obj.fill,
+    stroke: obj.stroke,
+    strokeWidth: obj.strokeWidth,
+    opacity: obj.opacity,
+    shadow: obj.shadow,
+    scaleX: obj.scaleX,
+    scaleY: obj.scaleY,
+    angle: obj.angle,
+    _customName: obj._customName,
+    _bannerLeftEnd: leftEnd,
+    _bannerRightEnd: rightEnd,
+    _bannerNotchL: nL,
+    _bannerNotchR: nR,
+    selectable: obj.selectable,
+    evented: obj.evented,
+    lockMovementX: obj.lockMovementX,
+    lockMovementY: obj.lockMovementY,
+    lockScalingX: obj.lockScalingX,
+    lockScalingY: obj.lockScalingY,
+    lockRotation: obj.lockRotation,
+    hasControls: obj.hasControls,
+  });
+
+  const idx = canvas.getObjects().indexOf(obj);
+  canvas.remove(obj);
+  canvas.insertAt(newPoly, idx);
+  canvas.setActiveObject(newPoly);
+  canvas.requestRenderAll();
+}
+
+function setBannerEnd(side, value) {
+  const obj = canvas.getActiveObject();
+  if (!obj || obj.type !== 'polygon') return;
+  if (side === 'left') obj._bannerLeftEnd = value;
+  else obj._bannerRightEnd = value;
+  rebuildBannerPoints(obj);
+  updateProps();
+  saveUndo();
+}
+
+function setBannerNotch(side, value) {
+  const obj = canvas.getActiveObject();
+  if (!obj || obj.type !== 'polygon') return;
+  if (side === 'left') obj._bannerNotchL = value;
+  else obj._bannerNotchR = value;
+  rebuildBannerPoints(obj);
+  updateProps();
+  saveUndo();
+}
+
+function changeFont(fontName) {
+  const obj = canvas.getActiveObject();
+  if (!obj) return;
+  obj.set('fontFamily', fontName);
+  obj.dirty = true;
+  obj.initDimensions();
+  obj.setCoords();
+  canvas.requestRenderAll();
+  updateProps();
+  saveUndo();
+}
+
+// --- Banner Group (linked banner + text with padding controls) ---
+
+function addBannerCombo() {
+  const w = 300, h = 70;
+  const x = canvasW / 2 - w / 2, y = canvasH / 2 - h / 2;
+  const leftEnd = 'chevron', rightEnd = 'arrow';
+  const nL = 20, nR = 20;
+  // Padding is now the BODY-relative breathing room — end inset (chevron/arrow
+  // depth) is added automatically by recenterBannerText.
+  const padL = 10, padR = 10, padT = 8, padB = 8;
+
+  const pts = buildBannerGroupPoints(w, h, leftEnd, rightEnd, nL, nR, 0);
+  const poly = new fabric.Polygon(pts, {
+    left: x, top: y, fill: '#2B2318',
+    shadow: new fabric.Shadow({color:'rgba(0,0,0,0.4)', offsetX:3, offsetY:3, blur:8}),
+  });
+
+  const fontSize = 32;
+  const textObj = new fabric.Textbox('Banner Text', {
+    left: x + padL, top: y + padT,
+    width: 100, // recenterBannerText will set this correctly
+    fontSize, fontFamily: 'Jost', fontWeight: 'bold',
+    fill: '#ECB351', textAlign: 'center',
+  });
+
+  const group = new fabric.Group([poly, textObj], {
+    _customName: 'Banner',
+    _isBannerGroup: true,
+    _padL: padL, _padR: padR, _padT: padT, _padB: padB,
+    _bannerLeftEnd: leftEnd, _bannerRightEnd: rightEnd,
+    _bannerNotchL: nL, _bannerNotchR: nR,
+  });
+
+  canvas.add(group);
+  // Sync width/height/text position to the inset+pad model
+  recenterBannerText(group, false);
+  attachBannerGroupControls(group);
+  canvas.setActiveObject(group);
+  canvas.requestRenderAll();
+  refreshLayers();
+  updateProps();
+  saveUndo();
+}
+
+// --- Banner group pull controls ---
+// Each arrow end gets two draggable handles:
+//   • tip   — horizontal pull, adjusts _bannerNotchL / _bannerNotchR
+//   • flare — vertical pull, adjusts _bannerFlareL / _bannerFlareR
+// Handles are only rendered when the corresponding end is 'arrow'.
+function _bannerHandleVisible(group, side, kind) {
+  const end = side === 'left' ? group._bannerLeftEnd : group._bannerRightEnd;
+  return end === 'arrow';
+}
+
+function _bannerHandleRender(color) {
+  return function(ctx, left, top) {
+    const size = 9;
+    ctx.save();
+    ctx.fillStyle = color;
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(left, top, size / 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+  };
+}
+
+function attachBannerGroupControls(group) {
+  if (!group || !group._isBannerGroup) return;
+  // Arrow flare and notch live in local polygon coords, so non-uniform scaling
+  // distorts the head. Keep only corner handles (proportional) and force uniform
+  // scaling so shift+corner can't bypass it either.
+  group.controls = Object.assign({}, fabric.Object.prototype.controls);
+  delete group.controls.ml;
+  delete group.controls.mr;
+  delete group.controls.mt;
+  delete group.controls.mb;
+  group.lockUniScaling = true;
+
+  // Helper: convert a local-space point (relative to group center) to the
+  // canvas-space point Fabric expects from positionHandler.
+  const localToCanvas = (g, lx, ly) => {
+    const pt = fabric.util.transformPoint(
+      new fabric.Point(lx, ly),
+      g.calcTransformMatrix()
+    );
+    return pt;
+  };
+
+  // Tip handle: sits at the tip of the arrow (x = ±gW/2, y = 0 in local coords).
+  // Dragging horizontally changes the notch depth (distance from tip to body).
+  const makeTipControl = (side) => new fabric.Control({
+    actionName: 'banner-tip-' + side,
+    cursorStyle: 'ew-resize',
+    render: _bannerHandleRender('#ECB351'),
+    positionHandler: function(dim, finalMatrix, fabricObject) {
+      const g = fabricObject;
+      if (!_bannerHandleVisible(g, side, 'tip')) return new fabric.Point(-9999, -9999);
+      const halfW = g.width / 2;
+      const lx = side === 'left' ? -halfW : halfW;
+      return localToCanvas(g, lx, 0);
+    },
+    actionHandler: function(eventData, transform, x, y) {
+      const g = transform.target;
+      // Convert pointer to group-local space
+      const local = fabric.util.transformPoint(
+        new fabric.Point(x, y),
+        fabric.util.invertTransform(g.calcTransformMatrix())
+      );
+      const halfW = g.width / 2;
+      // notch = horizontal distance from tip to body seam. Clamp so the body
+      // keeps at least 16px of width after both end insets are subtracted.
+      const otherEnd = side === 'left' ? g._bannerRightEnd : g._bannerLeftEnd;
+      const otherN = side === 'left' ? (g._bannerNotchR || 20) : (g._bannerNotchL || 20);
+      const bodyH = g._bannerBodyH || g.height || 40;
+      const otherInset = bannerEndInset(otherEnd, otherN, bodyH);
+      const maxN = Math.max(8, g.width - otherInset - 16);
+      let raw;
+      if (side === 'left') raw = local.x - (-halfW);
+      else raw = halfW - local.x;
+      const n = Math.max(4, Math.min(maxN, raw));
+      if (side === 'left') g._bannerNotchL = n;
+      else g._bannerNotchR = n;
+      rebuildBannerGroupShape(g);
+      return true;
+    },
+  });
+
+  // Flare handle: sits at the tip of the flare (x = ±(gW/2 - notch), y = ±(gH/2 + flare)).
+  // Dragging vertically changes how far the arrowhead extends beyond the body.
+  const makeFlareControl = (side) => new fabric.Control({
+    actionName: 'banner-flare-' + side,
+    cursorStyle: 'ns-resize',
+    render: _bannerHandleRender('#7aa2f7'),
+    positionHandler: function(dim, finalMatrix, fabricObject) {
+      const g = fabricObject;
+      if (!_bannerHandleVisible(g, side, 'flare')) return new fabric.Point(-9999, -9999);
+      const halfW = g.width / 2;
+      const bodyH = g._bannerBodyH || g.height;
+      const halfBodyH = bodyH / 2;
+      const n = side === 'left' ? (g._bannerNotchL || 20) : (g._bannerNotchR || 20);
+      const defaultFlare = bodyH * 0.15;
+      const flare = side === 'left'
+        ? (typeof g._bannerFlareL === 'number' ? g._bannerFlareL : defaultFlare)
+        : (typeof g._bannerFlareR === 'number' ? g._bannerFlareR : defaultFlare);
+      // Place above the body's top edge (not the group bbox, which includes flare).
+      const lx = side === 'left' ? -halfW + n : halfW - n;
+      const ly = -halfBodyH - flare;
+      return localToCanvas(g, lx, ly);
+    },
+    actionHandler: function(eventData, transform, x, y) {
+      const g = transform.target;
+      const local = fabric.util.transformPoint(
+        new fabric.Point(x, y),
+        fabric.util.invertTransform(g.calcTransformMatrix())
+      );
+      const bodyH = g._bannerBodyH || g.height;
+      const halfBodyH = bodyH / 2;
+      // flare = how far above the body the head peaks. Clamp 0..1.5×body height
+      // so dragging the handle can't produce runaway spikes.
+      const flare = Math.max(0, Math.min(bodyH * 1.5, -halfBodyH - local.y));
+      if (side === 'left') g._bannerFlareL = flare;
+      else g._bannerFlareR = flare;
+      rebuildBannerGroupShape(g);
+      return true;
+    },
+  });
+
+  group.controls.bannerTipL = makeTipControl('left');
+  group.controls.bannerTipR = makeTipControl('right');
+  group.controls.bannerFlareL = makeFlareControl('left');
+  group.controls.bannerFlareR = makeFlareControl('right');
+}
+
+// How far the banner body is inset from the outer bounding box on each end.
+// For "arrow" the head extends OUTSIDE the body (tip at x=0, body seam at x=n),
+// so the inset equals the notch depth.
+function bannerEndInset(end, n, h) {
+  if (end === 'chevron' || end === 'arrow' || end === 'point') return n;
+  if (end === 'round') return h / 2;
+  return 0; // flat / slants / ribbon / scallop / tab — body flush with edge
+}
+
+// Shared point builder for banner shapes. `opts` is optional; currently supports
+// `flareL` / `flareR` — how far each arrow head flares beyond the body height
+// (ignored for non-arrow ends). When omitted, a sensible default is used.
+function buildBannerGroupPoints(w, h, leftEnd, rightEnd, nL, nR, sw, opts) {
+  const pts = [];
+  const ROUND_SEGS = 12;
+  const s = (sw || 0) / 2;
+  const r = h / 2;
+  const ri = r - s;
+  const defaultFlare = h * 0.15;
+  const flareL = (opts && typeof opts.flareL === 'number') ? opts.flareL : defaultFlare;
+  const flareR = (opts && typeof opts.flareR === 'number') ? opts.flareR : defaultFlare;
+
+  // Helper: add right-side end points (going top→bottom on right edge)
+  function addRightEnd(end, n) {
+    if (end === 'point') {
+      pts.push({x:w-n, y:s}); pts.push({x:w-s, y:h/2}); pts.push({x:w-n, y:h-s});
+    } else if (end === 'chevron') {
+      pts.push({x:w-s, y:s}); pts.push({x:w-n, y:h/2}); pts.push({x:w-s, y:h-s});
+    } else if (end === 'round') {
+      pts.push({x:w-r, y:s});
+      for (let i = 0; i <= ROUND_SEGS; i++) {
+        const a = -Math.PI/2 + (Math.PI * i / ROUND_SEGS);
+        pts.push({x: w - r + ri * Math.cos(a), y: r + ri * Math.sin(a)});
+      }
+    } else if (end === 'arrow') {
+      // Arrow: banner body at full height, then a pointed arrowhead.
+      // Body seam sits at x = w - n; tip at x = w - s; flare extends above/below
+      // the body by `flareR` pixels.
+      const headLen = n;
+      const flare = flareR;
+      pts.push({x:w-headLen, y:s});                // body top-right corner
+      pts.push({x:w-headLen, y:s - flare});        // head flares up beyond body
+      pts.push({x:w-s, y:h/2});                   // arrow tip
+      pts.push({x:w-headLen, y:h-s + flare});     // head flares down beyond body
+      pts.push({x:w-headLen, y:h-s});              // body bottom-right corner
+    } else if (end === 'ribbon') {
+      // Ribbon tail: folds inward at the midpoint
+      const foldDepth = n * 0.6;
+      pts.push({x:w-s, y:s});
+      pts.push({x:w-foldDepth-s, y:h/2});
+      pts.push({x:w-s, y:h-s});
+    } else if (end === 'slant-l') {
+      // Slant left: top extends further right than bottom
+      pts.push({x:w-s, y:s}); pts.push({x:w-n, y:h-s});
+    } else if (end === 'slant-r') {
+      // Slant right: bottom extends further right than top
+      pts.push({x:w-n, y:s}); pts.push({x:w-s, y:h-s});
+    } else if (end === 'scallop') {
+      // Concave scoop — starts/ends at corners, curves inward by notch depth
+      const depth = Math.min(n, w * 0.3);
+      for (let i = 0; i <= ROUND_SEGS; i++) {
+        const t = i / ROUND_SEGS; // 0 at top, 1 at bottom
+        const y = s + t * (h - 2 * s);
+        const scoop = depth * Math.sin(t * Math.PI);
+        pts.push({x: w - s - scoop, y: y});
+      }
+    } else if (end === 'tab') {
+      // Stepped notch: flat edge with rectangular cutout center
+      const tabH = h * 0.25;
+      const tabD = n * 0.5;
+      pts.push({x:w-s, y:s});
+      pts.push({x:w-s, y:h/2-tabH});
+      pts.push({x:w-tabD-s, y:h/2-tabH});
+      pts.push({x:w-tabD-s, y:h/2+tabH});
+      pts.push({x:w-s, y:h/2+tabH});
+      pts.push({x:w-s, y:h-s});
+    } else { // flat
+      pts.push({x:w-s, y:s}); pts.push({x:w-s, y:h-s});
+    }
+  }
+
+  // Helper: add left-side end points (going bottom→top on left edge)
+  function addLeftEnd(end, n) {
+    if (end === 'point') {
+      pts.push({x:n, y:h-s}); pts.push({x:s, y:h/2});
+    } else if (end === 'chevron') {
+      pts.push({x:s, y:h-s}); pts.push({x:n, y:h/2});
+    } else if (end === 'round') {
+      pts.push({x:r, y:h-s});
+      for (let i = 0; i <= ROUND_SEGS; i++) {
+        const a = Math.PI/2 + (Math.PI * i / ROUND_SEGS);
+        pts.push({x: r + ri * Math.cos(a), y: r + ri * Math.sin(a)});
+      }
+    } else if (end === 'arrow') {
+      // Arrow: mirror of right arrow. Body seam at x = n, tip at x = s.
+      const headLen = n;
+      const flare = flareL;
+      pts.push({x:headLen, y:h-s});                // body bottom-left corner
+      pts.push({x:headLen, y:h-s + flare});        // head flares down
+      pts.push({x:s, y:h/2});                      // arrow tip
+      pts.push({x:headLen, y:s - flare});          // head flares up
+      pts.push({x:headLen, y:s});                   // body top-left corner
+    } else if (end === 'ribbon') {
+      const foldDepth = n * 0.6;
+      pts.push({x:s, y:h-s});
+      pts.push({x:foldDepth+s, y:h/2});
+      pts.push({x:s, y:s});
+    } else if (end === 'slant-l') {
+      // Mirror of right slant-l: bottom extends further left
+      pts.push({x:n, y:h-s}); pts.push({x:s, y:s});
+    } else if (end === 'slant-r') {
+      // Mirror of right slant-r: top extends further left
+      pts.push({x:s, y:h-s}); pts.push({x:n, y:s});
+    } else if (end === 'scallop') {
+      // Concave scoop — mirror of right scallop, bottom to top
+      const depth = Math.min(n, w * 0.3);
+      for (let i = 0; i <= ROUND_SEGS; i++) {
+        const t = i / ROUND_SEGS; // 0 at bottom, 1 at top
+        const y = (h - s) - t * (h - 2 * s);
+        const scoop = depth * Math.sin(t * Math.PI);
+        pts.push({x: s + scoop, y: y});
+      }
+    } else if (end === 'tab') {
+      const tabH = h * 0.25;
+      const tabD = n * 0.5;
+      pts.push({x:s, y:h-s});
+      pts.push({x:s, y:h/2+tabH});
+      pts.push({x:tabD+s, y:h/2+tabH});
+      pts.push({x:tabD+s, y:h/2-tabH});
+      pts.push({x:s, y:h/2-tabH});
+      pts.push({x:s, y:s});
+    } else { // flat
+      pts.push({x:s, y:h-s});
+    }
+  }
+
+  // Top-left starting point
+  if (leftEnd === 'point') pts.push({x:nL, y:s});
+  else if (leftEnd === 'arrow') pts.push({x:nL, y:s});
+  else if (leftEnd === 'round') pts.push({x:r, y:s});
+  else if (leftEnd === 'slant-r') pts.push({x:nL, y:s});
+  else pts.push({x:s, y:s});
+
+  // Right side
+  addRightEnd(rightEnd, nR);
+
+  // Left side
+  addLeftEnd(leftEnd, nL);
+
+  return pts;
+}
+
+function linkAsBannerGroup() {
+  const active = canvas.getActiveObject();
+  if (!active || active.type !== 'activeSelection') return;
+  const objs = active._objects;
+  const text = objs.find(o => o.type === 'textbox' || o.type === 'text' || o.type === 'i-text');
+  if (!text) { alert('Select at least one shape + one text to link'); return; }
+
+  // Find all non-text objects — these form the hit area
+  const shapes = objs.filter(o => o !== text && o.type !== 'textbox' && o.type !== 'text' && o.type !== 'i-text');
+  if (shapes.length === 0) { alert('Select at least one shape + one text to link'); return; }
+
+  // Determine mode: single polygon → full banner group; anything else → hitbox group
+  const isBanner = shapes.length === 1 && shapes[0].type === 'polygon';
+
+  // Compute the hit box (union of all shape bounding rects)
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  shapes.forEach(s => {
+    const b = s.getBoundingRect(true);
+    if (b.left < minX) minX = b.left;
+    if (b.top < minY) minY = b.top;
+    if (b.left + b.width > maxX) maxX = b.left + b.width;
+    if (b.top + b.height > maxY) maxY = b.top + b.height;
+  });
+  const hitW = maxX - minX, hitH = maxY - minY;
+
+  // Infer padding from text position relative to hit box
+  const tb = text.getBoundingRect(true);
+  const padL = Math.max(0, Math.round(tb.left - minX));
+  const padR = Math.max(0, Math.round(maxX - (tb.left + tb.width)));
+  const padT = Math.max(0, Math.round(tb.top - minY));
+  const padB = Math.max(0, Math.round(maxY - (tb.top + tb.height)));
+
+  const group = active.toGroup();
+  group._customName = text._customName || shapes[0]._customName || (isBanner ? 'Banner' : 'Linked');
+  group._padL = padL; group._padR = padR;
+  group._padT = padT; group._padB = padB;
+
+  if (isBanner) {
+    const poly = shapes[0];
+    group._isBannerGroup = true;
+    group._bannerLeftEnd = poly._bannerLeftEnd || 'flat';
+    group._bannerRightEnd = poly._bannerRightEnd || 'flat';
+    group._bannerNotchL = poly._bannerNotchL || 20;
+    group._bannerNotchR = poly._bannerNotchR || 20;
+    attachBannerGroupControls(group);
+    rebuildBannerGroupShape(group);
+  } else {
+    group._isHitboxGroup = true;
+  }
+
+  recenterBannerText(group, false);
+
+  canvas.requestRenderAll();
+  refreshLayers();
+  updateProps();
+  saveUndo();
+}
+
+// autoSize: if true, scale font to fill available height. Default true.
+function recenterBannerText(group, autoSize) {
+  if (!group || (!group._isBannerGroup && !group._isHitboxGroup) || !group._objects) return;
+  const text = group._objects.find(o => o.type === 'textbox' || o.type === 'text' || o.type === 'i-text');
+  if (!text) return;
+  const padL = group._padL || 0, padR = group._padR || 0;
+  const padT = group._padT || 0, padB = group._padB || 0;
+  const lineH = text.lineHeight || 1.16;
+  const CAP_RATIO = 0.74;
+  const fs = text.fontSize || 24;
+  const glyphH = fs * CAP_RATIO;
+  const glyphTopOffset = fs * (lineH - CAP_RATIO) / 2;
+
+  // For banner groups: the banner AUTO-FITS to text natural width & glyph height
+  // plus padding AND end insets (so chevrons/arrows don't eat text). For hitbox
+  // groups: width stays manual, no resizing.
+  let gW, gH, leftInset = 0, rightInset = 0;
+  if (group._isBannerGroup) {
+    const leftEnd = group._bannerLeftEnd || 'flat';
+    const rightEnd = group._bannerRightEnd || 'flat';
+    const nL = group._bannerNotchL || 20;
+    const nR = group._bannerNotchR || 20;
+
+    // Measure natural text width (not wrapped) by temporarily giving textbox
+    // a huge width and reading the longest line.
+    text.set('width', 10000);
+    text.initDimensions();
+    let naturalW = 0;
+    if (typeof text.calcTextWidth === 'function') {
+      naturalW = text.calcTextWidth();
+    } else if (text.__lineWidths && text.__lineWidths.length) {
+      naturalW = Math.max.apply(null, text.__lineWidths);
+    } else {
+      naturalW = text.width;
+    }
+    gH = Math.max(1, Math.round(glyphH + padT + padB));
+    // End insets are computed against the body height (gH). For 'round' this
+    // is h/2 — which can get very wide — but that's the shape the user chose.
+    leftInset = bannerEndInset(leftEnd, nL, gH);
+    rightInset = bannerEndInset(rightEnd, nR, gH);
+    gW = Math.max(10, Math.round(leftInset + padL + naturalW + padR + rightInset));
+
+    // Arrow flares extend above AND below the body. Expand the group's bbox so
+    // the selection rect (and hit area) covers the flares instead of cropping
+    // them. Body height is stashed on the group for handle/clamp code.
+    const flareU = leftEnd === 'arrow' ? (typeof group._bannerFlareL === 'number' ? group._bannerFlareL : gH * 0.15) : 0;
+    const flareV = rightEnd === 'arrow' ? (typeof group._bannerFlareR === 'number' ? group._bannerFlareR : gH * 0.15) : 0;
+    const maxFlare = Math.max(flareU, flareV);
+    const totalH = gH + 2 * maxFlare;
+
+    // Always rebuild the polygon — flare changes don't alter gW/gH but DO change
+    // the polygon's point set, so gating rebuild on dim changes drops those updates.
+    group._bannerBodyH = gH;
+    group.width = gW;
+    group.height = totalH;
+    const poly = group._objects.find(o => o.type === 'polygon');
+    if (poly) {
+      const pts = buildBannerGroupPoints(gW, gH, leftEnd, rightEnd, nL, nR, poly.strokeWidth || 0, {
+        flareL: group._bannerFlareL,
+        flareR: group._bannerFlareR,
+      });
+      poly.points = pts;
+      if (typeof poly._calcDimensions === 'function') poly._calcDimensions();
+      poly.left = -gW / 2;
+      poly.top = -totalH / 2;
+      poly.width = gW;
+      poly.height = totalH;
+      // pathOffset stays body-relative — point (gW/2, gH/2) is the body center,
+      // which we want at group center. The flare extends symmetrically above/below.
+      poly.pathOffset = { x: gW / 2, y: gH / 2 };
+      poly.dirty = true;
+      poly.setCoords();
+    }
+    // Set text width slightly larger than natural so fabric doesn't wrap
+    text.set('width', Math.max(10, Math.ceil(naturalW) + 4));
+    text.initDimensions();
+  } else {
+    gW = group.width;
+    gH = group.height;
+    text.set('width', Math.max(1, gW - padL - padR));
+    text.initDimensions();
+  }
+
+  // Vertically glyph-tight center; horizontally pad from the BODY (post-inset).
+  text.set('left', -gW / 2 + leftInset + padL);
+  const availH = Math.max(1, gH - padT - padB);
+  const visualTop = -gH / 2 + padT + (availH - glyphH) / 2;
+  text.set('top', visualTop - glyphTopOffset);
+
+  text.dirty = true;
+  text.setCoords();
+  group.dirty = true;
+  group.setCoords();
+  canvas.requestRenderAll();
+}
+
+function rebuildBannerGroupShape(group) {
+  if (!group || !group._isBannerGroup) return;
+  // recenterBannerText now recomputes width from insets + padding + text and
+  // rebuilds the polygon points in place, so this is just a re-run.
+  recenterBannerText(group, false);
+  group.dirty = true;
+  canvas.requestRenderAll();
+}
+
+function setBannerGroupText(value) {
+  const g = canvas.getActiveObject();
+  if (!g || (!g._isBannerGroup && !g._isHitboxGroup)) return;
+  const t = g._objects.find(o => o.type === 'textbox' || o.type === 'text' || o.type === 'i-text');
+  if (!t) return;
+  t.set('text', value); t.dirty = true;
+  recenterBannerText(g);
+  refreshLayers(); saveUndo();
+}
+
+function setBannerGroupFont(fontName) {
+  const g = canvas.getActiveObject();
+  if (!g || (!g._isBannerGroup && !g._isHitboxGroup)) return;
+  const t = g._objects.find(o => o.type === 'textbox' || o.type === 'text' || o.type === 'i-text');
+  if (!t) return;
+  t.set('fontFamily', fontName); t.dirty = true; t.initDimensions();
+  recenterBannerText(g);
+  updateProps(); saveUndo();
+}
+
+function setBannerGroupTextProp(prop, value) {
+  const g = canvas.getActiveObject();
+  if (!g || (!g._isBannerGroup && !g._isHitboxGroup)) return;
+  const t = g._objects.find(o => o.type === 'textbox' || o.type === 'text' || o.type === 'i-text');
+  if (!t) return;
+  t.set(prop, value); t.dirty = true;
+  if (prop === 'fontSize') {
+    t.initDimensions();
+    recenterBannerText(g, false); // manual size — just recenter, don't auto-size
+  }
+  g.dirty = true; canvas.requestRenderAll();
+  updateProps(); saveUndo();
+}
+
+function setBannerGroupPadding(side, value) {
+  const g = canvas.getActiveObject();
+  if (!g || (!g._isBannerGroup && !g._isHitboxGroup)) return;
+  const v = Math.max(0, +value || 0);
+  if (g._padLinked !== false) {
+    g._padT = g._padR = g._padB = g._padL = v;
+  } else {
+    g['_pad' + side] = v;
+  }
+  recenterBannerText(g, false); // don't auto-resize text — padding is exact
+  updateProps();
+  saveUndo();
+}
+
+function toggleBannerPadLink() {
+  const g = canvas.getActiveObject();
+  if (!g || (!g._isBannerGroup && !g._isHitboxGroup)) return;
+  g._padLinked = g._padLinked === false ? true : false;
+  if (g._padLinked) {
+    const v = g._padT || g._padL || 0;
+    g._padR = g._padB = g._padL = g._padT = v;
+    recenterBannerText(g, false);
+  }
+  updateProps();
+}
+
+function setBannerGroupEnd(side, value) {
+  const g = canvas.getActiveObject();
+  if (!g || !g._isBannerGroup) return;
+  if (side === 'left') g._bannerLeftEnd = value;
+  else g._bannerRightEnd = value;
+  rebuildBannerGroupShape(g);
+  updateProps(); saveUndo();
+}
+
+function setBannerGroupNotch(side, value) {
+  const g = canvas.getActiveObject();
+  if (!g || !g._isBannerGroup) return;
+  // Clamp notch so it never eats the body. Body width = gW - leftInset - rightInset
+  // needs to stay > 0, so cap each notch at ~45% of the current total width.
+  const otherEnd = side === 'left' ? g._bannerRightEnd : g._bannerLeftEnd;
+  const otherN = side === 'left' ? (g._bannerNotchR || 20) : (g._bannerNotchL || 20);
+  const otherInset = bannerEndInset(otherEnd, otherN, g._bannerBodyH || g.height || 40);
+  const maxN = Math.max(8, g.width - otherInset - 16); // leave at least 16px of body
+  const v = Math.max(4, Math.min(maxN, +value || 0));
+  if (side === 'left') g._bannerNotchL = v;
+  else g._bannerNotchR = v;
+  rebuildBannerGroupShape(g);
+  updateProps(); saveUndo();
+}
+
+function setBannerGroupFlare(side, value) {
+  const g = canvas.getActiveObject();
+  if (!g || !g._isBannerGroup) return;
+  // Flare is visually nonsensical beyond ~1.5× body height — clamp there.
+  const maxF = Math.max(20, (g._bannerBodyH || g.height || 40) * 1.5);
+  const v = Math.max(0, Math.min(maxF, +value || 0));
+  if (side === 'left') g._bannerFlareL = v;
+  else g._bannerFlareR = v;
+  rebuildBannerGroupShape(g);
+  updateProps(); saveUndo();
+}
+
+function toggleBannerGroupShadow(on) {
+  const g = canvas.getActiveObject();
+  if (!g || !g._isBannerGroup) return;
+  const p = g._objects.find(o => o.type === 'polygon');
+  if (!p) return;
+  if (on) {
+    if (p._savedShadow) { p.shadow = p._savedShadow; delete p._savedShadow; }
+    else { p.set('shadow', new fabric.Shadow({color:'rgba(0,0,0,0.4)', offsetX:3, offsetY:3, blur:8})); }
+  } else {
+    if (p._spreadGhost) { canvas.remove(p._spreadGhost); p._spreadGhost = null; }
+    delete p._savedShadow;
+    p._shadowSpread = 0;
+    p.set('shadow', null);
+  }
+  p.dirty = true; g.dirty = true;
+  canvas.requestRenderAll(); updateProps(); saveUndo();
+}
+
+function setBannerGroupShadowProp(prop, val) {
+  const g = canvas.getActiveObject();
+  if (!g || !g._isBannerGroup) return;
+  const p = g._objects.find(o => o.type === 'polygon');
+  if (!p) return;
+  const target = p.shadow || p._savedShadow;
+  if (!target) return;
+  target[prop] = val;
+  if (p._spreadGhost && p._shadowSpread > 0) {
+    if (p._savedShadow && !p.shadow) p.shadow = p._savedShadow;
+    applyShadowSpread(p, p._shadowSpread);
+  }
+  p.dirty = true; g.dirty = true;
+  canvas.requestRenderAll();
+}
+
+// Hitbox group — apply fill/stroke to all non-text children
+function toggleHitboxShapeStroke(on) {
+  const g = canvas.getActiveObject();
+  if (!g || !g._isHitboxGroup) return;
+  const shapes = g._objects.filter(o => o.type !== 'textbox' && o.type !== 'text' && o.type !== 'i-text');
+  shapes.forEach(s => {
+    if (on) { s.set({ stroke: s.stroke || '#FFFFFF', strokeWidth: s.strokeWidth > 0 ? s.strokeWidth : 2 }); }
+    else { s.set({ stroke: null, strokeWidth: 0 }); }
+    s.dirty = true;
+  });
+  g.dirty = true;
+  canvas.requestRenderAll();
+  updateProps(); saveUndo();
+}
+
+function setHitboxShapeStrokeWidth(val) {
+  const g = canvas.getActiveObject();
+  if (!g || !g._isHitboxGroup) return;
+  const shapes = g._objects.filter(o => o.type !== 'textbox' && o.type !== 'text' && o.type !== 'i-text');
+  shapes.forEach(s => { s.set('strokeWidth', Math.max(0, +val)); s.dirty = true; });
+  g.dirty = true;
+  canvas.requestRenderAll();
+  saveUndo();
+}
+
+function setHitboxShapeOpacity(val) {
+  const g = canvas.getActiveObject();
+  if (!g || !g._isHitboxGroup) return;
+  const v = Math.max(0, Math.min(1, +val));
+  const shapes = g._objects.filter(o => o.type !== 'textbox' && o.type !== 'text' && o.type !== 'i-text');
+  shapes.forEach(s => { s.set('opacity', v); s.dirty = true; });
+  g.dirty = true;
+  canvas.requestRenderAll();
+}
+
+function toggleBannerGroupTextStroke(on) {
+  const g = canvas.getActiveObject();
+  if (!g || (!g._isBannerGroup && !g._isHitboxGroup)) return;
+  const t = g._objects.find(o => o.type === 'textbox' || o.type === 'text' || o.type === 'i-text');
+  if (!t) return;
+  if (on) { t.set({ stroke: '#FFFFFF', strokeWidth: 2, paintFirst: 'stroke' }); }
+  else { t.set({ stroke: null, strokeWidth: 0 }); }
+  t.dirty = true; g.dirty = true;
+  canvas.requestRenderAll(); updateProps(); saveUndo();
+}
+
+function toggleBannerGroupPolyStroke(on) {
+  const g = canvas.getActiveObject();
+  if (!g || !g._isBannerGroup) return;
+  const p = g._objects.find(o => o.type === 'polygon');
+  if (!p) return;
+  if (on) { p.set({ stroke: '#FFFFFF', strokeWidth: 2 }); }
+  else { p.set({ stroke: null, strokeWidth: 0 }); }
+  p.dirty = true; g.dirty = true;
+  canvas.requestRenderAll(); updateProps(); saveUndo();
+}
+
+function setBannerGroupPolyProp(prop, value) {
+  const g = canvas.getActiveObject();
+  if (!g || !g._isBannerGroup) return;
+  const p = g._objects.find(o => o.type === 'polygon');
+  if (!p) return;
+  p.set(prop, value); p.dirty = true; g.dirty = true;
+  if (prop === 'strokeWidth') rebuildBannerGroupShape(g);
+  canvas.requestRenderAll(); saveUndo();
+}
+
+function toggleStroke(on) {
+  const obj = canvas.getActiveObject();
+  if (!obj) return;
+  if (on) {
+    const isText = obj.type === 'textbox' || obj.type === 'i-text' || obj.type === 'text';
+    obj.set({ stroke: '#FFFFFF', strokeWidth: 2 });
+    // For text, paint stroke behind fill so outline doesn't bleed over letterforms
+    if (isText) obj.set({ paintFirst: 'stroke' });
+  } else {
+    obj.set({ stroke: null, strokeWidth: 0 });
+  }
+  canvas.requestRenderAll();
+  updateProps();
+  saveUndo();
+}
+
+function toggleShadow(on) {
+  const obj = canvas.getActiveObject();
+  if (!obj) return;
+  if (on) {
+    // If spread was active, just restore the saved shadow (or create new)
+    if (obj._savedShadow) {
+      obj.shadow = obj._savedShadow;
+      delete obj._savedShadow;
+    } else {
+      obj.set('shadow', new fabric.Shadow({ color: 'rgba(0,0,0,0.5)', offsetX: 4, offsetY: 4, blur: 8 }));
+    }
+  } else {
+    // Clear spread ghost if any
+    if (obj._spreadGhost) { canvas.remove(obj._spreadGhost); obj._spreadGhost = null; }
+    delete obj._savedShadow;
+    obj._shadowSpread = 0;
+    obj.set('shadow', null);
+  }
+  canvas.requestRenderAll();
+  updateProps();
+}
+
+function setShadowProp(prop, val) {
+  const obj = canvas.getActiveObject();
+  if (!obj) return;
+  const target = obj.shadow || obj._savedShadow;
+  if (!target) return;
+  target[prop] = val;
+  // Ghost bakes blur into a _render wrapper, so rebuild it on any edit.
+  if (obj._spreadGhost && obj._shadowSpread > 0) {
+    const sp = obj._shadowSpread;
+    // Temporarily restore the live shadow so applyShadowSpread sees it
+    if (obj._savedShadow && !obj.shadow) obj.shadow = obj._savedShadow;
+    applyShadowSpread(obj, sp);
+  }
+  obj.dirty = true;
+  canvas.requestRenderAll();
+}
+
+// Shadow "spread" emulation. Canvas2D shadows have no spread; we approximate
+// by adding a stroke of the object's fill color so the visible shape (and thus
+// the cast shadow) is inflated by `spread` on all sides. The original stroke
+// is preserved in _spreadStrokeBackup and restored when spread returns to 0.
+// True shadow spread via a "ghost" clone placed behind the object. Canvas2D
+// has no native spread, so we render a second, larger copy with the shadow
+// applied and put the real object on top. The ghost auto-syncs position/size
+// whenever the object moves or scales.
+// --- Inner shadow (rect only) ---
+// _innerShadow = { lx, rx, uy, dy, blur, color }
+// Draws 4 inward-cast gradients clipped to the rounded-rect path so the
+// effect stays inside the shape (unlike outer shadow which can overflow).
+function _makeTransparentColor(c) {
+  if (!c) return 'rgba(0,0,0,0)';
+  const m = /rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i.exec(c);
+  if (m) return 'rgba(' + m[1] + ',' + m[2] + ',' + m[3] + ',0)';
+  const h = /^#?([0-9a-f]{6})$/i.exec(c);
+  if (h) {
+    const n = parseInt(h[1], 16);
+    return 'rgba(' + ((n>>16)&255) + ',' + ((n>>8)&255) + ',' + (n&255) + ',0)';
+  }
+  return 'rgba(0,0,0,0)';
+}
+function _rectRoundedPath(ctx, x, y, w, h, rx, ry) {
+  const rX = Math.min(rx || 0, w / 2);
+  const rY = Math.min(ry || 0, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + rX, y);
+  ctx.lineTo(x + w - rX, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + rY);
+  ctx.lineTo(x + w, y + h - rY);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - rX, y + h);
+  ctx.lineTo(x + rX, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - rY);
+  ctx.lineTo(x, y + rY);
+  ctx.quadraticCurveTo(x, y, x + rX, y);
+  ctx.closePath();
+}
+function _renderInnerShadowOnRect(rect, ctx) {
+  const is = rect._innerShadow;
+  if (!is) return;
+  const lx = +is.lx || 0;
+  const rx = +is.rx || 0;
+  const uy = +is.uy || 0;
+  const dy = +is.dy || 0;
+  if (lx === 0 && rx === 0 && uy === 0 && dy === 0) return;
+  const color = is.color || 'rgba(0,0,0,0.6)';
+  const blur = Math.max(0, +is.blur || 0);
+  const w = rect.width, h = rect.height;
+  const x0 = -w / 2, y0 = -h / 2;
+  const transparent = _makeTransparentColor(color);
+
+  function drawEdge(inside, fillX, fillY, fillW, fillH, gX1, gY1, gX2, gY2) {
+    ctx.save();
+    if (inside) {
+      _rectRoundedPath(ctx, x0, y0, w, h, rect.rx, rect.ry);
+      ctx.clip();
+    }
+    if (blur > 0) ctx.filter = 'blur(' + blur + 'px)';
+    const g = ctx.createLinearGradient(gX1, gY1, gX2, gY2);
+    g.addColorStop(0, color);
+    g.addColorStop(1, transparent);
+    ctx.fillStyle = g;
+    ctx.fillRect(fillX, fillY, fillW, fillH);
+    ctx.restore();
+  }
+
+  // Top edge: positive = inward, negative = outward (above)
+  if (uy > 0) drawEdge(true, x0, y0, w, uy, 0, y0, 0, y0 + uy);
+  else if (uy < 0) { const d = -uy; drawEdge(false, x0, y0 - d, w, d, 0, y0, 0, y0 - d); }
+  // Bottom edge
+  if (dy > 0) drawEdge(true, x0, y0 + h - dy, w, dy, 0, y0 + h, 0, y0 + h - dy);
+  else if (dy < 0) { const d = -dy; drawEdge(false, x0, y0 + h, w, d, 0, y0 + h, 0, y0 + h + d); }
+  // Left edge
+  if (lx > 0) drawEdge(true, x0, y0, lx, h, x0, 0, x0 + lx, 0);
+  else if (lx < 0) { const d = -lx; drawEdge(false, x0 - d, y0, d, h, x0, 0, x0 - d, 0); }
+  // Right edge
+  if (rx > 0) drawEdge(true, x0 + w - rx, y0, rx, h, x0 + w, 0, x0 + w - rx, 0);
+  else if (rx < 0) { const d = -rx; drawEdge(false, x0 + w, y0, d, h, x0 + w, 0, x0 + w + d, 0); }
+}
+function reattachBehaviors() {
+  // Reattach behaviors that don't survive serialization/deserialization
+  canvas.getObjects().forEach(o => {
+    // Frames: order matters — frame render first, then inner shadow may wrap it
+    if (o._isFrame) {
+      o._render = frameRender;
+      o._innerShadowAttached = false;
+      o._innerShadowBaseRender = null;
+      o.selectable = false;
+      o.evented = false;
+      o.dirty = true;
+    }
+    if (o.type === 'image') {
+      setupImageControls(o);
+      if (o._cornerRadius && o._cornerRadius > 0) setImageCornerRadiusOn(o, o._cornerRadius);
+    }
+    if (o._isBannerGroup) {
+      attachBannerGroupControls(o);
+      recenterBannerText(o, true);
+    }
+    if (o._shadowSpread && o._shadowSpread > 0 && o.shadow) {
+      applyShadowSpread(o, o._shadowSpread);
+    }
+    if (o.type === 'rect' && o._innerShadow) {
+      // Clear any stale attach flag from a prior session so attach actually rewraps
+      o._innerShadowAttached = false;
+      attachInnerShadow(o);
+    }
+  });
+  canvas.requestRenderAll();
+}
+function attachInnerShadow(rect) {
+  if (!rect || rect.type !== 'rect') return;
+  if (rect._innerShadowAttached) return;
+  // Preserve any existing instance _render (e.g. frameRender) so inner shadow composes with it
+  const baseRender = rect._render || fabric.Rect.prototype._render;
+  rect._innerShadowBaseRender = baseRender;
+  const shadowFirst = !!rect._isFrame;
+  rect._render = function(ctx) {
+    if (shadowFirst) {
+      _renderInnerShadowOnRect(this, ctx);
+      baseRender.call(this, ctx);
+    } else {
+      baseRender.call(this, ctx);
+      _renderInnerShadowOnRect(this, ctx);
+    }
+  };
+  rect._innerShadowAttached = true;
+  rect.objectCaching = false;
+  rect.dirty = true;
+}
+function detachInnerShadow(rect) {
+  if (!rect || !rect._innerShadowAttached) return;
+  rect._render = rect._innerShadowBaseRender || fabric.Rect.prototype._render;
+  rect._innerShadowBaseRender = null;
+  rect._innerShadowAttached = false;
+  rect.dirty = true;
+}
+function toggleInnerShadow(on) {
+  const obj = canvas.getActiveObject();
+  if (!obj || obj.type !== 'rect') return;
+  if (on) {
+    obj._innerShadow = obj._innerShadow || { lx: 0, rx: 0, uy: 20, dy: 20, blur: 8, color: 'rgba(0,0,0,0.6)' };
+    attachInnerShadow(obj);
+  } else {
+    obj._innerShadow = null;
+    detachInnerShadow(obj);
+  }
+  canvas.requestRenderAll();
+  updateProps();
+  saveUndo();
+}
+function setInnerShadowProp(prop, val) {
+  const obj = canvas.getActiveObject();
+  if (!obj || !obj._innerShadow) return;
+  const edgeProps = ['lx','rx','uy','dy'];
+  if (obj._innerShadow._linked && edgeProps.indexOf(prop) !== -1) {
+    edgeProps.forEach(p => { obj._innerShadow[p] = val; });
+  } else {
+    obj._innerShadow[prop] = val;
+  }
+  attachInnerShadow(obj);
+  obj.dirty = true;
+  canvas.requestRenderAll();
+  updateProps();
+  saveUndo();
+}
+function toggleInnerShadowLink() {
+  const obj = canvas.getActiveObject();
+  if (!obj || !obj._innerShadow) return;
+  obj._innerShadow._linked = !obj._innerShadow._linked;
+  if (obj._innerShadow._linked) {
+    // Use the average of the four so nothing jumps dramatically
+    const avg = Math.round(((+obj._innerShadow.lx||0) + (+obj._innerShadow.rx||0) + (+obj._innerShadow.uy||0) + (+obj._innerShadow.dy||0)) / 4);
+    obj._innerShadow.lx = avg;
+    obj._innerShadow.rx = avg;
+    obj._innerShadow.uy = avg;
+    obj._innerShadow.dy = avg;
+    attachInnerShadow(obj);
+    obj.dirty = true;
+    canvas.requestRenderAll();
+  }
+  updateProps();
+  saveUndo();
+}
+
+function applyShadowSpread(obj, spread) {
+  if (!obj) return;
+  spread = Math.max(0, +spread || 0);
+  obj._shadowSpread = spread;
+
+  // Clean up any existing ghost
+  if (obj._spreadGhost) {
+    canvas.remove(obj._spreadGhost);
+    obj._spreadGhost = null;
+  }
+  // Restore original shadow if we had stashed it
+  if (obj._savedShadow !== undefined) {
+    obj.shadow = obj._savedShadow;
+    delete obj._savedShadow;
+  }
+
+  if (spread <= 0 || !obj.shadow) {
+    // Detach any sync listeners
+    if (obj._spreadSyncHandler) {
+      obj.off('moving', obj._spreadSyncHandler);
+      obj.off('scaling', obj._spreadSyncHandler);
+      obj.off('modified', obj._spreadSyncHandler);
+      obj._spreadSyncHandler = null;
+    }
+    obj.dirty = true;
+    canvas.requestRenderAll();
+    return;
+  }
+
+  obj.clone(ghost => {
+    const bw = obj.getScaledWidth();
+    const bh = obj.getScaledHeight();
+    const gw = bw + spread * 2;
+    const gh = bh + spread * 2;
+    // The ghost IS the spread: it's drawn inflated, filled with the shadow
+    // color (hard-edged spread), and its own blur/offset shadow produces the
+    // soft glow emanating outward from the spread edge. This matches CSS
+    // box-shadow spread semantics closely.
+    const sh = obj.shadow;
+    const isFrame = !!obj._isFrame;
+    if (isFrame) {
+      // For frames: don't scale — grow width/height and thicken the ring so
+      // the ghost ring covers both sides of the real one (outer grows by
+      // spread, inner hole shrinks by spread).
+      ghost.set({
+        scaleX: 1, scaleY: 1,
+        width: obj.width + spread * 2,
+        height: obj.height + spread * 2,
+        left: obj.left - spread,
+        top: obj.top - spread,
+        originX: obj.originX, originY: obj.originY,
+        angle: obj.angle,
+        opacity: 1,
+        fill: sh.color || 'rgba(0,0,0,0.4)',
+        stroke: null, strokeWidth: 0,
+        objectCaching: false,
+        selectable: false, evented: false,
+        excludeFromExport: true,
+      });
+    } else {
+      ghost.set({
+        scaleX: (gw / obj.width),
+        scaleY: (gh / obj.height),
+        left: obj.left - spread * (obj.originX === 'center' ? 0 : 1),
+        top: obj.top - spread * (obj.originY === 'center' ? 0 : 1),
+        originX: obj.originX,
+        originY: obj.originY,
+        angle: obj.angle,
+        opacity: 1,
+        fill: sh.color || 'rgba(0,0,0,0.4)',
+        stroke: null,
+        strokeWidth: 0,
+        objectCaching: false,
+        selectable: false,
+        evented: false,
+        excludeFromExport: true,
+      });
+    }
+    // No fabric.Shadow on the ghost — we blur the ghost shape itself via
+    // ctx.filter so BOTH sides of the spread edge get falloff. Offset is
+    // handled by repositioning the ghost.
+    ghost.shadow = null;
+    const blurPx = Math.max(0, sh.blur || 0);
+    const offX = sh.offsetX || 0;
+    const offY = sh.offsetY || 0;
+    ghost._spreadOffset = { x: offX, y: offY };
+    // For frames, reattach the custom ring renderer so the middle stays hollow.
+    // Thicken the ring by spread so it covers both sides of the real frame's ring.
+    if (isFrame) {
+      ghost._isFrame = true;
+      ghost._frameThickness = (obj._frameThickness || 0) + spread * 2;
+      ghost._frameRadius = (obj._frameRadius || 0) + spread;
+      ghost._render = frameRender;
+    }
+    const origRender = ghost._render.bind(ghost);
+    ghost._render = function(ctx) {
+      const prev = ctx.filter;
+      ctx.filter = blurPx > 0 ? ('blur(' + blurPx + 'px)') : 'none';
+      origRender(ctx);
+      ctx.filter = prev || 'none';
+    };
+    ghost._isSpreadGhost = true;
+    canvas.add(ghost);
+    // Place ghost directly below the owner
+    const idx = canvas.getObjects().indexOf(obj);
+    ghost.moveTo(Math.max(0, idx));
+    obj._spreadGhost = ghost;
+
+    // Stash and clear the real object's shadow so only the ghost casts it
+    obj._savedShadow = obj.shadow;
+    obj.shadow = null;
+    obj.dirty = true;
+
+    // Keep ghost in sync when the owner moves/scales
+    const sync = () => {
+      if (!obj._spreadGhost) return;
+      const g = obj._spreadGhost;
+      if (isFrame) {
+        g.set({
+          scaleX: 1, scaleY: 1,
+          width: obj.width + spread * 2,
+          height: obj.height + spread * 2,
+          left: obj.left - spread,
+          top: obj.top - spread,
+          angle: obj.angle,
+        });
+        g._frameThickness = (obj._frameThickness || 0) + spread * 2;
+        g._frameRadius = (obj._frameRadius || 0) + spread;
+      } else {
+        const bw = obj.getScaledWidth();
+        const bh = obj.getScaledHeight();
+        g.set({
+          scaleX: (bw + spread * 2) / obj.width,
+          scaleY: (bh + spread * 2) / obj.height,
+          left: obj.left - spread * (obj.originX === 'center' ? 0 : 1),
+          top: obj.top - spread * (obj.originY === 'center' ? 0 : 1),
+          angle: obj.angle,
+        });
+      }
+      g.setCoords();
+      g.dirty = true;
+    };
+    obj._spreadSyncHandler = sync;
+    obj.on('moving', sync);
+    obj.on('scaling', sync);
+    obj.on('modified', sync);
+
+    canvas.requestRenderAll();
+  });
+}
+
+function setShadowSpread(val) {
+  const obj = canvas.getActiveObject();
+  if (!obj) return;
+  applyShadowSpread(obj, val);
+  canvas.requestRenderAll();
+  saveUndo();
+}
+
+function setBannerGroupShadowSpread(val) {
+  const g = canvas.getActiveObject();
+  if (!g || !g._isBannerGroup) return;
+  const p = g._objects.find(o => o.type === 'polygon');
+  if (!p) return;
+  applyShadowSpread(p, val);
+  g.dirty = true;
+  canvas.requestRenderAll();
+  saveUndo();
+}
+
+let _opaUndoTimer = null;
+function setOpacity(pct) {
+  const obj = canvas.getActiveObject();
+  if (!obj) return;
+  const v = Math.max(0, Math.min(100, Math.round(pct)));
+  obj.set('opacity', v / 100);
+  obj.dirty = true;
+  canvas.requestRenderAll();
+  const rangeEl = document.getElementById('opa-range');
+  const numEl = document.getElementById('opa-num');
+  if (rangeEl) rangeEl.value = v;
+  if (numEl) numEl.value = v;
+  clearTimeout(_opaUndoTimer);
+  _opaUndoTimer = setTimeout(saveUndo, 300);
+}
+
+function setObjProp(prop, val) {
+  // Canvas background — no active object required
+  if (prop === '_canvasBg') {
+    canvasBgColor = val;
+    applyCanvasBg();
+    saveUndo();
+    return;
+  }
+  if (prop === '_canvasBgAlpha') {
+    canvasBgAlpha = Math.max(0, Math.min(1, +val));
+    applyCanvasBg();
+    updateProps();
+    saveUndo();
+    return;
+  }
+  const obj = canvas.getActiveObject();
+  if (!obj) return;
+  // Special: banner group child properties
+  if (prop === '_bgTextFill' && (obj._isBannerGroup || obj._isHitboxGroup)) {
+    const t = obj._objects.find(o => o.type === 'textbox' || o.type === 'text' || o.type === 'i-text');
+    if (t) { t.set('fill', colorWithAlpha(val, getColorAlpha(t.fill))); t.dirty = true; }
+    obj.dirty = true; canvas.requestRenderAll(); saveUndo(); return;
+  }
+  if (prop === '_bgTextFillAlpha' && (obj._isBannerGroup || obj._isHitboxGroup)) {
+    const t = obj._objects.find(o => o.type === 'textbox' || o.type === 'text' || o.type === 'i-text');
+    if (t) { t.set('fill', colorWithAlpha(t.fill || '#fff', +val)); t.dirty = true; }
+    obj.dirty = true; canvas.requestRenderAll(); updateProps(); saveUndo(); return;
+  }
+  if (prop === '_bgBannerFill' && obj._isBannerGroup) {
+    const p = obj._objects.find(o => o.type === 'polygon');
+    if (p) { p.set('fill', colorWithAlpha(val, getColorAlpha(p.fill))); p.dirty = true; }
+    obj.dirty = true; canvas.requestRenderAll(); saveUndo(); return;
+  }
+  if (prop === '_bgBannerFillAlpha' && obj._isBannerGroup) {
+    const p = obj._objects.find(o => o.type === 'polygon');
+    if (p) { p.set('fill', colorWithAlpha(p.fill || '#333', +val)); p.dirty = true; }
+    obj.dirty = true; canvas.requestRenderAll(); updateProps(); saveUndo(); return;
+  }
+  if (prop === '_bgBannerStroke' && obj._isBannerGroup) {
+    const p = obj._objects.find(o => o.type === 'polygon');
+    if (p) { p.set('stroke', colorWithAlpha(val, getColorAlpha(p.stroke))); p.dirty = true; }
+    obj.dirty = true; canvas.requestRenderAll(); saveUndo(); return;
+  }
+  if (prop === '_bgBannerStrokeAlpha' && obj._isBannerGroup) {
+    const p = obj._objects.find(o => o.type === 'polygon');
+    if (p) { p.set('stroke', colorWithAlpha(p.stroke || '#fff', +val)); p.dirty = true; }
+    obj.dirty = true; canvas.requestRenderAll(); updateProps(); saveUndo(); return;
+  }
+  if (prop === '_hbShapeFill' && obj._isHitboxGroup) {
+    const shapes = obj._objects.filter(o => o.type !== 'textbox' && o.type !== 'text' && o.type !== 'i-text');
+    shapes.forEach(s => { s.set('fill', colorWithAlpha(val, getColorAlpha(s.fill))); s.dirty = true; });
+    obj.dirty = true; canvas.requestRenderAll(); saveUndo(); return;
+  }
+  if (prop === '_hbShapeFillAlpha' && obj._isHitboxGroup) {
+    const shapes = obj._objects.filter(o => o.type !== 'textbox' && o.type !== 'text' && o.type !== 'i-text');
+    shapes.forEach(s => { s.set('fill', colorWithAlpha(s.fill || '#333', +val)); s.dirty = true; });
+    obj.dirty = true; canvas.requestRenderAll(); updateProps(); saveUndo(); return;
+  }
+  if (prop === '_hbShapeStroke' && obj._isHitboxGroup) {
+    const shapes = obj._objects.filter(o => o.type !== 'textbox' && o.type !== 'text' && o.type !== 'i-text');
+    shapes.forEach(s => { s.set('stroke', colorWithAlpha(val, getColorAlpha(s.stroke))); s.dirty = true; });
+    obj.dirty = true; canvas.requestRenderAll(); saveUndo(); return;
+  }
+  if (prop === '_hbShapeStrokeAlpha' && obj._isHitboxGroup) {
+    const shapes = obj._objects.filter(o => o.type !== 'textbox' && o.type !== 'text' && o.type !== 'i-text');
+    shapes.forEach(s => { s.set('stroke', colorWithAlpha(s.stroke || '#fff', +val)); s.dirty = true; });
+    obj.dirty = true; canvas.requestRenderAll(); updateProps(); saveUndo(); return;
+  }
+  if (prop === '_bgTextStroke' && (obj._isBannerGroup || obj._isHitboxGroup)) {
+    const t = obj._objects.find(o => o.type === 'textbox' || o.type === 'text' || o.type === 'i-text');
+    if (t) { t.set('stroke', colorWithAlpha(val, getColorAlpha(t.stroke))); t.dirty = true; }
+    obj.dirty = true; canvas.requestRenderAll(); saveUndo(); return;
+  }
+  if (prop === '_bgTextStrokeAlpha' && (obj._isBannerGroup || obj._isHitboxGroup)) {
+    const t = obj._objects.find(o => o.type === 'textbox' || o.type === 'text' || o.type === 'i-text');
+    if (t) { t.set('stroke', colorWithAlpha(t.stroke || '#000', +val)); t.dirty = true; }
+    obj.dirty = true; canvas.requestRenderAll(); updateProps(); saveUndo(); return;
+  }
+  // Special: shadow color
+  if (prop === '_shadowColor') {
+    const target = obj.shadow || obj._savedShadow;
+    if (target) target.color = val;
+    if (obj._spreadGhost) {
+      if (obj._spreadGhost.shadow) obj._spreadGhost.shadow.color = val;
+      obj._spreadGhost.set('fill', val); // ghost fill is the spread color
+      obj._spreadGhost.dirty = true;
+    }
+    obj.dirty = true;
+    canvas.requestRenderAll();
+    return;
+  }
+  if (prop === 'stroke') {
+    val = colorWithAlpha(val, getColorAlpha(obj.stroke));
+  }
+  if (prop === '_strokeAlpha') {
+    obj.set('stroke', colorWithAlpha(obj.stroke || '#000', +val));
+    obj.dirty = true; canvas.requestRenderAll(); updateProps(); saveUndo();
+    return;
+  }
+  if (prop === 'fill' && typeof val === 'string') {
+    val = colorWithAlpha(val, getColorAlpha(obj.fill));
+  }
+  if (prop === '_fillAlpha') {
+    obj.set('fill', colorWithAlpha(obj.fill || '#000', +val));
+    obj.dirty = true; canvas.requestRenderAll(); updateProps(); saveUndo();
+    return;
+  }
+  obj.set(prop, val);
+  obj.setCoords();
+  canvas.requestRenderAll();
+  if (prop === '_customName' || prop === 'text') refreshLayers();
+  saveUndo();
+}
+
+function setObjSize(dim, val) {
+  const obj = canvas.getActiveObject();
+  if (!obj) return;
+  const b = obj.getBoundingRect(true);
+  const ratio = b.width / b.height;
+  if (dim === 'w') {
+    const newScaleX = obj.scaleX * (val / b.width);
+    obj.set('scaleX', newScaleX);
+    if (obj.lockUniScaling !== false) {
+      obj.set('scaleY', obj.scaleY * (val / b.width));
+    }
+  } else {
+    const newScaleY = obj.scaleY * (val / b.height);
+    obj.set('scaleY', newScaleY);
+    if (obj.lockUniScaling !== false) {
+      obj.set('scaleX', obj.scaleX * (val / b.height));
+    }
+  }
+  obj.setCoords();
+  canvas.requestRenderAll();
+  updateProps();
+}
+
+function toggleAspectLock() {
+  const obj = canvas.getActiveObject();
+  if (!obj) return;
+  obj.lockUniScaling = obj.lockUniScaling === false ? true : false;
+  canvas.requestRenderAll();
+  updateProps();
+}
+
+function toHex6(c) {
+  if (!c) return '#000000';
+  if (c.startsWith('#') && c.length === 7) return c;
+  if (c.startsWith('#') && c.length === 4) {
+    return '#' + c[1]+c[1] + c[2]+c[2] + c[3]+c[3];
+  }
+  // Try rgb
+  const m = c.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+  if (m) {
+    return '#' + [m[1],m[2],m[3]].map(x => (+x).toString(16).padStart(2,'0')).join('');
+  }
+  return '#000000';
+}
+
+// --- Add Elements ---
+function addText() {
+  const t = new fabric.Textbox('New Text', {
+    left: canvasW / 2 - 100,
+    top: canvasH / 2 - 20,
+    width: 200,
+    fontSize: 32,
+    fontFamily: 'Jost, sans-serif',
+    fontWeight: 'bold',
+    fill: '#ECB351',
+    textAlign: 'center',
+    _customName: 'Text',
+  });
+  canvas.add(t);
+  canvas.setActiveObject(t);
+  canvas.requestRenderAll();
+  refreshLayers();
+  updateProps();
+}
+
+function addRect() {
+  const r = new fabric.Rect({
+    left: canvasW / 2 - 100,
+    top: canvasH / 2 - 40,
+    width: 200,
+    height: 80,
+    fill: '#87986A',
+    _customName: 'Rectangle',
+  });
+  canvas.add(r);
+  canvas.setActiveObject(r);
+  canvas.requestRenderAll();
+  refreshLayers();
+  updateProps();
+}
+
+// Frame — a bordered rect inset from canvas edges with thickness + corner radius
+// Custom _render that draws a frame ring (outer rounded rect minus inner rounded
+// rect) using even-odd fill. Avoids stroke centering entirely.
+function frameRender(ctx) {
+  const w = this.width, h = this.height;
+  const th = Math.max(0, this._frameThickness || 0);
+  const rO = Math.min(this._frameRadius || 0, w / 2, h / 2);
+  const innerW = Math.max(0, w - th * 2);
+  const innerH = Math.max(0, h - th * 2);
+  const rI = Math.max(0, Math.min(rO - th, innerW / 2, innerH / 2));
+  // Draw in object-local coords; fabric has already translated to object center
+  const x = -w / 2, y = -h / 2;
+
+  // Partial-frame controls — default all on (full frame). Sides remove an
+  // entire edge; corners remove that corner's two arms; completeness (0..100)
+  // scales each arm's length as a fraction of half the side. At 100% with all
+  // sides + corners on, arms meet in the middle for a continuous edge.
+  const sT = this._frameTop !== false;
+  const sR = this._frameRight !== false;
+  const sB = this._frameBottom !== false;
+  const sL = this._frameLeft !== false;
+  const cTL = this._frameTL !== false;
+  const cTR = this._frameTR !== false;
+  const cBR = this._frameBR !== false;
+  const cBL = this._frameBL !== false;
+  const compRaw = this._frameCompleteness;
+  const comp = (compRaw === undefined ? 100 : Math.max(0, Math.min(100, compRaw))) / 100;
+  const allSidesOn = sT && sR && sB && sL;
+  const allCornersOn = cTL && cTR && cBR && cBL;
+  const fullFrame = allSidesOn && allCornersOn && comp >= 1;
+
+  ctx.fillStyle = this.fill || '#000';
+
+  // Fast path: classic full frame — keep the rounded-corner ring renderer.
+  if (fullFrame) {
+    ctx.beginPath();
+    if (rO > 0) {
+      ctx.moveTo(x + rO, y);
+      ctx.lineTo(x + w - rO, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + rO);
+      ctx.lineTo(x + w, y + h - rO);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - rO, y + h);
+      ctx.lineTo(x + rO, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - rO);
+      ctx.lineTo(x, y + rO);
+      ctx.quadraticCurveTo(x, y, x + rO, y);
+    } else {
+      ctx.rect(x, y, w, h);
+    }
+    if (innerW > 0 && innerH > 0) {
+      const ix = x + th, iy = y + th;
+      if (rI > 0) {
+        ctx.moveTo(ix + rI, iy);
+        ctx.quadraticCurveTo(ix, iy, ix, iy + rI);
+        ctx.lineTo(ix, iy + innerH - rI);
+        ctx.quadraticCurveTo(ix, iy + innerH, ix + rI, iy + innerH);
+        ctx.lineTo(ix + innerW - rI, iy + innerH);
+        ctx.quadraticCurveTo(ix + innerW, iy + innerH, ix + innerW, iy + innerH - rI);
+        ctx.lineTo(ix + innerW, iy + rI);
+        ctx.quadraticCurveTo(ix + innerW, iy, ix + innerW - rI, iy);
+        ctx.closePath();
+      } else {
+        ctx.moveTo(ix, iy);
+        ctx.lineTo(ix, iy + innerH);
+        ctx.lineTo(ix + innerW, iy + innerH);
+        ctx.lineTo(ix + innerW, iy);
+        ctx.closePath();
+      }
+    }
+    ctx.fill('evenodd');
+    return;
+  }
+
+  // Partial path: for each active corner, draw a rounded L-bracket extending
+  // armH along its horizontal side and armV along its vertical side. Arm ends
+  // are flat caps. If a corner only has one active arm (because the neighbor
+  // side is disabled), fall back to a flat rect strip.
+  if (th <= 0) return;
+  const armH = (w / 2) * comp;  // horizontal arm length from a corner
+  const armV = (h / 2) * comp;  // vertical arm length from a corner
+  const drawBracket = (corner, hasH, hasV) => {
+    if (!hasH && !hasV) return;
+    // Direction: sx=+1 if H-arm extends right from corner, sy=+1 if V-arm extends down
+    let cx, cy, sx, sy;
+    if (corner === 'TL')      { cx = x;     cy = y;     sx = 1;  sy = 1;  }
+    else if (corner === 'TR') { cx = x + w; cy = y;     sx = -1; sy = 1;  }
+    else if (corner === 'BR') { cx = x + w; cy = y + h; sx = -1; sy = -1; }
+    else /* BL */             { cx = x;     cy = y + h; sx = 1;  sy = -1; }
+    if (!hasH) {
+      // Vertical arm only — flat rect strip
+      ctx.fillRect(
+        sx > 0 ? cx : cx - th,
+        sy > 0 ? cy : cy - armV,
+        th, armV,
+      );
+      return;
+    }
+    if (!hasV) {
+      // Horizontal arm only — flat rect strip
+      ctx.fillRect(
+        sx > 0 ? cx : cx - armH,
+        sy > 0 ? cy : cy - th,
+        armH, th,
+      );
+      return;
+    }
+    // Both arms — rounded L-bracket. Clamp radius to arm lengths so the curve fits.
+    const rO2 = Math.max(0, Math.min(rO, armH, armV));
+    const rI2 = Math.max(0, rO2 - th);
+    ctx.beginPath();
+    ctx.moveTo(cx + sx * armH, cy);                              // outer H-arm end
+    ctx.lineTo(cx + sx * rO2, cy);                                // approach curve
+    ctx.quadraticCurveTo(cx, cy, cx, cy + sy * rO2);              // outer curve
+    ctx.lineTo(cx, cy + sy * armV);                               // outer V-arm end
+    ctx.lineTo(cx + sx * th, cy + sy * armV);                     // inner V-arm end
+    ctx.lineTo(cx + sx * th, cy + sy * (th + rI2));               // approach inner curve
+    ctx.quadraticCurveTo(cx + sx * th, cy + sy * th, cx + sx * (th + rI2), cy + sy * th);
+    ctx.lineTo(cx + sx * armH, cy + sy * th);                     // inner H-arm end
+    ctx.closePath();
+    ctx.fill();
+  };
+  drawBracket('TL', sT && cTL, sL && cTL);
+  drawBracket('TR', sT && cTR, sR && cTR);
+  drawBracket('BR', sB && cBR, sR && cBR);
+  drawBracket('BL', sB && cBL, sL && cBL);
+}
+
+function addFrame() {
+  const pad = 20;
+  const thickness = 6;
+  const f = new fabric.Rect({
+    left: 0, top: 0, width: 10, height: 10,
+    fill: '#87986A',
+    stroke: null,
+    strokeWidth: 0,
+    _customName: 'Frame',
+    _isFrame: true,
+    _frameThickness: thickness,
+    _frameRadius: 12,
+    _framePadT: pad, _framePadR: pad, _framePadB: pad, _framePadL: pad,
+    _frameOffset: pad,
+  });
+  f._render = frameRender;
+  applyFramePadding(f);
+  canvas.add(f);
+  canvas.setActiveObject(f);
+  canvas.requestRenderAll();
+  refreshLayers();
+  updateProps();
+  saveUndo();
+}
+
+// Recompute frame rect dimensions from per-edge padding. No stroke, no clip —
+// the custom _render draws the ring inside the rect bounds.
+function applyFramePadding(f) {
+  if (!f || !f._isFrame) return;
+  if (f._render !== frameRender) f._render = frameRender;
+  const pT = (f._framePadT || 0);
+  const pR = (f._framePadR || 0);
+  const pB = (f._framePadB || 0);
+  const pL = (f._framePadL || 0);
+  const w = Math.max(0, canvasW - pL - pR);
+  const h = Math.max(0, canvasH - pT - pB);
+  f.set({
+    left: pL,
+    top: pT,
+    width: w,
+    height: h,
+    scaleX: 1,
+    scaleY: 1,
+    rx: 0, ry: 0, // ignore fabric's native rounding; we draw it ourselves
+  });
+  f.setCoords();
+  f.dirty = true;
+}
+
+function setFramePad(side, val) {
+  const f = canvas.getActiveObject();
+  if (!f || !f._isFrame) return;
+  const v = Math.max(0, +val);
+  if (f._padLinked !== false) {
+    f._framePadT = f._framePadR = f._framePadB = f._framePadL = v;
+  } else {
+    f['_framePad' + side] = v;
+  }
+  applyFramePadding(f);
+  canvas.requestRenderAll();
+  updateProps();
+  saveUndo();
+}
+
+function togglePadLink() {
+  const f = canvas.getActiveObject();
+  if (!f || !f._isFrame) return;
+  f._padLinked = f._padLinked === false ? true : false;
+  if (f._padLinked) {
+    // When re-linking, unify to the top value
+    const v = f._framePadT || 0;
+    f._framePadR = f._framePadB = f._framePadL = v;
+    applyFramePadding(f);
+    canvas.requestRenderAll();
+  }
+  updateProps();
+}
+
+function snapFrameToCanvas() {
+  const f = canvas.getActiveObject();
+  if (!f || !f._isFrame) return;
+  f._framePadT = f._framePadR = f._framePadB = f._framePadL = 0;
+  applyFramePadding(f);
+  clearGuidelines();
+  canvas.requestRenderAll();
+  updateProps();
+  saveUndo();
+}
+
+// One-shot: add a centered textbox on the active shape and auto-link via linkAsBannerGroup.
+// Routes to banner group (polygon) or hitbox group (other shapes).
+function addTextAndLinkToShape() {
+  const shape = canvas.getActiveObject();
+  if (!shape) return;
+  if (shape.type === 'group' || shape.type === 'activeSelection') return;
+  if (shape._isFrame) return;
+
+  const bb = shape.getBoundingRect(true);
+  // Default font sized to ~half the shape height, clamped
+  const fontSize = Math.max(14, Math.min(72, Math.round(bb.height * 0.5)));
+  const lineH = 1.16;
+  const txtH = fontSize * lineH;
+  // Wide textbox centered on shape, with some inset so linking infers reasonable padding
+  const pad = Math.max(8, Math.round(Math.min(bb.width, bb.height) * 0.1));
+  const txtW = Math.max(40, bb.width - pad * 2);
+  const txt = new fabric.Textbox('Text', {
+    left: bb.left + pad,
+    top: bb.top + (bb.height - txtH) / 2,
+    width: txtW,
+    fontSize,
+    fontFamily: 'Jost',
+    fontWeight: 'bold',
+    fill: '#FFFFFF',
+    textAlign: 'center',
+  });
+  canvas.add(txt);
+
+  // Build an ActiveSelection of shape + text, then route through linkAsBannerGroup
+  const sel = new fabric.ActiveSelection([shape, txt], { canvas });
+  canvas.setActiveObject(sel);
+  linkAsBannerGroup();
+}
+
+// Legacy uniform-offset setter — now just sets all four paddings
+function setFrameOffset(val) {
+  const f = canvas.getActiveObject();
+  if (!f || !f._isFrame) return;
+  const v = Math.max(0, +val);
+  f._framePadT = f._framePadR = f._framePadB = f._framePadL = v;
+  f._frameOffset = v;
+  applyFramePadding(f);
+  canvas.requestRenderAll();
+  updateProps();
+  saveUndo();
+}
+function setFrameThickness(val) {
+  const f = canvas.getActiveObject();
+  if (!f || !f._isFrame) return;
+  f._frameThickness = Math.max(0, +val);
+  applyFramePadding(f);
+  canvas.requestRenderAll();
+  updateProps();
+  saveUndo();
+}
+function setFrameRadius(val) {
+  const f = canvas.getActiveObject();
+  if (!f || !f._isFrame) return;
+  f._frameRadius = Math.max(0, +val);
+  f.dirty = true;
+  canvas.requestRenderAll();
+  updateProps();
+  saveUndo();
+}
+// Toggle one edge of the frame on/off. Side is one of 'T','R','B','L'.
+function toggleFrameSide(side) {
+  const f = canvas.getActiveObject();
+  if (!f || !f._isFrame) return;
+  const key = { T: '_frameTop', R: '_frameRight', B: '_frameBottom', L: '_frameLeft' }[side];
+  if (!key) return;
+  f[key] = f[key] === false ? true : false;
+  f.dirty = true;
+  canvas.requestRenderAll();
+  updateProps();
+  saveUndo();
+}
+// Toggle one corner's contribution. Corner is one of 'TL','TR','BR','BL'.
+function toggleFrameCorner(corner) {
+  const f = canvas.getActiveObject();
+  if (!f || !f._isFrame) return;
+  const key = { TL: '_frameTL', TR: '_frameTR', BR: '_frameBR', BL: '_frameBL' }[corner];
+  if (!key) return;
+  f[key] = f[key] === false ? true : false;
+  f.dirty = true;
+  canvas.requestRenderAll();
+  updateProps();
+  saveUndo();
+}
+// Set how far each corner's arms extend along its sides (0..100%).
+function setFrameCompleteness(val) {
+  const f = canvas.getActiveObject();
+  if (!f || !f._isFrame) return;
+  f._frameCompleteness = Math.max(0, Math.min(100, +val));
+  f.dirty = true;
+  canvas.requestRenderAll();
+  // Debounce undo during slider drag — one commit per settle, not per pixel.
+  clearTimeout(f._compUndoTimer);
+  f._compUndoTimer = setTimeout(() => { saveUndo(); f._compUndoTimer = null; }, 250);
+}
+
+function addCircle() {
+  const c2 = new fabric.Circle({
+    left: canvasW / 2 - 40,
+    top: canvasH / 2 - 40,
+    radius: 40,
+    fill: '#ECB351',
+    _customName: 'Circle',
+  });
+  canvas.add(c2);
+  canvas.setActiveObject(c2);
+  canvas.requestRenderAll();
+  refreshLayers();
+  updateProps();
+}
+
+function addRoundedRect() {
+  const r = new fabric.Rect({
+    left: canvasW / 2 - 120, top: canvasH / 2 - 40,
+    width: 240, height: 80,
+    rx: 16, ry: 16,
+    fill: '#87986A',
+    _customName: 'Rounded Rect',
+  });
+  canvas.add(r); canvas.setActiveObject(r); canvas.requestRenderAll(); refreshLayers(); updateProps();
+}
+
+function addPill() {
+  const r = new fabric.Rect({
+    left: canvasW / 2 - 100, top: canvasH / 2 - 24,
+    width: 200, height: 48,
+    rx: 24, ry: 24,
+    fill: '#ECB351',
+    _customName: 'Pill',
+  });
+  canvas.add(r); canvas.setActiveObject(r); canvas.requestRenderAll(); refreshLayers(); updateProps();
+}
+
+function addTriangle() {
+  const t = new fabric.Triangle({
+    left: canvasW / 2 - 50, top: canvasH / 2 - 50,
+    width: 100, height: 100,
+    fill: '#ECB351',
+    _customName: 'Triangle',
+  });
+  canvas.add(t); canvas.setActiveObject(t); canvas.requestRenderAll(); refreshLayers(); updateProps();
+}
+
+function addArrow() {
+  // Right-pointing arrow polygon
+  const pts = [
+    { x: 0, y: 30 }, { x: 150, y: 30 }, { x: 150, y: 0 },
+    { x: 200, y: 50 },
+    { x: 150, y: 100 }, { x: 150, y: 70 }, { x: 0, y: 70 },
+  ];
+  const arrow = new fabric.Polygon(pts, {
+    left: canvasW / 2 - 100, top: canvasH / 2 - 50,
+    fill: '#FE6B4F',
+    _customName: 'Arrow',
+  });
+  canvas.add(arrow); canvas.setActiveObject(arrow); canvas.requestRenderAll(); refreshLayers(); updateProps();
+}
+
+function addBanner() {
+  // Ribbon banner shape — wide rectangle with notched ends
+  const w = 300, h = 70, notch = 20;
+  const pts = [
+    { x: 0, y: 0 }, { x: w, y: 0 },
+    { x: w - notch, y: h / 2 }, { x: w, y: h },
+    { x: 0, y: h }, { x: notch, y: h / 2 },
+  ];
+  const banner = new fabric.Polygon(pts, {
+    left: canvasW / 2 - w / 2, top: canvasH / 2 - h / 2,
+    fill: '#2B2318',
+    _customName: 'Banner',
+  });
+  canvas.add(banner); canvas.setActiveObject(banner); canvas.requestRenderAll(); refreshLayers(); updateProps();
+}
+
+function addAngledBanner() {
+  // Diagonal corner banner — rotated rectangle strip
+  const r = new fabric.Rect({
+    left: canvasW / 2 - 120, top: canvasH / 2 - 20,
+    width: 300, height: 40,
+    fill: '#FE6B4F',
+    angle: -15,
+    _customName: 'Angled Banner',
+  });
+  canvas.add(r); canvas.setActiveObject(r); canvas.requestRenderAll(); refreshLayers(); updateProps();
+}
+
+function addChevron() {
+  // Right-pointing chevron
+  const w = 200, h = 80, depth = 40;
+  const pts = [
+    { x: 0, y: 0 }, { x: w - depth, y: 0 },
+    { x: w, y: h / 2 }, { x: w - depth, y: h },
+    { x: 0, y: h }, { x: depth, y: h / 2 },
+  ];
+  const chev = new fabric.Polygon(pts, {
+    left: canvasW / 2 - w / 2, top: canvasH / 2 - h / 2,
+    fill: '#87986A',
+    _customName: 'Chevron',
+  });
+  canvas.add(chev); canvas.setActiveObject(chev); canvas.requestRenderAll(); refreshLayers(); updateProps();
+}
+
+function addDiamond() {
+  const size = 80;
+  const pts = [
+    { x: size, y: 0 }, { x: size * 2, y: size },
+    { x: size, y: size * 2 }, { x: 0, y: size },
+  ];
+  const d = new fabric.Polygon(pts, {
+    left: canvasW / 2 - size, top: canvasH / 2 - size,
+    fill: '#ECB351',
+    _customName: 'Diamond',
+  });
+  canvas.add(d); canvas.setActiveObject(d); canvas.requestRenderAll(); refreshLayers(); updateProps();
+}
+
+function addImageFromFile() {
+  const input = document.getElementById('image-input');
+  input.onchange = function() {
+    const file = this.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      fabric.Image.fromURL(e.target.result, function(img) {
+        // Scale to fit within canvas
+        const maxW = canvasW * 0.6;
+        const maxH = canvasH * 0.6;
+        const scale = Math.min(maxW / img.width, maxH / img.height, 1);
+        img.set({
+          left: canvasW / 2 - (img.width * scale) / 2,
+          top: canvasH / 2 - (img.height * scale) / 2,
+          scaleX: scale,
+          scaleY: scale,
+          _customName: file.name.replace(/\.[^.]+$/, ''),
+        });
+        setupImageControls(img);
+        canvas.add(img);
+        canvas.setActiveObject(img);
+        canvas.requestRenderAll();
+        refreshLayers();
+        updateProps();
+      });
+    };
+    reader.readAsDataURL(file);
+    this.value = '';
+  };
+  input.click();
+}
+
+// --- Zoom ---
+function setZoom(z) {
+  zoom = Math.max(0.1, Math.min(3, z));
+  const wrapper = document.getElementById('canvas-wrapper');
+  wrapper.style.transform = `scale(${zoom})`;
+  wrapper.style.transformOrigin = 'center center';
+  document.getElementById('zoom-display').textContent = Math.round(zoom * 100) + '%';
+}
+
+// --- Mouse tracking ---
+function onMouseMove(e) {
+  const pointer = canvas.getPointer(e.e);
+  document.getElementById('status-pos').textContent = `X: ${Math.round(pointer.x)} Y: ${Math.round(pointer.y)}`;
+}
+
+// --- Presets ---
+function loadPreset(preset) {
+  if (!preset) return;
+  const w = preset === '16x9' ? 1280 : 800;
+  const h = preset === '16x9' ? 720 : 800;
+  const name = preset === '16x9' ? 'New 16:9' : 'New 1:1';
+
+  saveCurrentTabState();
+  const id = createTab(name, w, h);
+  activeTabId = id;
+  initCanvas(w, h);
+
+  // Blank preset: transparent background, no placeholder content
+  canvas.backgroundColor = '';
+  canvas.requestRenderAll();
+  refreshLayers();
+  renderTabs();
+  document.getElementById('preset-select').value = '';
+}
+
+// --- Export ---
+function showExportModal() { document.getElementById('export-modal').classList.add('show'); }
+function hideExportModal() { document.getElementById('export-modal').classList.remove('show'); }
+
+function doExport() {
+  const format = document.getElementById('export-format').value;
+  const quality = +document.getElementById('export-quality').value / 100;
+  const scale = +document.getElementById('export-scale').value;
+
+  // Deselect to remove selection handles
+  canvas.discardActiveObject();
+  clearGuidelines();
+  canvas.requestRenderAll();
+
+  const multiplier = scale;
+  const mimeType = format === 'webp' ? 'image/webp' : format === 'jpeg' ? 'image/jpeg' : 'image/png';
+  const ext = format;
+
+  canvas.renderAll(); // synchronous — must commit before toDataURL
+
+  const dataURL = canvas.toDataURL({
+    format: format === 'jpeg' ? 'jpeg' : format,
+    quality: quality,
+    multiplier: multiplier,
+    left: 0,
+    top: 0,
+    width: canvasW,
+    height: canvasH,
+    enableRetinaScaling: false,
+  });
+
+  // Download
+  const tab = tabs.find(t => t.id === activeTabId);
+  const baseName = tab ? tab.name : `thumbnail_${canvasW}x${canvasH}`;
+  const link = document.createElement('a');
+  link.download = `${baseName}.${ext}`;
+  link.href = dataURL;
+  link.click();
+
+  hideExportModal();
+
+  // Show file size estimate
+  const bytes = Math.round((dataURL.length - `data:${mimeType};base64,`.length) * 0.75);
+  const kb = (bytes / 1024).toFixed(1);
+  document.getElementById('status-selection').textContent = `Exported ${ext.toUpperCase()} @ ${scale}x \u2014 ~${kb}KB`;
+}
+
+// --- JSON Save/Load ---
+function saveJSON() {
+  canvas.discardActiveObject();
+  clearGuidelines();
+  canvas.requestRenderAll();
+
+  const json = canvas.toJSON(['_customName', 'lockUniScaling', 'lockMovementX', 'lockMovementY', 'lockScalingX', 'lockScalingY', 'lockRotation', '_bannerLeftEnd', '_bannerRightEnd', '_bannerNotchL', '_bannerNotchR', '_bannerFlareL', '_bannerFlareR', '_isBannerGroup','_isHitboxGroup','_isFrame','_frameOffset','_framePadT','_framePadR','_framePadB','_framePadL', '_padL', '_padR', '_padT', '_padB', 'paintFirst','_shadowSpread','_spreadStrokeBackup','_frameThickness','_frameRadius','_frameTop','_frameRight','_frameBottom','_frameLeft','_frameTL','_frameTR','_frameBR','_frameBL','_frameCompleteness','_padLinked','_cornerRadius','_innerShadow']);
+  const meta = { canvasW, canvasH, exportVersion: 1 };
+  const data = JSON.stringify({ meta, canvas: json }, null, 2);
+
+  const tab = tabs.find(t => t.id === activeTabId);
+  const baseName = tab ? tab.name : `thumbnail_${canvasW}x${canvasH}`;
+
+  const blob = new Blob([data], { type: 'application/json' });
+  const link = document.createElement('a');
+  link.download = `${baseName}.json`;
+  link.href = URL.createObjectURL(blob);
+  link.click();
+}
+
+function loadJSON() {
+  const input = document.getElementById('json-input');
+  input.onchange = function() {
+    const files = Array.from(this.files);
+    if (!files.length) return;
+    loadJSONFiles(files, 0);
+    this.value = '';
+  };
+  input.click();
+}
+
+function loadJSONFiles(files, idx) {
+  if (idx >= files.length) return;
+  const file = files[idx];
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      const w = (data.meta && data.meta.canvasW) || 1280;
+      const h = (data.meta && data.meta.canvasH) || 720;
+      const tabName = file.name.replace(/\.json$/i, '');
+
+      saveCurrentTabState();
+      const id = createTab(tabName, w, h);
+      activeTabId = id;
+      initCanvas(w, h);
+
+      const canvasData = data.canvas || data;
+
+      const onDone = function() {
+        reattachBehaviors();
+        canvas.requestRenderAll();
+        refreshLayers();
+        renderTabs();
+        document.getElementById('status-selection').textContent = `Loaded: ${tabName}`;
+        document.getElementById('status-size').textContent = `${w} x ${h}`;
+        // Load next file
+        loadJSONFiles(files, idx + 1);
+      };
+
+      // Always use fabric's native loader — handles all types, props, nested groups, images
+      canvas.loadFromJSON(canvasData, onDone);
+    } catch(err) {
+      alert('Error loading ' + file.name + ': ' + err.message);
+      loadJSONFiles(files, idx + 1);
+    }
+  };
+  reader.readAsText(file);
+}
+
+function loadObjectsSequentially(objects, idx, done) {
+  if (idx >= objects.length) { done(); return; }
+  const o = objects[idx];
+  const next = () => loadObjectsSequentially(objects, idx + 1, done);
+
+  if (o.type === 'image' && o.src) {
+    fabric.Image.fromURL(o.src, function(img) {
+      img.set({
+        left: o.left || 0,
+        top: o.top || 0,
+        scaleX: o.scaleX || 1,
+        scaleY: o.scaleY || 1,
+        angle: o.angle || 0,
+        opacity: o.opacity != null ? o.opacity : 1,
+        _customName: o._customName || 'Image',
+        selectable: o.selectable !== false,
+        evented: o.evented !== false,
+        cropX: o.cropX || 0,
+        cropY: o.cropY || 0,
+        width: o.width || img.width,
+        height: o.height || img.height,
+        _cornerRadius: o._cornerRadius || 0,
+      });
+      setupImageControls(img);
+      if (o._cornerRadius && o._cornerRadius > 0) setImageCornerRadiusOn(img, o._cornerRadius);
+      // Apply clipPath for cover-style cropping
+      if (o.clipPath && o.clipPath.type === 'rect') {
+        const cp = new fabric.Rect({
+          left: o.clipPath.left || 0,
+          top: o.clipPath.top || 0,
+          width: o.clipPath.width || 100,
+          height: o.clipPath.height || 100,
+          absolutePositioned: !!o.clipPath.absolutePositioned,
+        });
+        img.clipPath = cp;
+      }
+      canvas.add(img);
+      next();
+    }, { crossOrigin: 'anonymous' });
+  } else if (o.type === 'rect') {
+    const r = new fabric.Rect({
+      left: o.left || 0, top: o.top || 0,
+      width: o.width || 100, height: o.height || 100,
+      fill: o.fill || '#333',
+      rx: o.rx || 0, ry: o.ry || 0,
+      angle: o.angle || 0,
+      opacity: o.opacity != null ? o.opacity : 1,
+      selectable: o.selectable !== false,
+      evented: o.evented !== false,
+      _customName: o._customName || 'Rectangle',
+    });
+    canvas.add(r);
+    next();
+  } else if (o.type === 'textbox' || o.type === 'text' || o.type === 'i-text') {
+    const t = new fabric.Textbox(o.text || '', {
+      left: o.left || 0, top: o.top || 0,
+      width: o.width || 200,
+      fontSize: o.fontSize || 24,
+      fontFamily: o.fontFamily || 'Arial',
+      fontWeight: o.fontWeight || 'normal',
+      fill: o.fill || '#fff',
+      textAlign: o.textAlign || 'left',
+      angle: o.angle || 0,
+      opacity: o.opacity != null ? o.opacity : 1,
+      _customName: o._customName || 'Text',
+    });
+    canvas.add(t);
+    next();
+  } else if (o.type === 'circle') {
+    const c2 = new fabric.Circle({
+      left: o.left || 0, top: o.top || 0,
+      radius: o.radius || 50,
+      fill: o.fill || '#333',
+      angle: o.angle || 0,
+      opacity: o.opacity != null ? o.opacity : 1,
+      _customName: o._customName || 'Circle',
+    });
+    canvas.add(c2);
+    next();
+  } else if (o.type === 'triangle') {
+    const tri = new fabric.Triangle({
+      left: o.left || 0, top: o.top || 0,
+      width: o.width || 100, height: o.height || 100,
+      fill: o.fill || '#333',
+      angle: o.angle || 0,
+      scaleX: o.scaleX || 1, scaleY: o.scaleY || 1,
+      opacity: o.opacity != null ? o.opacity : 1,
+      _customName: o._customName || 'Triangle',
+    });
+    canvas.add(tri);
+    next();
+  } else if (o.type === 'polygon' && o.points) {
+    const poly = new fabric.Polygon(o.points, {
+      left: o.left || 0, top: o.top || 0,
+      fill: o.fill || '#333',
+      angle: o.angle || 0,
+      scaleX: o.scaleX || 1, scaleY: o.scaleY || 1,
+      opacity: o.opacity != null ? o.opacity : 1,
+      _customName: o._customName || 'Polygon',
+    });
+    canvas.add(poly);
+    next();
+  } else {
+    next();
+  }
+}
+
+// --- Modals ---
+function showAddModal() { document.getElementById('add-modal').classList.add('show'); }
+function hideAddModal() { document.getElementById('add-modal').classList.remove('show'); }
+
+// --- Undo / Redo ---
+let undoStack = [];
+let redoStack = [];
+let undoLocked = false;
+const MAX_UNDO = 40;
+
+function saveUndo() {
+  if (undoLocked || !canvas) return;
+  const json = JSON.stringify(canvas.toJSON(['_customName','selectable','evented','lockMovementX','lockMovementY','lockScalingX','lockScalingY','lockRotation','_bannerLeftEnd','_bannerRightEnd','_bannerNotchL','_bannerNotchR','_isBannerGroup','_isHitboxGroup','_isFrame','_frameOffset','_framePadT','_framePadR','_framePadB','_framePadL','_padL','_padR','_padT','_padB','paintFirst','_shadowSpread','_spreadStrokeBackup','_frameThickness','_frameRadius','_padLinked','_cornerRadius','_innerShadow']));
+  // Don't push if identical to top of stack
+  if (undoStack.length && undoStack[undoStack.length - 1] === json) return;
+  undoStack.push(json);
+  if (undoStack.length > MAX_UNDO) undoStack.shift();
+  redoStack = [];
+}
+
+function undo() {
+  if (!canvas || undoStack.length < 1) return;
+  // Save current state to redo
+  const cur = JSON.stringify(canvas.toJSON(['_customName','selectable','evented','lockMovementX','lockMovementY','lockScalingX','lockScalingY','lockRotation','_bannerLeftEnd','_bannerRightEnd','_bannerNotchL','_bannerNotchR','_isBannerGroup','_isHitboxGroup','_isFrame','_frameOffset','_framePadT','_framePadR','_framePadB','_framePadL','_padL','_padR','_padT','_padB','paintFirst','_shadowSpread','_spreadStrokeBackup','_frameThickness','_frameRadius','_padLinked','_cornerRadius','_innerShadow']));
+  redoStack.push(cur);
+  const prev = undoStack.pop();
+  restoreState(prev);
+}
+
+function redo() {
+  if (!canvas || redoStack.length < 1) return;
+  // Save current to undo
+  const cur = JSON.stringify(canvas.toJSON(['_customName','selectable','evented','lockMovementX','lockMovementY','lockScalingX','lockScalingY','lockRotation','_bannerLeftEnd','_bannerRightEnd','_bannerNotchL','_bannerNotchR','_isBannerGroup','_isHitboxGroup','_isFrame','_frameOffset','_framePadT','_framePadR','_framePadB','_framePadL','_padL','_padR','_padT','_padB','paintFirst','_shadowSpread','_spreadStrokeBackup','_frameThickness','_frameRadius','_padLinked','_cornerRadius','_innerShadow']));
+  undoStack.push(cur);
+  const next = redoStack.pop();
+  restoreState(next);
+}
+
+function restoreState(json) {
+  undoLocked = true;
+  canvas.loadFromJSON(json, function() {
+    reattachBehaviors();
+    refreshLayers();
+    updateProps();
+    undoLocked = false;
+  });
+}
+
+// --- Right-click Context Menu ---
+function showContextMenu(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  const menu = document.getElementById('context-menu');
+  const obj = canvas.getActiveObject();
+  const hasObj = !!obj;
+  const isGroup = hasObj && obj.type === 'group';
+  const isBanner = isGroup && obj._isBannerGroup;
+  const isMulti = hasObj && obj.type === 'activeSelection';
+  const hasMultiWithPolyAndText = isMulti && obj._objects &&
+    obj._objects.some(o => o.type === 'polygon') &&
+    obj._objects.some(o => o.type === 'textbox' || o.type === 'text' || o.type === 'i-text');
+
+  let html = '';
+  // Always available
+  html += `<div class="ctx-item" onclick="undo(); hideContextMenu()">Undo <span class="shortcut">Ctrl+Z</span></div>`;
+  html += `<div class="ctx-item" onclick="redo(); hideContextMenu()">Redo <span class="shortcut">Ctrl+Y</span></div>`;
+  html += '<div class="ctx-sep"></div>';
+
+  if (hasObj) {
+    html += `<div class="ctx-item" onclick="duplicateLayer(); hideContextMenu()">Duplicate <span class="shortcut">Ctrl+D</span></div>`;
+    html += `<div class="ctx-item" onclick="deleteLayer(); hideContextMenu()">Delete <span class="shortcut">Del</span></div>`;
+    html += '<div class="ctx-sep"></div>';
+    html += `<div class="ctx-item" onclick="moveLayer('up'); hideContextMenu()">Move Up</div>`;
+    html += `<div class="ctx-item" onclick="moveLayer('down'); hideContextMenu()">Move Down</div>`;
+    html += '<div class="ctx-sep"></div>';
+
+    if (isMulti) {
+      html += `<div class="ctx-item" onclick="groupSelected(); hideContextMenu()">Group <span class="shortcut">Ctrl+G</span></div>`;
+      if (hasMultiWithPolyAndText) {
+        html += `<div class="ctx-item" onclick="linkAsBannerGroup(); hideContextMenu()">Link as Banner</div>`;
+      }
+    }
+    if (isGroup && !isBanner) {
+      html += `<div class="ctx-item" onclick="ungroupSelected(); hideContextMenu()">Ungroup <span class="shortcut">Ctrl+Shift+G</span></div>`;
+    }
+    if (isBanner) {
+      html += `<div class="ctx-item" onclick="ungroupSelected(); hideContextMenu()">Ungroup Banner</div>`;
+    }
+
+    // Lock/unlock
+    const locked = obj.lockMovementX;
+    html += '<div class="ctx-sep"></div>';
+    html += `<div class="ctx-item" onclick="toggleLockActive(); hideContextMenu()">${locked ? 'Unlock' : 'Lock'}</div>`;
+    // Visibility
+    html += `<div class="ctx-item" onclick="toggleVisActive(); hideContextMenu()">${obj.visible === false ? 'Show' : 'Hide'}</div>`;
+  } else {
+    // No selection
+    html += `<div class="ctx-item" onclick="showAddModal(); hideContextMenu()">Add Element</div>`;
+    html += `<div class="ctx-item" onclick="loadJSON(); hideContextMenu()">Load JSON</div>`;
+  }
+
+  menu.innerHTML = html;
+  menu.style.left = e.clientX + 'px';
+  menu.style.top = e.clientY + 'px';
+  menu.classList.add('show');
+
+  // Ensure menu stays on screen
+  requestAnimationFrame(() => {
+    const rect = menu.getBoundingClientRect();
+    if (rect.right > window.innerWidth) menu.style.left = (window.innerWidth - rect.width - 4) + 'px';
+    if (rect.bottom > window.innerHeight) menu.style.top = (window.innerHeight - rect.height - 4) + 'px';
+  });
+}
+
+function hideContextMenu() {
+  document.getElementById('context-menu').classList.remove('show');
+}
+
+function toggleLockActive() {
+  const obj = canvas.getActiveObject();
+  if (!obj) return;
+  const locked = !obj.lockMovementX;
+  obj.set({
+    lockMovementX: locked, lockMovementY: locked,
+    lockScalingX: locked, lockScalingY: locked,
+    lockRotation: locked, hasControls: !locked,
+  });
+  canvas.requestRenderAll(); refreshLayers();
+}
+
+function toggleVisActive() {
+  const obj = canvas.getActiveObject();
+  if (!obj) return;
+  obj.visible = !obj.visible;
+  canvas.requestRenderAll(); refreshLayers();
+}
+
+// Attach right-click to canvas area
+document.getElementById('canvas-area').addEventListener('contextmenu', showContextMenu);
+// Close context menu on any click
+document.addEventListener('click', hideContextMenu);
+document.addEventListener('mousedown', function(e) {
+  if (!document.getElementById('context-menu').contains(e.target)) hideContextMenu();
+});
+
+// --- Keyboard Shortcuts ---
+document.addEventListener('keydown', function(e) {
+  // Delete
+  if ((e.key === 'Delete' || e.key === 'Backspace') && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+    const obj = canvas.getActiveObject();
+    if (obj && obj.type !== 'textbox' || (obj && !obj.isEditing)) {
+      deleteLayer();
+      e.preventDefault();
+    }
+  }
+  // Ctrl+Z undo / Ctrl+Y or Ctrl+Shift+Z redo
+  if (e.ctrlKey && e.key === 'z' && !e.shiftKey && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+    e.preventDefault();
+    undo();
+    return;
+  }
+  if ((e.ctrlKey && e.key === 'y') || (e.ctrlKey && e.shiftKey && e.key === 'Z')) {
+    if (document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+      e.preventDefault();
+      redo();
+      return;
+    }
+  }
+  // Ctrl+G group / Ctrl+Shift+G ungroup
+  if (e.ctrlKey && e.key === 'g' && !e.shiftKey) {
+    e.preventDefault();
+    groupSelected();
+    return;
+  }
+  if (e.ctrlKey && e.shiftKey && e.key === 'G') {
+    e.preventDefault();
+    ungroupSelected();
+    return;
+  }
+  // Ctrl+D duplicate
+  if (e.ctrlKey && e.key === 'd') {
+    e.preventDefault();
+    duplicateLayer();
+  }
+  // Ctrl+S save
+  if (e.ctrlKey && e.key === 's') {
+    e.preventDefault();
+    saveJSON();
+  }
+  // Ctrl+E export
+  if (e.ctrlKey && e.key === 'e') {
+    e.preventDefault();
+    showExportModal();
+  }
+  // Escape
+  if (e.key === 'Escape') {
+    canvas.discardActiveObject();
+    clearGuidelines();
+    canvas.requestRenderAll();
+    refreshLayers();
+    updateProps();
+    hideExportModal();
+    hideAddModal();
+  }
+  // Arrow keys for nudging
+  if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key) && document.activeElement.tagName !== 'INPUT') {
+    const obj = canvas.getActiveObject();
+    if (!obj || obj.lockMovementX) return;
+    e.preventDefault();
+    const step = e.shiftKey ? 10 : 1;
+    if (e.key === 'ArrowLeft') obj.set('left', obj.left - step);
+    if (e.key === 'ArrowRight') obj.set('left', obj.left + step);
+    if (e.key === 'ArrowUp') obj.set('top', obj.top - step);
+    if (e.key === 'ArrowDown') obj.set('top', obj.top + step);
+    obj.setCoords();
+    canvas.requestRenderAll();
+    updateProps();
+  }
+});
+
+// Close modals on background click
+document.getElementById('export-modal').addEventListener('click', function(e) { if (e.target === this) hideExportModal(); });
+document.getElementById('add-modal').addEventListener('click', function(e) { if (e.target === this) hideAddModal(); });
+
+// --- Auto-load from URL query params ---
+// Usage: editor.html?load=output/16x9/foo_v1.json,output/1x1/foo_v1.json,...
+async function autoLoadFromURL() {
+  const params = new URLSearchParams(window.location.search);
+  const loadParam = params.get('load');
+  if (!loadParam) return;
+
+  const paths = loadParam.split(',').map(p => p.trim()).filter(Boolean);
+  if (!paths.length) return;
+
+  console.log(`Auto-loading ${paths.length} JSON file(s)...`);
+  for (const filePath of paths) {
+    try {
+      const resp = await fetch(filePath);
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const data = await resp.json();
+      const w = (data.meta && data.meta.canvasW) || 1280;
+      const h = (data.meta && data.meta.canvasH) || 720;
+      const tabName = filePath.split('/').pop().replace(/\.json$/i, '');
+
+      saveCurrentTabState();
+      const id = createTab(tabName, w, h);
+      activeTabId = id;
+      initCanvas(w, h);
+
+      const canvasData = data.canvas || data;
+
+      await new Promise((resolve, reject) => {
+        const onDone = function() {
+          canvas.requestRenderAll();
+          refreshLayers();
+          renderTabs();
+          document.getElementById('status-selection').textContent = `Loaded: ${tabName}`;
+          document.getElementById('status-size').textContent = `${w} x ${h}`;
+          resolve();
+        };
+
+        if (canvasData.objects && canvasData.objects.some(o => o.type === 'image' && o.src)) {
+          canvas.backgroundColor = canvasData.background || '#000';
+          loadObjectsSequentially(canvasData.objects, 0, onDone);
+        } else {
+          canvas.loadFromJSON(canvasData, onDone);
+        }
+      });
+      console.log(`  Loaded: ${tabName}`);
+    } catch (err) {
+      console.error(`Failed to load ${filePath}:`, err);
+    }
+  }
+
+  // Switch to first tab
+  if (tabs.length > 0) {
+    switchToTab(tabs[0].id);
+  }
+}
+
+// --- Boot ---
+initCanvas(1280, 720);
+renderTabs();
+autoLoadFromURL();
+</script>
+</body>
+</html>
