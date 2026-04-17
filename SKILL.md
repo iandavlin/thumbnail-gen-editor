@@ -1,37 +1,26 @@
 # Thumbnail Generator Skill
 
-Generates show thumbnails as editable `.pptx` files optimized for Google Slides import, using **pptxgenjs** (Node.js).
+Generates show thumbnails as Fabric.js JSON layouts, rendered and exported as PNG from the HTML editor.
 
 ## Output
 
-Every run produces **8 files** in `./output/`, organized by aspect ratio:
+Each episode produces a **JSON layout** in `./output/<ratio>/`, loaded by the HTML editor and exported as PNG directly. JSON is the source of truth — diff-able, reproducible, reloadable.
 
 ```
 output/
-  16x9/
-    {show}_{guest}_16x9_v1.pptx
-    {show}_{guest}_16x9_v2.pptx
-    {show}_{guest}_16x9_v3.pptx
-    {show}_{guest}_16x9_all.pptx    # all 3 variants as slides
-  1x1/
-    {show}_{guest}_1x1_v1.pptx
-    {show}_{guest}_1x1_v2.pptx
-    {show}_{guest}_1x1_v3.pptx
-    {show}_{guest}_1x1_all.pptx     # all 3 variants as slides
+  16x9/{show}_{guest}_16x9.json       # canonical layout (plus any variants if fanned out)
+  1x1/{show}_{guest}_1x1.json
 ```
 
-Each variant (V1/V2/V3) is the **same layout** across both ratios — reflowed, not cropped.
+When ready, open the JSON in the editor and hit Export PNG. That PNG is the final deliverable for YouTube / social / deck-embed.
 
-All elements are **separate, editable objects** in Google Slides: text boxes, shapes, images.
+## Workflow
 
-## Two Workflows
+One primary path: **HTML Editor (`editor.html`)** — interactive Fabric.js canvas editor. Design layouts in JSON, open with Load JSON, tweak in GUI, hit Export PNG.
 
-There are now **two** ways to produce thumbnails:
+Legacy: the `generate.js` / `generate_1x1.js` scripts emit `.pptx` via pptxgenjs — **deprecated**. Only reach for this path if the final asset genuinely needs to be editable in Google Slides. PNG-in-deck is almost always better (`slide.addImage`).
 
-1. **HTML Editor** (`editor.html`) — interactive Fabric.js canvas editor. Best for layout design, iteration, and one-off thumbnails. Export PNG/JPG directly. **This is the primary workflow going forward.**
-2. **pptxgenjs Generators** (`generate*.js`) — scripted `.pptx` output for Google Slides. Best for batch variants or when the final asset needs to be editable in Slides.
-
-Layouts designed in the editor can be **saved as JSON** and reloaded later. Sample layouts live in `output/16x9/*.json`.
+Layouts live on disk as JSON. Sample layouts: `output/16x9/*.json`. Reusable templates: `templates/*.json` (see `templates/README.md`).
 
 ### The generator/editor handoff
 
@@ -39,26 +28,87 @@ Layouts designed in the editor can be **saved as JSON** and reloaded later. Samp
 
 - When starting a new thumbnail, **build it as JSON** (via a new or extended `generate_*.js`), write to `output/16x9/*.json`, and load it in the editor. Don't build layouts imperatively through live eval / `preview_eval` — editor state is volatile, JSON is source of truth.
 - On editor load, `reattachBehaviors()` rebuilds banner polygon points from metadata (`_isBannerGroup`, `_bannerLeftEnd/RightEnd`, `_bannerNotchL/R`, padding, text fontSize). So the generator only needs to emit metadata + a minimal placeholder polygon — don't pre-compute points.
-- Image `src` in JSON should be a relative path (e.g. `/assets/episode/foo.png`), not a `localhost` absolute URL — portable across sessions.
+- Image `src` in JSON should be a relative path (e.g. `/assets/2026-06-25_thorell/foo.png`), not a `localhost` absolute URL — portable across sessions. Saving from the editor's Save JSON re-bakes absolute URLs; relativize them before checking files in.
 - User edits in the editor, hits **Save JSON** — the new version overwrites or lives alongside the generator output. If the user commits to a mod, I port it back into the generator so `node generate_*.js` reproduces it.
 
 ## Folder Structure
 
 ```
 Thumbnails/
-  editor.html        # HTML/Fabric.js visual editor (primary workflow)
-  assets/            # Persistent assets (logos, branding, recurring graphics)
-  assets/episode/    # Per-episode assets (guest photos, sponsor badges, references)
+  editor.html                   # HTML/Fabric.js visual editor (primary workflow)
+  serve.js                      # Static file server for local dev (port 8080 via launch.json)
+  assets/                       # Persistent assets (logos, branding, recurring graphics)
+  assets/<YYYY-MM-DD>_<slug>/   # Per-episode assets — one folder per episode, ISO date prefixed
+  templates/                    # Reusable JSON layouts (slot-based + remix-copy — see templates/README.md)
+  templates/components/         # Reusable sub-elements (banner shapes, frames, logos)
   output/
-    16x9/            # Generated 16:9 .pptx files + saved .json editor layouts
-    1x1/             # Generated 1:1 .pptx files
-  generate.js        # Main pptxgenjs generator (produces both 16:9 and 1:1)
-  generate_1x1.js    # Standalone 1:1 pptxgenjs generator
-  SKILL.md           # This file
+    16x9/                       # Saved JSON layouts (16:9)
+    1x1/                        # Saved JSON layouts (1:1)
+  SKILL.md                      # This file
 ```
 
 - `assets/` contents persist between runs.
-- `assets/episode/` is cleared between episodes. Drop guest photos and sponsor badges here.
+- **Per-episode assets** live in `assets/<YYYY-MM-DD>_<slug>/` — ISO date prefix (zero-padded) so folders sort chronologically in any file listing. Slug is short and recognizable (`thorell`, `ted`, `slj`). Example: `assets/2026-06-25_thorell/`.
+- Image drop flow: when a user hands me an image in chat, (a) find out the show + date, (b) have the user save from clipboard to `~/Downloads/`, (c) I move + rename it into `assets/<YYYY-MM-DD>_<slug>/` with a descriptive filename (e.g. `ryan_thorell_guitar.jpg`), (d) reference as `/assets/<YYYY-MM-DD>_<slug>/<filename>` in JSON.
+
+## Deployment / Pushing changes
+
+The app is deployed as a separate git repo at `dist/thumbnails-app/`. The working dir at repo root is where iteration happens; `dist/thumbnails-app/` is the snapshot that gets pushed to GitHub and pulled by the EC2 server.
+
+- **Repo:** https://github.com/iandavlin/thumbnail-gen-editor (branch `main`)
+- **Deploy target:** EC2 instance, pulls via the read-only deploy key already installed on that box
+- **Deploy key info lives in:** memory + the README in `dist/thumbnails-app/`
+
+### When to push
+
+- **Only on explicit user request.** Don't push reflexively after edits — the user wants to batch changes and verify locally first.
+- Good moments to remind the user a push is pending: after a meaningful editor improvement (new control, bug fix), after a brand/palette change, after a new template or pattern lands.
+
+### What to sync from the working dir into `dist/thumbnails-app/`
+
+Files that ship in the deploy package:
+- `editor.html`
+- `serve.js`
+- `SKILL.md`
+- `package.json`, `package-lock.json` (if dependencies changed)
+- `templates/` (entire tree — including `components/` and `patterns/`)
+- `generate*.js` (only if the user actually runs them on the deploy target — usually not)
+
+Files that **do NOT** ship (stay local only):
+- `output/` (per-episode work; episode JSON files belong to the user, not the app)
+- `assets/<date>_<slug>/` (per-episode media; user-specific)
+- `assets/episode/` (legacy episode folder)
+- Loose root images, `.pptx` files, `node_modules/`
+
+### Push procedure
+
+When the user asks to push:
+
+```bash
+# From the working dir, copy curated files into the deploy snapshot
+cp editor.html serve.js SKILL.md dist/thumbnails-app/
+cp package.json package-lock.json dist/thumbnails-app/
+cp -r templates/* dist/thumbnails-app/templates/
+
+# Then commit + push from the deploy snapshot
+cd dist/thumbnails-app
+git add .
+git status                # show the user what's about to be committed
+# Get the user's go-ahead, then commit with a focused message
+git commit -m "Brief subject — what changed and why"
+git push origin main
+```
+
+After push, the EC2 box needs to pull and restart the service. If the user has the EC2 Claude session open, hand it: `cd ~/thumbnail-gen-editor && git pull && sudo systemctl restart thumbnails`. Otherwise the user does it manually.
+
+### Commit message style
+
+One-line subject (~60 chars), focused on the user-visible change:
+- `Add center-snapping with orange guide lines on the canvas`
+- `Fix banner text shadow toggle (was hidden by stale conditional)`
+- `Refresh brand palette to 2026 Looth Group colors`
+
+Don't pile multiple unrelated changes into one commit — squash where it makes sense, but a clean push usually maps to a single logical change.
 
 ## Workflow
 
@@ -133,10 +183,13 @@ The user picks a direction, then we generate.
 ### Phase 4: Generate
 
 Once layout and images are approved:
-1. Download selected images to `assets/episode/`
+1. Create the per-episode folder `assets/<YYYY-MM-DD>_<slug>/` and move images into it with descriptive filenames
 2. Process photos (crop, background removal if needed)
-3. Generate the `.pptx` files with 3 color variants
-4. Present output for review
+3. Write the JSON layout to `output/<ratio>/{show}_{guest}_<ratio>.json` — either by hand-editing a template copy, or (for fanout) via a small `generate_*.js` that emits JSON
+4. Load the JSON in the editor for last-mile tweaks; user exports PNG when satisfied
+5. For a one-off, skip the generator `.js` entirely — edit JSON directly. Generator pattern only pays off when you need programmatic variants or reproducibility
+
+Before starting from scratch, check `templates/*.json` for a successful layout worth reskinning (see `templates/README.md` → `toReskin` / `useWhen` notes on each).
 
 ### Phase 5: Iterate
 
@@ -278,21 +331,44 @@ It's a full reflow:
 
 ## Default Brand Palette (Looth Group)
 
-The authoritative color swatch is stored in `assets/462542433_1778364879633295_210989199861190657_n.jpg`. Reference it visually when needed.
+Aged palette (2026). Grouped by role. Desaturated/warmed from the original brights for a more editorial, vintage feel.
+
+**Core brand colors** — aged interpretation of the logo. The identity:
+
+| Name | Hex | Role |
+|---|---|---|
+| Forest | #5C6B4F | Primary · backdrop |
+| Looth Orange | #BF7237 | Primary accent |
+| Ringed Gold | #C9A155 | Secondary accent |
+| Deep Forest | #343D2E | Shadow · text |
+| Sage | #A7B597 | Soft accent · text |
+| Burnt Orange | #9E5131 | Orange shadow |
+
+**Neutrals** — warm, slightly olive. Parchment through to coffee:
 
 | Name | Hex |
 |---|---|
-| GOLD | #ECB351 |
-| GOLD_LIGHT | #F1DE83 |
-| GREEN_PALE | #D4E0B8 |
-| GREEN_LIGHT | #C2D5AA |
-| GREEN_MID | #A8BE8B |
-| GREEN_SAGE | #97A97C |
-| GREEN_DARK | #87986A |
-| CORAL | #FE6B4F |
-| DARK | #2B2318 |
-| OFFWHITE | #FAF6EE |
-| WHITE | #FFFFFF |
+| Parchment | #F5F0E4 |
+| Linen | #E4DCC9 |
+| Stone | #B0A894 |
+| Ash | #645F50 |
+| Graphite | #3A362C |
+| Coffee | #1B1812 |
+
+**Extended palette** — retuned to sit next to the aged core. Slate teal = info; rust red = error:
+
+| Name | Hex |
+|---|---|
+| Rosewood | #6B3824 |
+| Copper | #9E6238 |
+| Wheat | #BBA472 |
+| Meadow | #6E8459 |
+| Pine | #27382A |
+| Rust Red | #7A2E25 |
+| Slate Teal | #4E6670 |
+| Oxblood | #5A2220 |
+
+**Contrast note:** Looth Orange on Forest is display-only. For small text on Forest, use Ringed Gold or Parchment.
 
 ## Variant Design
 
@@ -335,9 +411,9 @@ Use **sharp** (Node.js) to:
 2. Match crop tightness to the visual strategy decided in Phase 2
 3. Save to temp files, clean up after generation
 
-## Google Slides Compatibility
+## Google Slides Compatibility (legacy pptxgenjs path only)
 
-Slide dimensions must be set **before** adding slides:
+Only relevant if using the deprecated `generate.js` / `generate_1x1.js` pptxgenjs path. Slide dimensions must be set **before** adding slides:
 
 - 16:9: `width: 12.8, height: 7.2` (inches) via `defineLayout()`
 - 1:1: `width: 8, height: 8` (inches) via `defineLayout()`

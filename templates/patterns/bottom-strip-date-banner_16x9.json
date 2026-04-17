@@ -1,0 +1,123 @@
+{
+  "name": "bottom-strip-date-banner",
+  "description": "Full-width strip across the lower 1/10 of the canvas with a double-chevron date banner centered on it. Banner has a soft drop shadow; text has a hard no-blur offset shadow (4, 2) for a punchy vinyl-lettering look.",
+  "canvasRef": { "w": 1280, "h": 720 },
+  "tweakable": {
+    "objects[0].fill": "Strip fill color (default: #2B2318 dark brown)",
+    "objects[1].objects[0].fill": "Banner panel fill (default: #ECB351 gold)",
+    "objects[1].objects[1].text": "Date text — e.g. 'JUN 25 · 3 PM ET'",
+    "objects[1].objects[1].fill": "Date text color (default: #2B2318 dark — high contrast on gold)",
+    "objects[1].objects[1].shadow": "Text shadow — default is offset (4,2) blur 0"
+  },
+  "objects": [
+    {
+      "type": "rect",
+      "version": "5.3.0",
+      "originX": "left", "originY": "top",
+      "left": 0, "top": 648,
+      "width": 1280, "height": 72,
+      "fill": "#2B2318",
+      "stroke": null, "strokeWidth": 0,
+      "strokeDashArray": null, "strokeLineCap": "butt", "strokeDashOffset": 0,
+      "strokeLineJoin": "miter", "strokeUniform": false, "strokeMiterLimit": 4,
+      "scaleX": 1, "scaleY": 1,
+      "angle": 0, "flipX": false, "flipY": false, "opacity": 1,
+      "shadow": null, "visible": true, "backgroundColor": "",
+      "fillRule": "nonzero", "paintFirst": "fill",
+      "globalCompositeOperation": "source-over", "skewX": 0, "skewY": 0,
+      "rx": 0, "ry": 0,
+      "_customName": "Bottom Strip",
+      "lockMovementX": false, "lockMovementY": false,
+      "lockScalingX": false, "lockScalingY": false, "lockRotation": false
+    },
+    {
+      "type": "group",
+      "version": "5.3.0",
+      "originX": "left", "originY": "top",
+      "left": 507, "top": 662,
+      "width": 266, "height": 44,
+      "fill": "rgb(0,0,0)",
+      "stroke": null, "strokeWidth": 0,
+      "strokeDashArray": null, "strokeLineCap": "butt", "strokeDashOffset": 0,
+      "strokeLineJoin": "miter", "strokeUniform": false, "strokeMiterLimit": 4,
+      "scaleX": 1, "scaleY": 1,
+      "angle": 0, "flipX": false, "flipY": false, "opacity": 1,
+      "shadow": null, "visible": true, "backgroundColor": "",
+      "fillRule": "nonzero", "paintFirst": "fill",
+      "globalCompositeOperation": "source-over", "skewX": 0, "skewY": 0,
+      "_customName": "Date",
+      "lockUniScaling": true,
+      "lockMovementX": false, "lockMovementY": false,
+      "lockScalingX": false, "lockScalingY": false, "lockRotation": false,
+      "_bannerLeftEnd": "chevron",
+      "_bannerRightEnd": "chevron",
+      "_bannerNotchL": 20,
+      "_bannerNotchR": 20,
+      "_isBannerGroup": true,
+      "_padL": 14, "_padR": 14, "_padT": 8, "_padB": 8,
+      "_padLinked": false,
+      "objects": [
+        {
+          "type": "polygon", "version": "5.3.0",
+          "originX": "left", "originY": "top",
+          "left": -133, "top": -22,
+          "width": 266, "height": 44,
+          "fill": "#ECB351",
+          "stroke": null, "strokeWidth": 0,
+          "strokeDashArray": null, "strokeLineCap": "butt", "strokeDashOffset": 0,
+          "strokeLineJoin": "miter", "strokeUniform": false, "strokeMiterLimit": 4,
+          "scaleX": 1, "scaleY": 1,
+          "angle": 0, "flipX": false, "flipY": false, "opacity": 1,
+          "shadow": {
+            "color": "rgba(0,0,0,0.4)", "blur": 8,
+            "offsetX": 3, "offsetY": 3,
+            "affectStroke": false, "nonScaling": false
+          },
+          "visible": true, "backgroundColor": "",
+          "fillRule": "nonzero", "paintFirst": "fill",
+          "globalCompositeOperation": "source-over", "skewX": 0, "skewY": 0,
+          "lockMovementX": false, "lockMovementY": false,
+          "lockScalingX": false, "lockScalingY": false, "lockRotation": false,
+          "points": [
+            { "x": 0, "y": 0 },
+            { "x": 266, "y": 0 },
+            { "x": 246, "y": 22 },
+            { "x": 266, "y": 44 },
+            { "x": 0, "y": 44 },
+            { "x": 20, "y": 22 }
+          ]
+        },
+        {
+          "type": "textbox", "version": "5.3.0",
+          "originX": "left", "originY": "top",
+          "left": -105, "top": -18.56,
+          "width": 210, "height": 36.16,
+          "fill": "#2B2318",
+          "stroke": null, "strokeWidth": 0,
+          "strokeDashArray": null, "strokeLineCap": "butt", "strokeDashOffset": 0,
+          "strokeLineJoin": "miter", "strokeUniform": false, "strokeMiterLimit": 4,
+          "scaleX": 1, "scaleY": 1,
+          "angle": 0, "flipX": false, "flipY": false, "opacity": 1,
+          "shadow": {
+            "color": "rgba(0,0,0,0.5)", "blur": 0,
+            "offsetX": 4, "offsetY": 2,
+            "affectStroke": false, "nonScaling": false
+          },
+          "visible": true, "backgroundColor": "",
+          "fillRule": "nonzero", "paintFirst": "fill",
+          "globalCompositeOperation": "source-over", "skewX": 0, "skewY": 0,
+          "fontFamily": "Jost", "fontWeight": "bold", "fontSize": 32,
+          "text": "JUN 25 · 3 PM ET",
+          "underline": false, "overline": false, "linethrough": false,
+          "textAlign": "center", "fontStyle": "normal", "lineHeight": 1.16,
+          "textBackgroundColor": "", "charSpacing": 0, "styles": [],
+          "direction": "ltr", "path": null, "pathStartOffset": 0,
+          "pathSide": "left", "pathAlign": "baseline", "minWidth": 20,
+          "splitByGrapheme": false,
+          "lockMovementX": false, "lockMovementY": false,
+          "lockScalingX": false, "lockScalingY": false, "lockRotation": false
+        }
+      ]
+    }
+  ]
+}

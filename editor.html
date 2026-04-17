@@ -202,6 +202,8 @@
     </div>
     <div style="flex:1"></div>
     <button onclick="loadJSON()">Load JSON(s)</button>
+    <button onclick="insertPattern()">Insert Pattern</button>
+    <button onclick="saveAsPattern()">Save as Pattern</button>
     <button onclick="saveJSON()">Save JSON</button>
     <div class="sep"></div>
     <button onclick="showExportModal()" style="background:#7aa2f7;color:#111;font-weight:600;border-color:#7aa2f7">Export</button>
@@ -307,6 +309,7 @@
 <!-- Hidden file inputs -->
 <input type="file" id="image-input" accept="image/*" style="display:none">
 <input type="file" id="json-input" accept=".json" multiple style="display:none">
+<input type="file" id="pattern-input" accept=".json" style="display:none">
 
 <!-- Context Menu -->
 <div id="context-menu"></div>
@@ -317,18 +320,31 @@
 const FONTS = ['Jost','Arial','Helvetica','Georgia','Times New Roman','Courier New','Verdana','Impact','Trebuchet MS','Palatino','Garamond','Oswald','Montserrat','Roboto','Poppins','Lato','Open Sans','Raleway','Playfair Display','Bebas Neue'];
 
 // --- Brand Palette ---
+// The Looth Group, refreshed brand colors. Grouped: Core → Neutrals → Extended.
 const BRAND = [
-  { name: 'Gold',        hex: '#ECB351' },
-  { name: 'Gold Light',  hex: '#F1DE83' },
-  { name: 'Green Pale',  hex: '#D4E0B8' },
-  { name: 'Green Light', hex: '#C2D5AA' },
-  { name: 'Green Mid',   hex: '#A8BE8B' },
-  { name: 'Green Sage',  hex: '#97A97C' },
-  { name: 'Green Dark',  hex: '#87986A' },
-  { name: 'Coral',       hex: '#FE6B4F' },
-  { name: 'Dark',        hex: '#2B2318' },
-  { name: 'Offwhite',    hex: '#FAF6EE' },
-  { name: 'White',       hex: '#FFFFFF' },
+  // Core brand colors (lifted from the logo — these are the identity)
+  { name: 'Forest',       hex: '#416943' },
+  { name: 'Looth Orange', hex: '#FE9336' },
+  { name: 'Ringed Gold',  hex: '#FDC649' },
+  { name: 'Deep Forest',  hex: '#2F4D2E' },
+  { name: 'Sage',         hex: '#A1C499' },
+  { name: 'Burnt Orange', hex: '#E4591E' },
+  // Neutrals (warm-leaning)
+  { name: 'Paper',        hex: '#FAF7F0' },
+  { name: 'Linen',        hex: '#E8E4D6' },
+  { name: 'Stone',        hex: '#B8B2A0' },
+  { name: 'Ash',          hex: '#6B6757' },
+  { name: 'Graphite',     hex: '#3A3830' },
+  { name: 'Coffee',       hex: '#1C1B16' },
+  // Extended palette (complementary tones)
+  { name: 'Rosewood',     hex: '#7A3A1F' },
+  { name: 'Copper',       hex: '#B87333' },
+  { name: 'Brass',        hex: '#D9A441' },
+  { name: 'Meadow',       hex: '#5E8C54' },
+  { name: 'Pine',         hex: '#1F3A2A' },
+  { name: 'Rust Red',     hex: '#8B1E1E' },
+  { name: 'Slate Teal',   hex: '#4A6B7A' },
+  { name: 'Wheat',        hex: '#C9B37A' },
 ];
 
 // Build a color picker widget: native picker + hex input + brand swatches
@@ -398,7 +414,7 @@ function saveCurrentTabState() {
   clearGuidelines();
   canvas.discardActiveObject();
   canvas.requestRenderAll();
-  tab.canvasJSON = canvas.toJSON(['_customName', 'lockUniScaling', 'lockMovementX', 'lockMovementY', 'lockScalingX', 'lockScalingY', 'lockRotation', '_bannerLeftEnd', '_bannerRightEnd', '_bannerNotchL', '_bannerNotchR', '_bannerFlareL', '_bannerFlareR', '_isBannerGroup','_isHitboxGroup','_isFrame','_frameOffset','_framePadT','_framePadR','_framePadB','_framePadL', '_padL', '_padR', '_padT', '_padB', 'paintFirst','_shadowSpread','_spreadStrokeBackup','_frameThickness','_frameRadius','_padLinked','_cornerRadius','_innerShadow']);
+  tab.canvasJSON = canvas.toJSON(['_customName', 'lockUniScaling', 'lockMovementX', 'lockMovementY', 'lockScalingX', 'lockScalingY', 'lockRotation', '_bannerLeftEnd', '_bannerRightEnd', '_bannerNotchL', '_bannerNotchR', '_bannerFlareL', '_bannerFlareR', '_isBannerGroup','_isHitboxGroup','_isFrame','_frameOffset','_framePadT','_framePadR','_framePadB','_framePadL', '_padL', '_padR', '_padT', '_padB', 'paintFirst','_shadowSpread','_spreadStrokeBackup','_frameThickness','_frameRadius','_padLinked','_cornerRadius','_innerShadow','_corners','_cornersLinked']);
   tab.canvasW = canvasW;
   tab.canvasH = canvasH;
 }
@@ -531,9 +547,9 @@ function clearGuidelines() {
   guidelines = [];
 }
 
-function addGuideline(points) {
+function addGuideline(points, color) {
   const line = new fabric.Line(points, {
-    stroke: GUIDE_COLOR,
+    stroke: color || GUIDE_COLOR,
     strokeWidth: 1,
     strokeDashArray: [3, 3],
     selectable: false,
@@ -559,20 +575,54 @@ function onObjectMoving(e) {
   const obj = e.target;
   obj.setCoords();
   const b = obj.getBoundingRect(true, true);
-  // Snap the bounding-box top-left to the grid, then apply the delta to obj.left/top
-  const tgtL = snapVal(b.left);
-  const tgtT = snapVal(b.top);
-  const dx = tgtL - b.left;
-  const dy = tgtT - b.top;
+
+  // Center-snap thresholds (in pixels). Slightly larger than grid feel so it
+  // grabs reliably when you drag near the centerline.
+  const CENTER_SNAP = 8;
+  const CENTER_GUIDE_COLOR = '#FE9336'; // Looth Orange — distinct from grid guides
+
+  const objCenterX = b.left + b.width / 2;
+  const objCenterY = b.top + b.height / 2;
+  const canvasCenterX = canvasW / 2;
+  const canvasCenterY = canvasH / 2;
+
+  let dx, dy, centeredX = false, centeredY = false;
+
+  // X-axis: prefer center-snap if close, else grid-snap on bounding-box left
+  if (Math.abs(objCenterX - canvasCenterX) < CENTER_SNAP) {
+    dx = canvasCenterX - objCenterX;
+    centeredX = true;
+  } else {
+    dx = snapVal(b.left) - b.left;
+  }
+  // Y-axis: same logic
+  if (Math.abs(objCenterY - canvasCenterY) < CENTER_SNAP) {
+    dy = canvasCenterY - objCenterY;
+    centeredY = true;
+  } else {
+    dy = snapVal(b.top) - b.top;
+  }
+
   if (dx !== 0) obj.set('left', obj.left + dx);
   if (dy !== 0) obj.set('top', obj.top + dy);
   obj.setCoords();
-  // Guide lines on the snapped edges
-  addGuideline([tgtL, 0, tgtL, canvasH]);
-  addGuideline([0, tgtT, canvasW, tgtT]);
+
   const nb = obj.getBoundingRect(true, true);
-  addGuideline([nb.left + nb.width, 0, nb.left + nb.width, canvasH]);
-  addGuideline([0, nb.top + nb.height, canvasW, nb.top + nb.height]);
+
+  // X guides: center line if centered (orange), else left + right edges (grid color)
+  if (centeredX) {
+    addGuideline([canvasCenterX, 0, canvasCenterX, canvasH], CENTER_GUIDE_COLOR);
+  } else {
+    addGuideline([nb.left, 0, nb.left, canvasH]);
+    addGuideline([nb.left + nb.width, 0, nb.left + nb.width, canvasH]);
+  }
+  // Y guides: center line if centered, else top + bottom edges
+  if (centeredY) {
+    addGuideline([0, canvasCenterY, canvasW, canvasCenterY], CENTER_GUIDE_COLOR);
+  } else {
+    addGuideline([0, nb.top, canvasW, nb.top]);
+    addGuideline([0, nb.top + nb.height, canvasW, nb.top + nb.height]);
+  }
   updateProps();
 }
 
@@ -661,6 +711,60 @@ function setImageCornerRadius(r) {
   }
   img.dirty = true;
   canvas.requestRenderAll();
+  saveUndo();
+}
+
+// --- Image filters (Fabric.Image.filters.*) ---
+// Sliders: Blur / Brightness / Contrast / Saturation. Toggles: Grayscale / Sepia / Invert.
+// Stored on image.filters array, serialized automatically into saved JSON.
+
+function _getActiveImage() {
+  const img = canvas.getActiveObject();
+  return (img && img.type === 'image') ? img : null;
+}
+
+function setImageFilter(type, key, value) {
+  const img = _getActiveImage();
+  if (!img) return;
+  const FilterClass = fabric.Image.filters[type];
+  if (!FilterClass) return;
+  if (!img.filters) img.filters = [];
+  let f = img.filters.find(x => x.type === type);
+  if (Math.abs(+value) < 1e-6) {
+    // Effectively zero — remove the filter entry for a cleaner saved JSON
+    if (f) img.filters = img.filters.filter(x => x !== f);
+  } else if (f) {
+    f[key] = +value;
+  } else {
+    const opts = {}; opts[key] = +value;
+    img.filters.push(new FilterClass(opts));
+  }
+  img.applyFilters();
+  canvas.requestRenderAll();
+  saveUndo();
+}
+
+function toggleImageFilter(type, enabled) {
+  const img = _getActiveImage();
+  if (!img) return;
+  const FilterClass = fabric.Image.filters[type];
+  if (!FilterClass) return;
+  if (!img.filters) img.filters = [];
+  const existing = img.filters.find(x => x.type === type);
+  if (enabled && !existing) img.filters.push(new FilterClass());
+  else if (!enabled && existing) img.filters = img.filters.filter(x => x !== existing);
+  img.applyFilters();
+  canvas.requestRenderAll();
+  saveUndo();
+}
+
+function clearImageFilters() {
+  const img = _getActiveImage();
+  if (!img) return;
+  img.filters = [];
+  img.applyFilters();
+  canvas.requestRenderAll();
+  updateProps();
   saveUndo();
 }
 
@@ -1225,15 +1329,14 @@ function updateProps() {
       html += `<label>FR</label><input type="number" min="0" max="${maxFlare}" value="${fR}" onchange="setBannerGroupFlare('right', +this.value)" ${rEnd==='arrow'?'':'disabled'}></div>`;
     }
 
-    // Shadow (reads from polygon child)
+    // Banner (polygon) shadow — reads from polygon child
     if (bgPoly) {
       const sh = bgPoly.shadow || bgPoly._savedShadow;
-      const hasSh = !!sh && (sh.offsetX || sh.offsetY || sh.blur);
-      const shColor = (sh && sh.color) || 'rgba(0,0,0,0.4)';
-      const shX = (sh && sh.offsetX) || 3;
-      const shY = (sh && sh.offsetY) || 3;
-      const shBlur = (sh && sh.blur) || 8;
-      html += '<div style="font-size:11px;color:#888;margin:8px 0 4px;">Shadow</div>';
+      const hasSh = !!sh;
+      const shX = (sh && sh.offsetX) || 0;
+      const shY = (sh && sh.offsetY) || 0;
+      const shBlur = (sh && sh.blur) || 0;
+      html += '<div style="font-size:11px;color:#888;margin:8px 0 4px;">Banner Shadow</div>';
       html += `<div class="prop-row"><label>Shad</label><input type="checkbox" ${hasSh?'checked':''} onchange="toggleBannerGroupShadow(this.checked)"> <span style="font-size:11px;color:#888">${hasSh?'On':'Off'}</span></div>`;
       if (hasSh) {
         const shSpread = (bgPoly && bgPoly._shadowSpread) || 0;
@@ -1241,6 +1344,25 @@ function updateProps() {
         html += `<label>SY</label><input type="number" value="${shY}" onchange="setBannerGroupShadowProp('offsetY', +this.value)"></div>`;
         html += `<div class="prop-row"><label>Blur</label><input type="number" min="0" value="${shBlur}" onchange="setBannerGroupShadowProp('blur', +this.value)">`;
         html += `<label>Sprd</label><input type="number" min="0" max="100" value="${shSpread}" onchange="setBannerGroupShadowSpread(+this.value)"></div>`;
+      }
+    }
+
+    // Text (child textbox) shadow — separate from banner polygon shadow
+    if (bgText) {
+      const tsh = bgText.shadow;
+      const hasTsh = !!tsh;
+      const tshX = (tsh && tsh.offsetX) || 0;
+      const tshY = (tsh && tsh.offsetY) || 0;
+      const tshBlur = (tsh && tsh.blur) || 0;
+      const tshColor = (tsh && tsh.color) || 'rgba(0,0,0,0.6)';
+      html += '<div style="font-size:11px;color:#888;margin:8px 0 4px;">Text Shadow</div>';
+      html += `<div class="prop-row"><label>TShad</label><input type="checkbox" ${hasTsh?'checked':''} onchange="toggleBannerTextShadow(this.checked)"> <span style="font-size:11px;color:#888">${hasTsh?'On':'Off'}</span></div>`;
+      if (hasTsh) {
+        html += `<div class="prop-row"><label>TSX</label><input type="number" value="${tshX}" onchange="setBannerTextShadowProp('offsetX', +this.value)">`;
+        html += `<label>TSY</label><input type="number" value="${tshY}" onchange="setBannerTextShadowProp('offsetY', +this.value)"></div>`;
+        html += `<div class="prop-row"><label>TBlur</label><input type="number" min="0" value="${tshBlur}" onchange="setBannerTextShadowProp('blur', +this.value)"></div>`;
+        html += `<div class="prop-row"><label>TSCol</label>${brandColorPicker('_bgTextShadowColor', getColorHex(tshColor) || '#000000')}</div>`;
+        html += alphaRow('TSOpa', '_bgTextShadowAlpha', getColorAlpha(tshColor));
       }
     }
 
@@ -1433,13 +1555,33 @@ function updateProps() {
   else if (obj.type === 'image') {
     html += '<hr style="border-color:#333;margin:8px 0">';
     html += `<div class="prop-row"><label>Rad</label><input type="number" min="0" max="2000" value="${obj._cornerRadius || 0}" onchange="setImageCornerRadius(+this.value)"></div>`;
+    // Filters
+    const getF = (t) => (obj.filters || []).find(f => f.type === t);
+    const blur   = (getF('Blur')       || {}).blur        ?? 0;
+    const brit   = (getF('Brightness') || {}).brightness  ?? 0;
+    const con    = (getF('Contrast')   || {}).contrast    ?? 0;
+    const sat    = (getF('Saturation') || {}).saturation  ?? 0;
+    const gray   = !!getF('Grayscale');
+    const sepia  = !!getF('Sepia');
+    const invert = !!getF('Invert');
+    html += '<div style="font-size:11px;color:#888;margin:8px 0 2px;">Filters</div>';
+    html += `<div class="prop-row"><label>Blur</label><input type="range" min="0" max="1" step="0.01" value="${blur}" oninput="setImageFilter('Blur','blur',+this.value)"><input type="number" min="0" max="1" step="0.01" value="${blur}" onchange="setImageFilter('Blur','blur',+this.value)" style="width:50px"></div>`;
+    html += `<div class="prop-row"><label>Brit</label><input type="range" min="-1" max="1" step="0.01" value="${brit}" oninput="setImageFilter('Brightness','brightness',+this.value)"><input type="number" min="-1" max="1" step="0.01" value="${brit}" onchange="setImageFilter('Brightness','brightness',+this.value)" style="width:50px"></div>`;
+    html += `<div class="prop-row"><label>Con</label><input type="range" min="-1" max="1" step="0.01" value="${con}" oninput="setImageFilter('Contrast','contrast',+this.value)"><input type="number" min="-1" max="1" step="0.01" value="${con}" onchange="setImageFilter('Contrast','contrast',+this.value)" style="width:50px"></div>`;
+    html += `<div class="prop-row"><label>Sat</label><input type="range" min="-1" max="1" step="0.01" value="${sat}" oninput="setImageFilter('Saturation','saturation',+this.value)"><input type="number" min="-1" max="1" step="0.01" value="${sat}" onchange="setImageFilter('Saturation','saturation',+this.value)" style="width:50px"></div>`;
+    html += `<div class="prop-row" style="gap:12px"><label><input type="checkbox" ${gray?'checked':''} onchange="toggleImageFilter('Grayscale', this.checked)"> Gray</label><label><input type="checkbox" ${sepia?'checked':''} onchange="toggleImageFilter('Sepia', this.checked)"> Sepia</label><label><input type="checkbox" ${invert?'checked':''} onchange="toggleImageFilter('Invert', this.checked)"> Inv</label></div>`;
+    html += `<div class="prop-row"><button onclick="clearImageFilters()" style="flex:1">Clear filters</button></div>`;
   }
   else if (obj.type === 'rect' || obj.type === 'circle' || obj.type === 'triangle' || obj.type === 'polygon') {
     html += '<hr style="border-color:#333;margin:8px 0">';
     html += `<div class="prop-row"><label>Fill</label>${brandColorPicker('fill', getColorHex(obj.fill) || '#333333')}</div>`;
     html += alphaRow('FOpa', '_fillAlpha', getColorAlpha(obj.fill));
     if (obj.type === 'rect') {
-      html += `<div class="prop-row"><label>Rad</label><input type="number" value="${obj.rx || 0}" onchange="setObjProp('rx', +this.value); setObjProp('ry', +this.value)"></div>`;
+      const c = obj._corners || { tl: obj.rx || 0, tr: obj.rx || 0, br: obj.rx || 0, bl: obj.rx || 0 };
+      const linked = obj._cornersLinked !== false; // default linked
+      const lockBtn = `<button type="button" onclick="toggleRectCornersLink()" title="${linked ? 'Linked — all corners equal' : 'Independent corners'}" style="margin-left:6px;padding:2px 6px;background:${linked ? '#C8A868' : '#333'};color:${linked ? '#000' : '#ccc'};border:1px solid #555;border-radius:3px;cursor:pointer">${linked ? '🔗' : '🔓'}</button>`;
+      html += `<div class="prop-row"><label>TL</label><input type="number" min="0" value="${c.tl}" onchange="setRectCorner('tl', +this.value)" style="width:55px"><label>TR</label><input type="number" min="0" value="${c.tr}" onchange="setRectCorner('tr', +this.value)" style="width:55px">${lockBtn}</div>`;
+      html += `<div class="prop-row"><label>BL</label><input type="number" min="0" value="${c.bl}" onchange="setRectCorner('bl', +this.value)" style="width:55px"><label>BR</label><input type="number" min="0" value="${c.br}" onchange="setRectCorner('br', +this.value)" style="width:55px"></div>`;
     }
     // Banner shape controls (for polygons with _bannerLeftEnd or any polygon)
     if (obj.type === 'polygon') {
@@ -1491,7 +1633,10 @@ function updateProps() {
   // --- Shadow (all element types) ---
   html += '<hr style="border-color:#333;margin:8px 0">';
   const sh = obj.shadow || obj._savedShadow;
-  const hasShadow = !!sh && (sh.offsetX || sh.offsetY || sh.blur);
+  // "Has shadow" = any shadow object exists. Don't gate on offsetX/Y/blur being
+  // nonzero — shadows with only a color (or intentionally 0/0/0 while being
+  // edited) must still be toggleable and editable from the panel.
+  const hasShadow = !!sh;
   const shColor = (sh && sh.color) ? sh.color : '#000000';
   const shX = (sh && sh.offsetX) || 0;
   const shY = (sh && sh.offsetY) || 0;
@@ -2246,6 +2391,30 @@ function toggleBannerGroupShadow(on) {
   canvas.requestRenderAll(); updateProps(); saveUndo();
 }
 
+function toggleBannerTextShadow(on) {
+  const g = canvas.getActiveObject();
+  if (!g || !g._isBannerGroup) return;
+  const t = g._objects.find(o => o.type === 'textbox' || o.type === 'text' || o.type === 'i-text');
+  if (!t) return;
+  if (on) {
+    t.set('shadow', new fabric.Shadow({ color: 'rgba(0,0,0,0.6)', offsetX: 4, offsetY: 2, blur: 0 }));
+  } else {
+    t.set('shadow', null);
+  }
+  t.dirty = true; g.dirty = true;
+  canvas.requestRenderAll(); updateProps(); saveUndo();
+}
+
+function setBannerTextShadowProp(prop, val) {
+  const g = canvas.getActiveObject();
+  if (!g || !g._isBannerGroup) return;
+  const t = g._objects.find(o => o.type === 'textbox' || o.type === 'text' || o.type === 'i-text');
+  if (!t || !t.shadow) return;
+  t.shadow[prop] = val;
+  t.dirty = true; g.dirty = true;
+  canvas.requestRenderAll();
+}
+
 function setBannerGroupShadowProp(prop, val) {
   const g = canvas.getActiveObject();
   if (!g || !g._isBannerGroup) return;
@@ -2492,25 +2661,164 @@ function reattachBehaviors() {
       o._innerShadowAttached = false;
       attachInnerShadow(o);
     }
+    // Per-corner radius (rect): reattach custom render only when corners are unlocked
+    if (o.type === 'rect' && o._corners && o._cornersLinked === false) {
+      o._customCornersAttached = false;
+      attachCustomCorners(o);
+    }
   });
   canvas.requestRenderAll();
 }
+// --- Per-corner radius (rect) ---
+// Stored as _corners = { tl, tr, br, bl } and _cornersLinked (default true).
+// Linked: standard fabric rx/ry. Unlinked: custom _render draws a path with
+// 4 independent radii.
+
+function _drawRoundedRectPath(ctx, x, y, w, h, c) {
+  const tl = Math.max(0, Math.min(c.tl || 0, w / 2, h / 2));
+  const tr = Math.max(0, Math.min(c.tr || 0, w / 2, h / 2));
+  const br = Math.max(0, Math.min(c.br || 0, w / 2, h / 2));
+  const bl = Math.max(0, Math.min(c.bl || 0, w / 2, h / 2));
+  ctx.beginPath();
+  ctx.moveTo(x + tl, y);
+  ctx.lineTo(x + w - tr, y);
+  if (tr > 0) ctx.quadraticCurveTo(x + w, y, x + w, y + tr);
+  ctx.lineTo(x + w, y + h - br);
+  if (br > 0) ctx.quadraticCurveTo(x + w, y + h, x + w - br, y + h);
+  ctx.lineTo(x + bl, y + h);
+  if (bl > 0) ctx.quadraticCurveTo(x, y + h, x, y + h - bl);
+  ctx.lineTo(x, y + tl);
+  if (tl > 0) ctx.quadraticCurveTo(x, y, x + tl, y);
+  ctx.closePath();
+}
+
+function customCornersRender(ctx) {
+  const w = this.width, h = this.height;
+  const x = -w / 2, y = -h / 2;
+  const c = this._corners || { tl: this.rx || 0, tr: this.rx || 0, br: this.rx || 0, bl: this.rx || 0 };
+  _drawRoundedRectPath(ctx, x, y, w, h, c);
+  if (this.fill) {
+    ctx.fillStyle = this.fill;
+    ctx.fill();
+  }
+  // Inner shadow (drawn between fill and stroke so the stroke stays clean)
+  if (this._innerShadow) {
+    ctx.save();
+    _drawRoundedRectPath(ctx, x, y, w, h, c);
+    ctx.clip();
+    _renderInnerShadowOnRect(this, ctx);
+    ctx.restore();
+  }
+  if (this.stroke && this.strokeWidth > 0) {
+    ctx.lineWidth = this.strokeWidth;
+    ctx.strokeStyle = this.stroke;
+    _drawRoundedRectPath(ctx, x, y, w, h, c);
+    ctx.stroke();
+  }
+}
+
+function attachCustomCorners(rect) {
+  if (!rect || rect.type !== 'rect') return;
+  if (rect._customCornersAttached) return;
+  if (!rect._cornersBaseRender) rect._cornersBaseRender = rect._render || fabric.Rect.prototype._render;
+  rect._render = customCornersRender;
+  rect._customCornersAttached = true;
+  rect.objectCaching = false;
+  rect.dirty = true;
+}
+
+function detachCustomCorners(rect) {
+  if (!rect || !rect._customCornersAttached) return;
+  rect._render = rect._cornersBaseRender || fabric.Rect.prototype._render;
+  rect._cornersBaseRender = null;
+  rect._customCornersAttached = false;
+  rect.dirty = true;
+}
+
+function setRectCorner(corner, value) {
+  const obj = canvas.getActiveObject();
+  if (!obj || obj.type !== 'rect') return;
+  const v = Math.max(0, +value || 0);
+  if (obj._cornersLinked !== false) {
+    // Locked — propagate to all corners and to fabric's stock rx/ry
+    obj._corners = { tl: v, tr: v, br: v, bl: v };
+    obj.set({ rx: v, ry: v });
+    detachCustomCorners(obj);
+  } else {
+    obj._corners = obj._corners || { tl: 0, tr: 0, br: 0, bl: 0 };
+    obj._corners[corner] = v;
+    attachCustomCorners(obj);
+  }
+  obj.dirty = true;
+  canvas.requestRenderAll();
+  updateProps();
+  saveUndo();
+}
+
+function toggleRectCornersLink() {
+  const obj = canvas.getActiveObject();
+  if (!obj || obj.type !== 'rect') return;
+  const wasLinked = obj._cornersLinked !== false;
+  obj._cornersLinked = !wasLinked;
+  if (obj._cornersLinked) {
+    // Going from independent → linked: average the four corners
+    const c = obj._corners || { tl: obj.rx || 0, tr: obj.rx || 0, br: obj.rx || 0, bl: obj.rx || 0 };
+    const avg = Math.round((c.tl + c.tr + c.br + c.bl) / 4);
+    obj._corners = { tl: avg, tr: avg, br: avg, bl: avg };
+    obj.set({ rx: avg, ry: avg });
+    detachCustomCorners(obj);
+  } else {
+    // Going from linked → independent: seed _corners from current rx
+    const r = obj.rx || 0;
+    obj._corners = obj._corners || { tl: r, tr: r, br: r, bl: r };
+    attachCustomCorners(obj);
+  }
+  obj.dirty = true;
+  canvas.requestRenderAll();
+  updateProps();
+  saveUndo();
+}
+
 function attachInnerShadow(rect) {
   if (!rect || rect.type !== 'rect') return;
   if (rect._innerShadowAttached) return;
   // Preserve any existing instance _render (e.g. frameRender) so inner shadow composes with it
   const baseRender = rect._render || fabric.Rect.prototype._render;
   rect._innerShadowBaseRender = baseRender;
-  const shadowFirst = !!rect._isFrame;
-  rect._render = function(ctx) {
-    if (shadowFirst) {
+
+  if (rect._isFrame) {
+    // Frame: shadow first (under the ring), then frame ring on top
+    rect._render = function(ctx) {
       _renderInnerShadowOnRect(this, ctx);
       baseRender.call(this, ctx);
-    } else {
-      baseRender.call(this, ctx);
+    };
+  } else if (rect._customCornersAttached) {
+    // customCornersRender already integrates the inner shadow at the right
+    // point in its own draw sequence — just call it, no extra shadow pass
+    rect._render = baseRender;
+  } else {
+    // Standard rect: render fill → inner shadow → stroke so the inner shadow
+    // sits under the stroke (and under anything stacked on top), not above it
+    rect._render = function(ctx) {
+      const w = this.width, h = this.height;
+      const x = -w / 2, y = -h / 2;
+      const rx = Math.min(this.rx || 0, w / 2);
+      const ry = Math.min(this.ry || 0, h / 2);
+      const c = { tl: rx, tr: rx, br: rx, bl: rx };
+      if (this.fill) {
+        _drawRoundedRectPath(ctx, x, y, w, h, c);
+        ctx.fillStyle = this.fill;
+        ctx.fill();
+      }
       _renderInnerShadowOnRect(this, ctx);
-    }
-  };
+      if (this.stroke && this.strokeWidth > 0) {
+        _drawRoundedRectPath(ctx, x, y, w, h, c);
+        ctx.lineWidth = this.strokeWidth;
+        ctx.strokeStyle = this.stroke;
+        ctx.stroke();
+      }
+    };
+  }
   rect._innerShadowAttached = true;
   rect.objectCaching = false;
   rect.dirty = true;
@@ -2832,6 +3140,16 @@ function setObjProp(prop, val) {
   if (prop === '_bgTextStrokeAlpha' && (obj._isBannerGroup || obj._isHitboxGroup)) {
     const t = obj._objects.find(o => o.type === 'textbox' || o.type === 'text' || o.type === 'i-text');
     if (t) { t.set('stroke', colorWithAlpha(t.stroke || '#000', +val)); t.dirty = true; }
+    obj.dirty = true; canvas.requestRenderAll(); updateProps(); saveUndo(); return;
+  }
+  if (prop === '_bgTextShadowColor' && obj._isBannerGroup) {
+    const t = obj._objects.find(o => o.type === 'textbox' || o.type === 'text' || o.type === 'i-text');
+    if (t && t.shadow) { t.shadow.color = colorWithAlpha(val, getColorAlpha(t.shadow.color)); t.dirty = true; }
+    obj.dirty = true; canvas.requestRenderAll(); saveUndo(); return;
+  }
+  if (prop === '_bgTextShadowAlpha' && obj._isBannerGroup) {
+    const t = obj._objects.find(o => o.type === 'textbox' || o.type === 'text' || o.type === 'i-text');
+    if (t && t.shadow) { t.shadow.color = colorWithAlpha(t.shadow.color || '#000', +val); t.dirty = true; }
     obj.dirty = true; canvas.requestRenderAll(); updateProps(); saveUndo(); return;
   }
   // Special: shadow color
@@ -3508,7 +3826,21 @@ function saveJSON() {
   clearGuidelines();
   canvas.requestRenderAll();
 
-  const json = canvas.toJSON(['_customName', 'lockUniScaling', 'lockMovementX', 'lockMovementY', 'lockScalingX', 'lockScalingY', 'lockRotation', '_bannerLeftEnd', '_bannerRightEnd', '_bannerNotchL', '_bannerNotchR', '_bannerFlareL', '_bannerFlareR', '_isBannerGroup','_isHitboxGroup','_isFrame','_frameOffset','_framePadT','_framePadR','_framePadB','_framePadL', '_padL', '_padR', '_padT', '_padB', 'paintFirst','_shadowSpread','_spreadStrokeBackup','_frameThickness','_frameRadius','_frameTop','_frameRight','_frameBottom','_frameLeft','_frameTL','_frameTR','_frameBR','_frameBL','_frameCompleteness','_padLinked','_cornerRadius','_innerShadow']);
+  const json = canvas.toJSON(['_customName', 'lockUniScaling', 'lockMovementX', 'lockMovementY', 'lockScalingX', 'lockScalingY', 'lockRotation', '_bannerLeftEnd', '_bannerRightEnd', '_bannerNotchL', '_bannerNotchR', '_bannerFlareL', '_bannerFlareR', '_isBannerGroup','_isHitboxGroup','_isFrame','_frameOffset','_framePadT','_framePadR','_framePadB','_framePadL', '_padL', '_padR', '_padT', '_padB', 'paintFirst','_shadowSpread','_spreadStrokeBackup','_frameThickness','_frameRadius','_frameTop','_frameRight','_frameBottom','_frameLeft','_frameTL','_frameTR','_frameBR','_frameBL','_frameCompleteness','_padLinked','_cornerRadius','_innerShadow','_corners','_cornersLinked']);
+
+  // Relativize image URLs — Fabric's toJSON bakes the resolved absolute URL,
+  // which breaks portability across hosts/ports. Strip origin so src stays
+  // e.g. "/assets/2026-06-25_thorell/foo.png".
+  const origin = window.location.origin;
+  const relativize = (obj) => {
+    if (!obj) return;
+    if (obj.type === 'image' && typeof obj.src === 'string' && obj.src.startsWith(origin)) {
+      obj.src = obj.src.slice(origin.length);
+    }
+    if (Array.isArray(obj.objects)) obj.objects.forEach(relativize);
+  };
+  if (Array.isArray(json.objects)) json.objects.forEach(relativize);
+
   const meta = { canvasW, canvasH, exportVersion: 1 };
   const data = JSON.stringify({ meta, canvas: json }, null, 2);
 
@@ -3570,6 +3902,146 @@ function loadJSONFiles(files, idx) {
     }
   };
   reader.readAsText(file);
+}
+
+// Insert a pattern into the CURRENT canvas (merge, not replace).
+// Patterns are JSON files at templates/patterns/*.json with shape:
+//   { name, description, canvasRef, tweakable, objects: [ ... fabric objects ... ] }
+// Two call forms:
+//   insertPattern()         — opens a file picker (user flow)
+//   insertPattern(path)     — fetches the pattern from that URL (agent / scripted flow)
+function insertPattern(path) {
+  // Programmatic form: fetch the given path directly
+  if (typeof path === 'string') {
+    return fetch(path)
+      .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(data => applyPatternData(data, path.split('/').pop().replace(/\.json$/i, '')));
+  }
+  // Interactive form: file picker
+  const input = document.getElementById('pattern-input');
+  input.onchange = function() {
+    const file = this.files[0];
+    this.value = '';
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const data = JSON.parse(e.target.result);
+        applyPatternData(data, file.name.replace(/\.json$/i, ''));
+      } catch(err) {
+        alert('Error inserting ' + file.name + ': ' + err.message);
+      }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
+// Shared pattern-insert logic used by both forms above.
+function applyPatternData(data, fallbackName) {
+  return new Promise((resolve) => {
+    const objsJson = data.objects
+      || (data.canvas && data.canvas.objects)
+      || (data.fabricObject ? [data.fabricObject] : null);
+    if (!objsJson || !objsJson.length) {
+      alert('Pattern has no objects to insert: ' + (data.name || fallbackName));
+      resolve([]);
+      return;
+    }
+    fabric.util.enlivenObjects(objsJson, function(enlivened) {
+      const added = [];
+      enlivened.forEach(obj => {
+        canvas.add(obj);
+        added.push(obj);
+      });
+      reattachBehaviors();
+      canvas.requestRenderAll();
+      refreshLayers();
+      if (added.length === 1) {
+        canvas.setActiveObject(added[0]);
+      } else if (added.length > 1) {
+        const sel = new fabric.ActiveSelection(added, { canvas });
+        canvas.setActiveObject(sel);
+      }
+      canvas.requestRenderAll();
+      saveUndo();
+      document.getElementById('status-selection').textContent =
+        `Inserted pattern: ${data.name || fallbackName} (${added.length} objects)`;
+      resolve(added);
+    });
+  });
+}
+
+// Save the current selection as a reusable pattern.
+// Prompts for name + description, downloads a pattern JSON the user drops
+// into templates/patterns/. The downloaded file follows the pattern schema:
+//   { name, description, canvasRef, tweakable, objects: [ ... ] }
+function saveAsPattern() {
+  const active = canvas.getActiveObject();
+  if (!active) {
+    alert('Select one or more objects first, then click Save as Pattern.');
+    return;
+  }
+  const selected = active.type === 'activeSelection' ? active.getObjects() : [active];
+
+  const name = prompt(
+    'Pattern name (slug — lowercase with dashes, e.g. "bottom-strip-date-banner"):',
+    ''
+  );
+  if (!name) return;
+  const description = prompt(
+    'Short description (what is this pattern for? when to use it?):',
+    ''
+  ) || '';
+
+  // Same extra-prop list saveJSON uses, so banner/frame/etc. metadata is preserved
+  const EXTRA = ['_customName', 'lockUniScaling', 'lockMovementX', 'lockMovementY', 'lockScalingX', 'lockScalingY', 'lockRotation', '_bannerLeftEnd', '_bannerRightEnd', '_bannerNotchL', '_bannerNotchR', '_bannerFlareL', '_bannerFlareR', '_isBannerGroup','_isHitboxGroup','_isFrame','_frameOffset','_framePadT','_framePadR','_framePadB','_framePadL', '_padL', '_padR', '_padT', '_padB', 'paintFirst','_shadowSpread','_spreadStrokeBackup','_frameThickness','_frameRadius','_frameTop','_frameRight','_frameBottom','_frameLeft','_frameTL','_frameTR','_frameBR','_frameBL','_frameCompleteness','_padLinked','_cornerRadius','_innerShadow','_corners','_cornersLinked'];
+
+  const objsJson = selected.map(o => o.toObject(EXTRA));
+
+  // Relativize image URLs so the pattern is portable across hosts/ports
+  const origin = window.location.origin;
+  const relativize = (obj) => {
+    if (!obj) return;
+    if (obj.type === 'image' && typeof obj.src === 'string' && obj.src.startsWith(origin)) {
+      obj.src = obj.src.slice(origin.length);
+    }
+    if (Array.isArray(obj.objects)) obj.objects.forEach(relativize);
+  };
+  objsJson.forEach(relativize);
+
+  // Auto-generate a tweakable stub so the agent/user sees what's customizable.
+  // Filled in by hand post-save — this is just scaffolding.
+  const tweakable = {};
+  objsJson.forEach((obj, i) => {
+    const kind = obj._isBannerGroup ? 'banner'
+      : obj._isFrame ? 'frame'
+      : obj.type;
+    const label = obj._customName || `unnamed-${kind}`;
+    tweakable[`objects[${i}]`] = `${kind} "${label}" — edit this file to describe which fields are intended tweakable`;
+  });
+
+  const pattern = {
+    name,
+    description,
+    canvasRef: { w: canvasW, h: canvasH },
+    tweakable,
+    objects: objsJson
+  };
+
+  const ratioTag = (canvasW === canvasH) ? '1x1'
+    : (Math.abs(canvasW / canvasH - 16/9) < 0.01) ? '16x9'
+    : `${canvasW}x${canvasH}`;
+  const filename = `${name}_${ratioTag}.json`;
+
+  const blob = new Blob([JSON.stringify(pattern, null, 2)], { type: 'application/json' });
+  const link = document.createElement('a');
+  link.download = filename;
+  link.href = URL.createObjectURL(blob);
+  link.click();
+
+  document.getElementById('status-selection').textContent =
+    `Saved pattern: ${filename} (${selected.length} object${selected.length === 1 ? '' : 's'}) — move to templates/patterns/`;
 }
 
 function loadObjectsSequentially(objects, idx, done) {
@@ -3691,7 +4163,7 @@ const MAX_UNDO = 40;
 
 function saveUndo() {
   if (undoLocked || !canvas) return;
-  const json = JSON.stringify(canvas.toJSON(['_customName','selectable','evented','lockMovementX','lockMovementY','lockScalingX','lockScalingY','lockRotation','_bannerLeftEnd','_bannerRightEnd','_bannerNotchL','_bannerNotchR','_isBannerGroup','_isHitboxGroup','_isFrame','_frameOffset','_framePadT','_framePadR','_framePadB','_framePadL','_padL','_padR','_padT','_padB','paintFirst','_shadowSpread','_spreadStrokeBackup','_frameThickness','_frameRadius','_padLinked','_cornerRadius','_innerShadow']));
+  const json = JSON.stringify(canvas.toJSON(['_customName','selectable','evented','lockMovementX','lockMovementY','lockScalingX','lockScalingY','lockRotation','_bannerLeftEnd','_bannerRightEnd','_bannerNotchL','_bannerNotchR','_isBannerGroup','_isHitboxGroup','_isFrame','_frameOffset','_framePadT','_framePadR','_framePadB','_framePadL','_padL','_padR','_padT','_padB','paintFirst','_shadowSpread','_spreadStrokeBackup','_frameThickness','_frameRadius','_padLinked','_cornerRadius','_innerShadow','_corners','_cornersLinked']));
   // Don't push if identical to top of stack
   if (undoStack.length && undoStack[undoStack.length - 1] === json) return;
   undoStack.push(json);
@@ -3702,7 +4174,7 @@ function saveUndo() {
 function undo() {
   if (!canvas || undoStack.length < 1) return;
   // Save current state to redo
-  const cur = JSON.stringify(canvas.toJSON(['_customName','selectable','evented','lockMovementX','lockMovementY','lockScalingX','lockScalingY','lockRotation','_bannerLeftEnd','_bannerRightEnd','_bannerNotchL','_bannerNotchR','_isBannerGroup','_isHitboxGroup','_isFrame','_frameOffset','_framePadT','_framePadR','_framePadB','_framePadL','_padL','_padR','_padT','_padB','paintFirst','_shadowSpread','_spreadStrokeBackup','_frameThickness','_frameRadius','_padLinked','_cornerRadius','_innerShadow']));
+  const cur = JSON.stringify(canvas.toJSON(['_customName','selectable','evented','lockMovementX','lockMovementY','lockScalingX','lockScalingY','lockRotation','_bannerLeftEnd','_bannerRightEnd','_bannerNotchL','_bannerNotchR','_isBannerGroup','_isHitboxGroup','_isFrame','_frameOffset','_framePadT','_framePadR','_framePadB','_framePadL','_padL','_padR','_padT','_padB','paintFirst','_shadowSpread','_spreadStrokeBackup','_frameThickness','_frameRadius','_padLinked','_cornerRadius','_innerShadow','_corners','_cornersLinked']));
   redoStack.push(cur);
   const prev = undoStack.pop();
   restoreState(prev);
@@ -3711,7 +4183,7 @@ function undo() {
 function redo() {
   if (!canvas || redoStack.length < 1) return;
   // Save current to undo
-  const cur = JSON.stringify(canvas.toJSON(['_customName','selectable','evented','lockMovementX','lockMovementY','lockScalingX','lockScalingY','lockRotation','_bannerLeftEnd','_bannerRightEnd','_bannerNotchL','_bannerNotchR','_isBannerGroup','_isHitboxGroup','_isFrame','_frameOffset','_framePadT','_framePadR','_framePadB','_framePadL','_padL','_padR','_padT','_padB','paintFirst','_shadowSpread','_spreadStrokeBackup','_frameThickness','_frameRadius','_padLinked','_cornerRadius','_innerShadow']));
+  const cur = JSON.stringify(canvas.toJSON(['_customName','selectable','evented','lockMovementX','lockMovementY','lockScalingX','lockScalingY','lockRotation','_bannerLeftEnd','_bannerRightEnd','_bannerNotchL','_bannerNotchR','_isBannerGroup','_isHitboxGroup','_isFrame','_frameOffset','_framePadT','_framePadR','_framePadB','_framePadL','_padL','_padR','_padT','_padB','paintFirst','_shadowSpread','_spreadStrokeBackup','_frameThickness','_frameRadius','_padLinked','_cornerRadius','_innerShadow','_corners','_cornersLinked']));
   undoStack.push(cur);
   const next = redoStack.pop();
   restoreState(next);
@@ -3932,6 +4404,7 @@ async function autoLoadFromURL() {
 
       await new Promise((resolve, reject) => {
         const onDone = function() {
+          reattachBehaviors();
           canvas.requestRenderAll();
           refreshLayers();
           renderTabs();
@@ -3939,13 +4412,10 @@ async function autoLoadFromURL() {
           document.getElementById('status-size').textContent = `${w} x ${h}`;
           resolve();
         };
-
-        if (canvasData.objects && canvasData.objects.some(o => o.type === 'image' && o.src)) {
-          canvas.backgroundColor = canvasData.background || '#000';
-          loadObjectsSequentially(canvasData.objects, 0, onDone);
-        } else {
-          canvas.loadFromJSON(canvasData, onDone);
-        }
+        // Always use fabric's native loader — handles groups/banner groups,
+        // frames, nested objects, and all property round-tripping. The old
+        // loadObjectsSequentially path silently skipped `group` types.
+        canvas.loadFromJSON(canvasData, onDone);
       });
       console.log(`  Loaded: ${tabName}`);
     } catch (err) {
