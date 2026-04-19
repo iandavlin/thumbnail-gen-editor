@@ -519,6 +519,64 @@ The brand palette is fixed, but each episode photo has different tones. Use the 
 
 **Balance** — a large element near center can be balanced by a smaller element farther out. Don't feel obligated to fill every corner — negative space is a tool.
 
+## JSON Format Reference
+
+All layouts are saved as `{ meta, canvas }` where:
+- `meta`: `{ canvasW, canvasH, exportVersion }` — source of truth for canvas dimensions
+- `canvas`: Fabric.js JSON with `{ version, objects, background }`
+
+### Object types in canvas.objects
+
+| type | notes |
+|---|---|
+| `image` | `src` (base64 or relative path), `scaleX/scaleY`, `left/top` |
+| `textbox` | `text`, `fontSize`, `width` (container width), `scaleX/scaleY` |
+| `rect` | may be a frame (`_isFrame: true`) with `_frameThickness`, `_frameRadius`, `_framePadT/R/B/L` |
+| `group` | banner groups have `_isBannerGroup: true`, `_bannerLeftEnd/RightEnd`, `_bannerNotchL/R` |
+
+Frame rects have `left:0, top:0, width:canvasW, height:canvasH` and always fill the canvas.
+
+### Aspect Ratio Conversion
+
+When converting between ratios (e.g. 16:9 → 1:1), **always use uniform scaling** — never stretch objects with independent x/y scales.
+
+Use `sx = dstW/srcW` and `sy = dstH/srcH` independently. Text uses sx/sy so font size and width scale together, preserving line breaks.
+
+For each object:
+- `left` and `top`: multiply by the chosen uniform scale
+- `image`: always uniform scale (locked axis — never distort aspect ratio). Detect fill images (rendered size ≥ 80% of source canvas on both axes) and use **cover** scaling to fill the destination canvas, centered. Non-fill (positioned) images use **fit** scaling: `min(sx, sy)`
+- `textbox`: use `sx`/`sy` independently — `width *= sx`, `scaleX *= sx`, `scaleY *= sy`, `fontSize *= sx` (keeps same characters-per-line so line breaks are preserved)
+- `group`: use geometric mean `√(sx × sy)` as a uniform scale — preserves banner/polygon shape without distortion. Detect via `lockUniScaling: true` or `_isBannerGroup: true`.
+- `rect` (non-frame): multiply `width` and `height` by the same factor
+- `rect` (_isFrame): reset to `left:0, top:0, width:dstW, height:dstH, scaleX:1, scaleY:1`
+
+Update `meta.canvasW` and `meta.canvasH` to the destination dimensions.
+
+**Minimal node one-liner** (16:9 1280×720 → 1:1 1080×1080):
+```js
+const fs = require('fs');
+const src = JSON.parse(fs.readFileSync(INPUT));
+const [SW,SH,DW,DH] = [1280,720,1080,1080];
+const sx = DW/SW, sy = DH/SH;
+const objects = src.canvas.objects.map(o => {
+  const obj = JSON.parse(JSON.stringify(o));
+  obj.left = o.left * sx; obj.top = o.top * sy;
+  if (o._isFrame) { obj.left=0; obj.top=0; obj.width=DW; obj.height=DH; obj.scaleX=1; obj.scaleY=1; }
+  else if (o.type==='image')   {
+    const rw=o.width*(o.scaleX||1), rh=o.height*(o.scaleY||1), isFill=rw>=SW*0.8&&rh>=SH*0.8;
+    if (isFill) { const s=Math.max(DW/o.width,DH/o.height); obj.scaleX=s; obj.scaleY=s; obj.left=(DW-o.width*s)/2; obj.top=(DH-o.height*s)/2; }
+    else { const s=Math.min(sx,sy); obj.scaleX=(o.scaleX||1)*s; obj.scaleY=(o.scaleY||1)*s; }
+  }
+  else if (o.type==='textbox') { obj.width=o.width*sx; obj.scaleX=(o.scaleX||1)*sx; obj.scaleY=(o.scaleY||1)*sy; obj.fontSize=Math.round(o.fontSize*sx); }
+  else if (o.type==='group')   { const sg=Math.sqrt(sx*sy); obj.scaleX=(o.scaleX||1)*sg; obj.scaleY=(o.scaleY||1)*sg; }
+  else if (o.type==='rect')    { obj.width=o.width*sx; obj.height=o.height*sy; }
+  return obj;
+});
+fs.writeFileSync(OUTPUT, JSON.stringify({meta:{canvasW:DW,canvasH:DH,exportVersion:1},canvas:{...src.canvas,objects}}));
+```
+
+Output file goes in `output/1x1/` with a `_1x1` suffix. Note: uniform fit-scale will leave empty space in the new aspect ratio — background images may need repositioning in the editor to fill the canvas.
+
 ## Known Pitfalls
 
 - **Date bar wrapping**: Keep date text short. If it wraps, widen the text box, not shrink the font.

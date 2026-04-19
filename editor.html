@@ -111,9 +111,43 @@
   .color-field { display: flex; align-items: center; gap: 4px; flex: 1; }
   .color-field input[type="color"] { width: 28px; height: 24px; padding: 0; border: none; cursor: pointer; flex-shrink: 0; }
   .color-field .hex-input { width: 68px; background: #333; border: 1px solid #444; color: #e0e0e0; padding: 3px 5px; border-radius: 3px; font-size: 11px; font-family: monospace; }
-  .brand-swatches { display: flex; gap: 2px; flex-wrap: wrap; margin-top: 2px; }
   .brand-swatch { width: 16px; height: 16px; border-radius: 3px; cursor: pointer; border: 1px solid rgba(255,255,255,0.15); transition: transform 0.1s; }
   .brand-swatch:hover { transform: scale(1.3); border-color: #fff; z-index: 1; }
+
+  /* Gradient picker */
+  .gm-btn { flex:1; padding:2px 0; font-size:10px; border-radius:2px; cursor:pointer; border:1px solid #444; background:#2a2a2a; color:#999; }
+  .gm-btn.gm-on { background:#3a3f5a; border-color:#7aa2f7; color:#ddd; }
+  .grad-panel { background:#1e1e1e; border:1px solid #333; border-radius:3px; padding:5px; margin-top:3px; }
+  .grad-type-btn { font-size:10px; padding:1px 6px; border-radius:2px; cursor:pointer; border:1px solid #444; background:#2a2a2a; color:#999; }
+  .grad-type-btn.gm-on { background:#3a3f5a; border-color:#7aa2f7; color:#ddd; }
+  .grad-stop-row { display:flex; align-items:center; gap:3px; margin:2px 0; }
+  .grad-stop-row input[type="color"] { width:24px; height:20px; padding:0; border:none; cursor:pointer; flex:none; }
+  .grad-stop-row input[type="range"] { flex:1; min-width:0; }
+
+  /* Texture fill modal */
+  #tex-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:200; align-items:center; justify-content:center; }
+  #tex-modal.show { display:flex; }
+  #tex-modal .modal { background:#2a2a2a; border:1px solid #444; border-radius:8px; padding:20px; width:520px; }
+  #tex-modal h3 { margin:0 0 14px; font-size:14px; color:#e0e0e0; }
+  #tex-modal .tex-layout { display:flex; gap:16px; }
+  #tex-modal .tex-controls { flex:1; }
+  #tex-modal .tex-type-grid { display:grid; grid-template-columns:1fr 1fr; gap:5px; margin-bottom:12px; }
+  #tex-modal .tex-type-btn { padding:6px 8px; background:#333; border:1px solid #444; color:#ccc; border-radius:5px; cursor:pointer; font-size:12px; text-align:left; }
+  #tex-modal .tex-type-btn.active { background:#3a3f5a; border-color:#7aa2f7; color:#ddd; }
+  #tex-modal .tex-preview-col { display:flex; flex-direction:column; gap:8px; align-items:flex-end; }
+  #tex-modal canvas { border:1px solid #444; border-radius:4px; display:block; }
+  #tex-modal .tex-blend-row { display:flex; align-items:center; gap:6px; font-size:12px; color:#888; }
+  #tex-modal .tex-blend-row select { background:#333; border:1px solid #444; color:#ddd; padding:3px 5px; border-radius:3px; font-size:12px; flex:1; }
+  #tex-modal .tex-actions { display:flex; gap:8px; margin-top:14px; justify-content:flex-end; }
+
+  /* Floating brand panel */
+  #brand-panel { display:none; position:fixed; z-index:9999; background:#1e1e1e; border:1px solid #555; border-radius:7px; padding:10px; box-shadow:0 6px 24px rgba(0,0,0,0.7); width:160px; }
+  #brand-panel .bp-title { font-size:10px; color:#777; margin-bottom:6px; text-transform:uppercase; letter-spacing:.05em; }
+  #brand-panel .bp-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:4px; }
+  #brand-panel .bp-swatch { width:22px; height:22px; border-radius:4px; cursor:pointer; border:1px solid rgba(255,255,255,0.12); transition:transform .1s; }
+  #brand-panel .bp-swatch:hover { transform:scale(1.25); border-color:#fff; z-index:1; }
+  .brand-palette-btn { background:#2a2a2a; border:1px solid #444; color:#888; border-radius:3px; cursor:pointer; padding:0 5px; font-size:13px; line-height:1; flex:none; }
+  .brand-palette-btn:hover { background:#3a3a3a; color:#ddd; }
 
   /* Shadow controls */
   .shadow-toggle { display: flex; align-items: center; gap: 6px; }
@@ -300,8 +334,47 @@
         <span class="icon">&#128247;</span>Image
       </div>
     </div>
+    <div style="font-size:11px;color:#888;margin:14px 0 6px;font-weight:600;text-transform:uppercase;letter-spacing:.05em">Textures</div>
+    <div class="add-options" id="texture-options"></div>
     <div class="actions" style="margin-top:16px">
       <button class="btn-cancel" onclick="hideAddModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Texture Fill Modal -->
+<div id="tex-modal">
+  <div class="modal">
+    <h3>Texture Fill</h3>
+    <div class="tex-layout">
+      <div class="tex-controls">
+        <div class="tex-type-grid" id="tex-type-grid"></div>
+        <div id="tex-param-rows"></div>
+      </div>
+      <div class="tex-preview-col">
+        <canvas id="tex-preview-canvas" width="200" height="120"></canvas>
+        <div class="tex-blend-row">
+          <span>Blend</span>
+          <select id="tex-blend-select" onchange="window._texModal&&(_texModal.blend=this.value)">
+            <option value="overlay">overlay</option>
+            <option value="multiply">multiply</option>
+            <option value="screen">screen</option>
+            <option value="soft-light">soft-light</option>
+            <option value="normal">normal</option>
+            <option value="color-dodge">color-dodge</option>
+            <option value="difference">difference</option>
+          </select>
+        </div>
+        <div class="tex-blend-row">
+          <span>Opacity</span>
+          <input type="range" min="0" max="100" id="tex-opa-range" style="flex:1" oninput="window._texModal&&(_texModal.opacity=+this.value/100)">
+          <span id="tex-opa-val" style="width:32px">80%</span>
+        </div>
+      </div>
+    </div>
+    <div class="tex-actions">
+      <button onclick="hideTextureModal()" style="padding:7px 18px;background:#333;border:1px solid #444;color:#ccc;border-radius:4px;cursor:pointer">Cancel</button>
+      <button onclick="applyTextureFill()" style="padding:7px 18px;background:#7aa2f7;color:#111;border:none;border-radius:4px;cursor:pointer;font-weight:600">Apply</button>
     </div>
   </div>
 </div>
@@ -320,31 +393,71 @@
 const FONTS = ['Jost','Arial','Helvetica','Georgia','Times New Roman','Courier New','Verdana','Impact','Trebuchet MS','Palatino','Garamond','Oswald','Montserrat','Roboto','Poppins','Lato','Open Sans','Raleway','Playfair Display','Bebas Neue'];
 
 // --- Brand Palette ---
-// The Looth Group, refreshed brand colors. Grouped: Core → Neutrals → Extended.
+// The Looth Group — aged palette (2026). Grouped: Core → Neutrals → Extended.
 const BRAND = [
-  // Core brand colors (lifted from the logo — these are the identity)
-  { name: 'Forest',       hex: '#416943' },
-  { name: 'Looth Orange', hex: '#FE9336' },
-  { name: 'Ringed Gold',  hex: '#FDC649' },
-  { name: 'Deep Forest',  hex: '#2F4D2E' },
-  { name: 'Sage',         hex: '#A1C499' },
-  { name: 'Burnt Orange', hex: '#E4591E' },
-  // Neutrals (warm-leaning)
-  { name: 'Paper',        hex: '#FAF7F0' },
-  { name: 'Linen',        hex: '#E8E4D6' },
-  { name: 'Stone',        hex: '#B8B2A0' },
-  { name: 'Ash',          hex: '#6B6757' },
-  { name: 'Graphite',     hex: '#3A3830' },
-  { name: 'Coffee',       hex: '#1C1B16' },
-  // Extended palette (complementary tones)
-  { name: 'Rosewood',     hex: '#7A3A1F' },
-  { name: 'Copper',       hex: '#B87333' },
-  { name: 'Brass',        hex: '#D9A441' },
-  { name: 'Meadow',       hex: '#5E8C54' },
-  { name: 'Pine',         hex: '#1F3A2A' },
-  { name: 'Rust Red',     hex: '#8B1E1E' },
-  { name: 'Slate Teal',   hex: '#4A6B7A' },
-  { name: 'Wheat',        hex: '#C9B37A' },
+  // Core brand colors (aged interpretation of the logo — the identity)
+  { name: 'Forest',       hex: '#5C6B4F' },
+  { name: 'Looth Orange', hex: '#BF7237' },
+  { name: 'Ringed Gold',  hex: '#C9A155' },
+  { name: 'Deep Forest',  hex: '#343D2E' },
+  { name: 'Sage',         hex: '#A7B597' },
+  { name: 'Burnt Orange', hex: '#9E5131' },
+  // Neutrals (warm, slightly olive — parchment through coffee)
+  { name: 'Parchment',    hex: '#F5F0E4' },
+  { name: 'Linen',        hex: '#E4DCC9' },
+  { name: 'Stone',        hex: '#B0A894' },
+  { name: 'Ash',          hex: '#645F50' },
+  { name: 'Graphite',     hex: '#3A362C' },
+  { name: 'Coffee',       hex: '#1B1812' },
+  // Extended palette (retuned to sit next to the aged core)
+  { name: 'Rosewood',     hex: '#6B3824' },
+  { name: 'Copper',       hex: '#9E6238' },
+  { name: 'Wheat',        hex: '#BBA472' },
+  { name: 'Meadow',       hex: '#6E8459' },
+  { name: 'Pine',         hex: '#27382A' },
+  { name: 'Rust Red',     hex: '#7A2E25' },
+  { name: 'Slate Teal',   hex: '#4E6670' },
+  { name: 'Oxblood',      hex: '#5A2220' },
+];
+
+// ── Texture library ──────────────────────────────────────────────────────────
+// Add new entries here to expand the library. Each entry needs:
+//   id, name, icon, defaults (blend, opacity + any gen params), paramDefs
+const TEXTURE_TYPES = [
+  {
+    id: 'grain', name: 'Film Grain', icon: '◫',
+    defaults: { blend:'overlay',  opacity:0.15, size:1,  coarse:40 },
+    paramDefs: [
+      { key:'size',   label:'Grain Size', min:0.5, max:8,   step:0.5 },
+      { key:'coarse', label:'Coarse Mix', min:0,   max:100, step:5   },
+    ]
+  },
+  {
+    id: 'bump', name: 'Bump / Stone', icon: '⬛',
+    defaults: { blend:'multiply', opacity:0.80, freq:4,  azimuth:45, elevation:35, intensity:15 },
+    paramDefs: [
+      { key:'freq',      label:'Roughness', min:1,  max:20,  step:1 },
+      { key:'azimuth',   label:'Light Dir', min:0,  max:360, step:5 },
+      { key:'elevation', label:'Elevation', min:5,  max:85,  step:5 },
+      { key:'intensity', label:'Intensity', min:5,  max:40,  step:1 },
+    ]
+  },
+  {
+    id: 'paper', name: 'Paper', icon: '📄',
+    defaults: { blend:'multiply', opacity:0.30, freq:12, elevation:50 },
+    paramDefs: [
+      { key:'freq',      label:'Texture',   min:4,  max:30,  step:1 },
+      { key:'elevation', label:'Angle',     min:10, max:80,  step:5 },
+    ]
+  },
+  {
+    id: 'noise', name: 'Noise', icon: '▒',
+    defaults: { blend:'overlay',  opacity:0.20, freq:8,  octaves:4 },
+    paramDefs: [
+      { key:'freq',    label:'Frequency', min:1, max:20, step:1 },
+      { key:'octaves', label:'Octaves',   min:1, max:8,  step:1 },
+    ]
+  },
 ];
 
 // Build a color picker widget: native picker + hex input + brand swatches
@@ -353,15 +466,10 @@ const BRAND = [
 // Returns HTML string
 function brandColorPicker(prop, currentVal) {
   const hex6 = toHex6(currentVal || '#000000');
-  const uid = 'cp_' + prop + '_' + Math.random().toString(36).slice(2,8);
+  const uid = 'cp_' + prop.replace(/[^a-z0-9]/gi,'_'); // deterministic — survives updateProps rebuild
   let html = `<div class="color-field">`;
-  html += `<input type="color" id="${uid}_native" value="${hex6}" onchange="colorPickerChanged('${prop}', this.value, '${uid}')">`;
+  html += `<input type="color" id="${uid}_native" value="${hex6}" onchange="colorPickerChanged('${prop}', this.value, '${uid}')" onclick="showBrandPanel(event, function(h){ colorPickerChanged('${prop}',h,'${uid}') }, '${uid}_native')">`;
   html += `<input type="text" class="hex-input" id="${uid}_hex" value="${hex6}" onchange="colorPickerHexChanged('${prop}', this.value, '${uid}')" spellcheck="false">`;
-  html += `</div>`;
-  html += `<div class="brand-swatches">`;
-  for (const c of BRAND) {
-    html += `<div class="brand-swatch" style="background:${c.hex}" title="${c.name} (${c.hex})" onclick="colorPickerChanged('${prop}', '${c.hex}', '${uid}')"></div>`;
-  }
   html += `</div>`;
   return html;
 }
@@ -385,6 +493,152 @@ function colorPickerHexChanged(prop, val, uid) {
     const full = '#' + hex[1]+hex[1] + hex[2]+hex[2] + hex[3]+hex[3];
     colorPickerChanged(prop, full, uid);
   }
+}
+
+// --- Gradient fill state ---
+let _gSObjRef = null;
+window._gS = {};
+
+function isGradFill(f) {
+  return f && typeof f === 'object' && Array.isArray(f.colorStops) && f.colorStops.length > 0;
+}
+function isPatternFill(f) {
+  return f && typeof f === 'object' && (f.type === 'pattern' || f instanceof fabric.Pattern);
+}
+
+function _gradAngleFromCoords(coords) {
+  if (!coords) return 0;
+  const dx = ((coords.x2 ?? 1) - (coords.x1 ?? 0));
+  const dy = ((coords.y2 ?? 0) - (coords.y1 ?? 0));
+  return Math.round((Math.atan2(dy, dx) * 180 / Math.PI + 360) % 360);
+}
+
+function _gradState(prop, rawFill) {
+  const obj = canvas ? canvas.getActiveObject() : null;
+  if (obj !== _gSObjRef) { _gSObjRef = obj; window._gS = {}; }
+  if (!_gS[prop]) {
+    if (isGradFill(rawFill)) {
+      _gS[prop] = { mode: 'gradient', type: rawFill.type || 'linear',
+        angle: _gradAngleFromCoords(rawFill.coords),
+        stops: rawFill.colorStops.map(s => ({ color: toHex6(s.color) || '#000000', offset: +s.offset })) };
+    } else if (isPatternFill(rawFill)) {
+      const meta = obj && obj._texFillMetas && obj._texFillMetas[prop];
+      const ttype = TEXTURE_TYPES.find(t => t.id === meta?.type) || TEXTURE_TYPES[0];
+      _gS[prop] = { mode: 'texture', texType: ttype.id, texParams: { ...ttype.defaults, ...(meta?.params || {}) } };
+    } else {
+      const hex = toHex6(rawFill) || '#333333';
+      _gS[prop] = { mode: 'solid', type: 'linear', angle: 0,
+        stops: [{ color: hex, offset: 0 }, { color: '#ffffff', offset: 1 }] };
+    }
+  }
+  return _gS[prop];
+}
+
+function gradMode(prop, mode) {
+  if (_gS[prop]) _gS[prop].mode = mode;
+  if (mode === 'gradient') { const gs = _gS[prop]; if (gs) setObjProp(prop, _buildFabricGrad(gs)); }
+  if (mode === 'texture') { showTextureFillModal(prop); return; }
+  if (mode === 'solid') { const gs = _gS[prop]; if (gs) setObjProp(prop, gs.stops?.[0]?.color || '#333333'); }
+  updateProps();
+}
+
+function gradField(prop, field, val) {
+  if (!_gS[prop]) return;
+  _gS[prop][field] = field === 'angle' ? +val : val;
+  const gs = _gS[prop];
+  if (gs.mode === 'gradient') { setObjProp(prop, _buildFabricGrad(gs)); }
+  updateProps();
+}
+
+function gradStopField(prop, idx, field, val) {
+  const gs = _gS[prop]; if (!gs || !gs.stops[idx]) return;
+  gs.stops[idx][field] = field === 'offset' ? +val : val;
+  if (gs.mode === 'gradient') setObjProp(prop, _buildFabricGrad(gs));
+  updateProps();
+}
+
+function gradAddStop(prop) {
+  const gs = _gS[prop]; if (!gs) return;
+  const lastOff = gs.stops.length ? gs.stops[gs.stops.length - 1].offset : 0;
+  gs.stops.push({ color: '#ffffff', offset: Math.min(1, lastOff + 0.2) });
+  if (gs.mode === 'gradient') setObjProp(prop, _buildFabricGrad(gs));
+  updateProps();
+}
+
+function gradRemoveStop(prop, idx) {
+  const gs = _gS[prop]; if (!gs || gs.stops.length <= 2) return;
+  gs.stops.splice(idx, 1);
+  if (gs.mode === 'gradient') setObjProp(prop, _buildFabricGrad(gs));
+  updateProps();
+}
+
+function _buildFabricGrad(gs) {
+  const rad = (gs.angle || 0) * Math.PI / 180;
+  const coords = gs.type === 'radial'
+    ? { x1: 0.5, y1: 0.5, r1: 0, x2: 0.5, y2: 0.5, r2: 0.5 }
+    : { x1: 0.5 - 0.5 * Math.cos(rad), y1: 0.5 - 0.5 * Math.sin(rad),
+        x2: 0.5 + 0.5 * Math.cos(rad), y2: 0.5 + 0.5 * Math.sin(rad) };
+  const stops = [...gs.stops].sort((a, b) => a.offset - b.offset);
+  return new fabric.Gradient({ type: gs.type || 'linear', gradientUnits: 'percentage',
+    coords, colorStops: stops.map(s => ({ offset: s.offset, color: s.color })) });
+}
+
+function colorControl(prop, rawFill) {
+  const gs = _gradState(prop, rawFill);
+  const solidHex = isGradFill(rawFill)
+    ? (gs.stops[0]?.color || '#333333')
+    : (toHex6(rawFill) || '#333333');
+  const mSolid = gs.mode === 'solid', mGrad = gs.mode === 'gradient', mTex = gs.mode === 'texture';
+
+  let html = `<div style="flex:1;min-width:0;display:flex;flex-direction:column">`;
+  html += `<div style="display:flex;gap:2px;margin-bottom:3px">`;
+  html += `<button class="gm-btn${mSolid?' gm-on':''}" onclick="gradMode('${prop}','solid')">Solid</button>`;
+  html += `<button class="gm-btn${mGrad?' gm-on':''}" onclick="gradMode('${prop}','gradient')">Gradient</button>`;
+  html += `<button class="gm-btn${mTex?' gm-on':''}" onclick="gradMode('${prop}','texture')">Texture</button>`;
+  html += `</div>`;
+
+  if (mSolid) {
+    html += brandColorPicker(prop, solidHex);
+  } else if (mTex) {
+    const ttype = TEXTURE_TYPES.find(t => t.id === gs.texType) || TEXTURE_TYPES[0];
+    html += `<div style="display:flex;align-items:center;gap:6px;padding:4px 0">`;
+    html += `<span style="font-size:12px">${ttype.icon} ${ttype.name}</span>`;
+    html += `<button onclick="showTextureFillModal('${prop}')" style="flex:1;padding:3px 0;background:#2a3a4a;color:#7aa2f7;border:1px solid #3a5a7a;border-radius:4px;cursor:pointer;font-size:11px">Edit…</button>`;
+    html += `</div>`;
+  } else {
+    const isLin = gs.type !== 'radial';
+    html += `<div class="grad-panel">`;
+    html += `<div style="display:flex;align-items:center;gap:3px;margin-bottom:4px">`;
+    html += `<button class="grad-type-btn${isLin?' gm-on':''}" onclick="gradField('${prop}','type','linear')">Linear</button>`;
+    html += `<button class="grad-type-btn${!isLin?' gm-on':''}" onclick="gradField('${prop}','type','radial')">Radial</button>`;
+    if (isLin) {
+      html += `<input type="number" min="0" max="360" value="${gs.angle||0}" title="Angle"
+        style="width:44px;background:#2a2a2a;border:1px solid #444;color:#ddd;border-radius:2px;padding:1px 4px;font-size:11px;margin-left:4px"
+        onchange="gradField('${prop}','angle',+this.value)"><span style="font-size:10px;color:#888">°</span>`;
+    }
+    html += `</div>`;
+    gs.stops.forEach((s, i) => {
+      const pct = Math.round(s.offset * 100);
+      html += `<div class="grad-stop-row">`;
+      html += `<span style="font-size:10px;color:#888;width:12px;flex:none">${i+1}</span>`;
+      const _sid = 'gstop_' + prop.replace(/[^a-z0-9]/gi,'_') + '_' + i;
+      html += `<input type="color" id="${_sid}" value="${s.color}"
+        onchange="gradStopField('${prop}',${i},'color',this.value)"
+        onclick="showBrandPanel(event,function(h){gradStopField('${prop}',${i},'color',h);var e=document.getElementById('${_sid}');if(e)e.value=h;},'${_sid}')">`;
+      html += `<input type="range" min="0" max="100" value="${pct}" oninput="gradStopField('${prop}',${i},'offset',+this.value/100)">`;
+      html += `<span style="font-size:10px;color:#888;width:26px;flex:none">${pct}%</span>`;
+      if (gs.stops.length > 2) {
+        html += `<button onclick="gradRemoveStop('${prop}',${i})" style="background:#222;border:1px solid #444;color:#d66;border-radius:2px;cursor:pointer;padding:0 4px;font-size:11px;flex:none">×</button>`;
+      }
+      html += `</div>`;
+    });
+    html += `<div style="display:flex;gap:4px;margin-top:4px">`;
+    html += `<button onclick="gradAddStop('${prop}')" style="flex:1;font-size:10px;padding:2px 0;background:#2a2a2a;border:1px solid #444;color:#aaa;border-radius:2px;cursor:pointer">+ Stop</button>`;
+    html += `</div>`;
+    html += `</div>`;
+  }
+  html += `</div>`;
+  return html;
 }
 
 // --- State ---
@@ -414,7 +668,7 @@ function saveCurrentTabState() {
   clearGuidelines();
   canvas.discardActiveObject();
   canvas.requestRenderAll();
-  tab.canvasJSON = canvas.toJSON(['_customName', 'lockUniScaling', 'lockMovementX', 'lockMovementY', 'lockScalingX', 'lockScalingY', 'lockRotation', '_bannerLeftEnd', '_bannerRightEnd', '_bannerNotchL', '_bannerNotchR', '_bannerFlareL', '_bannerFlareR', '_isBannerGroup','_isHitboxGroup','_isFrame','_frameOffset','_framePadT','_framePadR','_framePadB','_framePadL', '_padL', '_padR', '_padT', '_padB', 'paintFirst','_shadowSpread','_spreadStrokeBackup','_frameThickness','_frameRadius','_padLinked','_cornerRadius','_innerShadow','_corners','_cornersLinked']);
+  tab.canvasJSON = canvas.toJSON(['_customName', 'lockUniScaling', 'lockMovementX', 'lockMovementY', 'lockScalingX', 'lockScalingY', 'lockRotation', '_bannerLeftEnd', '_bannerRightEnd', '_bannerNotchL', '_bannerNotchR', '_bannerFlareL', '_bannerFlareR', '_isBannerGroup','_isHitboxGroup','_isFrame','_frameOffset','_framePadT','_framePadR','_framePadB','_framePadL', '_padL', '_padR', '_padT', '_padB', 'paintFirst','_shadowSpread','_spreadStrokeBackup','_frameThickness','_frameRadius','_frameInnerRadius','_padLinked','_cornerRadius','_innerShadow','_corners','_cornersLinked','_isTextureOverlay','_textureType','_textureParams','globalCompositeOperation','_texFillMetas']);
   tab.canvasW = canvasW;
   tab.canvasH = canvasH;
 }
@@ -431,7 +685,7 @@ function switchToTab(id) {
   if (tab.canvasJSON) {
     canvas.loadFromJSON(tab.canvasJSON, function() {
       // Sync canvasBg globals from loaded background
-      const bgStr = canvas.backgroundColor || '#2B2318';
+      const bgStr = canvas.backgroundColor || '';
       const rgbaM = /^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)(?:\s*,\s*([\d.]+))?\s*\)$/i.exec(bgStr);
       if (rgbaM) {
         canvasBgColor = '#' + ((1<<24) | (+rgbaM[1]<<16) | (+rgbaM[2]<<8) | +rgbaM[3]).toString(16).slice(1);
@@ -490,7 +744,7 @@ function addTab() {
   saveCurrentTabState();
   const w = canvasW || 1280;
   const h = canvasH || 720;
-  const bg = (canvas && canvas.backgroundColor) || '#2B2318';
+  const bg = (canvas && canvas.backgroundColor) || '';
   const id = Date.now() + Math.floor(Math.random() * 1000);
   const name = 'Untitled ' + (tabs.length + 1);
   // Seed an empty canvas JSON so the new tab loads at the requested size + bg
@@ -509,7 +763,7 @@ function initCanvas(w, h) {
   canvas = new fabric.Canvas('c', {
     width: w,
     height: h,
-    backgroundColor: '#2B2318',
+    backgroundColor: '',
     preserveObjectStacking: true,
     selection: true,
   });
@@ -529,10 +783,34 @@ function initCanvas(w, h) {
       o.set({ width: newW, height: newH, scaleX: 1, scaleY: 1 });
       o.setCoords();
     }
+    // Panel / hitbox groups: reflow after resize. Panels use the repeater
+    // rebuild; non-panel hitbox groups use the single-textbox recenter path.
+    if (o && o._isHitboxGroup) {
+      if (o._isPanelGroup) _rebuildPanelLines(o);
+      else recenterBannerText(o, false);
+    }
     saveUndo(); refreshLayers(); updateProps();
   });
   canvas.on('mouse:move', onMouseMove);
   canvas.on('text:changed', () => { saveUndo(); refreshLayers(); });
+  canvas.on('mouse:down', (opt) => {
+    if (!canvas._texClipPending) return;
+    const tex = canvas._texClipPending;
+    const target = opt.target;
+    canvas._texClipPending = null;
+    canvas.defaultCursor = 'default';
+    canvas.hoverCursor = 'move';
+    if (!target || target === tex || target._isTextureOverlay) { updateProps(); return; }
+    target.clone(clip => {
+      clip.set({ absolutePositioned: true, left: target.left, top: target.top,
+        originX: target.originX || 'left', originY: target.originY || 'top',
+        angle: target.angle || 0, scaleX: target.scaleX || 1, scaleY: target.scaleY || 1 });
+      tex.clipPath = clip;
+      tex.dirty = true;
+      canvas.setActiveObject(tex);
+      canvas.requestRenderAll(); updateProps(); saveUndo();
+    });
+  });
 
   document.getElementById('status-size').textContent = `${w} x ${h}`;
   setZoom(1);
@@ -678,14 +956,16 @@ function makeImageCropAction(edge) {
 function setImageCornerRadiusOn(img, r) {
   r = Math.max(0, +r || 0);
   img._cornerRadius = r;
-  if (r <= 0) { img.clipPath = null; return; }
+  if (r <= 0) { img.clipPath = null; img.dirty = true; return; }
   const w = img.width, h = img.height;
   const rr = Math.min(r, w / 2, h / 2);
+  // Center-origin so the clip path is centered on the image's local
+  // coordinate system. left/top origin with negative offsets doesn't clip
+  // in Fabric 5.3 — verified by side-by-side test.
   img.clipPath = new fabric.Rect({
-    left: -w / 2, top: -h / 2,
     width: w, height: h,
     rx: rr, ry: rr,
-    originX: 'left', originY: 'top',
+    originX: 'center', originY: 'center',
     absolutePositioned: false,
   });
   img.dirty = true;
@@ -695,23 +975,65 @@ function setImageCornerRadius(r) {
   const img = canvas.getActiveObject();
   if (!img || img.type !== 'image') return;
   r = Math.max(0, +r || 0);
-  img._cornerRadius = r;
+
+  // Removing the clip is safe to do in-place — no recreate needed.
   if (r <= 0) {
+    img._cornerRadius = 0;
     img.clipPath = null;
-  } else {
-    const w = img.width, h = img.height;
+    img.dirty = true;
+    canvas.requestRenderAll();
+    saveUndo();
+    return;
+  }
+
+  // Workaround for fabric quirk: setting clipPath on an image AFTER it's been
+  // added to canvas (with the custom mid-edge crop controls from
+  // setupImageControls attached) doesn't size the cache canvas correctly, so
+  // the clip renders against a 300x150 default canvas. Cleanest fix is to
+  // recreate the image with the clipPath in place BEFORE add — that path
+  // works. Latency: one fresh fabric.Image.fromURL (browser-cached, fast).
+  const src = img.getSrc ? img.getSrc() : img.src;
+  const idx = canvas.getObjects().indexOf(img);
+  const props = {
+    left: img.left, top: img.top,
+    scaleX: img.scaleX, scaleY: img.scaleY,
+    width: img.width, height: img.height,
+    cropX: img.cropX || 0, cropY: img.cropY || 0,
+    angle: img.angle || 0,
+    opacity: img.opacity != null ? img.opacity : 1,
+    flipX: !!img.flipX, flipY: !!img.flipY,
+    selectable: img.selectable !== false,
+    evented: img.evented !== false,
+  };
+  const customName = img._customName;
+  const shadow = img.shadow ? new fabric.Shadow(img.shadow.toObject ? img.shadow.toObject() : img.shadow) : null;
+  const filters = img.filters ? img.filters.slice() : [];
+
+  fabric.Image.fromURL(src, function(fresh) {
+    fresh.set(props);
+    fresh._customName = customName;
+    if (shadow) fresh.shadow = shadow;
+    if (filters.length) {
+      fresh.filters = filters;
+      fresh.applyFilters();
+    }
+    setupImageControls(fresh);
+    fresh._cornerRadius = r;
+    const w = fresh.width, h = fresh.height;
     const rr = Math.min(r, w / 2, h / 2);
-    img.clipPath = new fabric.Rect({
-      left: -w / 2, top: -h / 2,
+    fresh.clipPath = new fabric.Rect({
       width: w, height: h,
       rx: rr, ry: rr,
-      originX: 'left', originY: 'top',
+      originX: 'center', originY: 'center',
       absolutePositioned: false,
     });
-  }
-  img.dirty = true;
-  canvas.requestRenderAll();
-  saveUndo();
+    canvas.remove(img);
+    canvas.insertAt(fresh, idx);
+    canvas.setActiveObject(fresh);
+    canvas.requestRenderAll();
+    updateProps();
+    saveUndo();
+  }, { crossOrigin: 'anonymous' });
 }
 
 // --- Image filters (Fabric.Image.filters.*) ---
@@ -721,6 +1043,21 @@ function setImageCornerRadius(r) {
 function _getActiveImage() {
   const img = canvas.getActiveObject();
   return (img && img.type === 'image') ? img : null;
+}
+
+// Fabric's default WebGL filter backend has a 2048px texture cap. High-res
+// images exceed it and render blank after applyFilters(). Force the Canvas2D
+// backend when the source image is larger than the WebGL limit.
+function _safeApplyFilters(img) {
+  const src = img._originalElement || img._element;
+  const maxSide = Math.max(src?.naturalWidth || src?.width || 0, src?.naturalHeight || src?.height || 0);
+  const webglCap = (fabric.isWebglSupported && fabric.isWebglSupported()) ? (fabric.WebglFilterBackend?.prototype?.tileSize || 2048) : 0;
+  if (maxSide > webglCap && fabric.Canvas2dFilterBackend) {
+    if (!(fabric.filterBackend instanceof fabric.Canvas2dFilterBackend)) {
+      fabric.filterBackend = new fabric.Canvas2dFilterBackend();
+    }
+  }
+  img.applyFilters();
 }
 
 function setImageFilter(type, key, value) {
@@ -739,7 +1076,7 @@ function setImageFilter(type, key, value) {
     const opts = {}; opts[key] = +value;
     img.filters.push(new FilterClass(opts));
   }
-  img.applyFilters();
+  _safeApplyFilters(img);
   canvas.requestRenderAll();
   saveUndo();
 }
@@ -753,7 +1090,7 @@ function toggleImageFilter(type, enabled) {
   const existing = img.filters.find(x => x.type === type);
   if (enabled && !existing) img.filters.push(new FilterClass());
   else if (!enabled && existing) img.filters = img.filters.filter(x => x !== existing);
-  img.applyFilters();
+  _safeApplyFilters(img);
   canvas.requestRenderAll();
   saveUndo();
 }
@@ -762,7 +1099,7 @@ function clearImageFilters() {
   const img = _getActiveImage();
   if (!img) return;
   img.filters = [];
-  img.applyFilters();
+  _safeApplyFilters(img);
   canvas.requestRenderAll();
   updateProps();
   saveUndo();
@@ -849,11 +1186,14 @@ function getColorAlpha(c) {
 }
 function getColorHex(c) {
   if (!c) return '#000000';
+  if (isGradFill(c)) return getColorHex(c.colorStops[0].color);
+  if (isPatternFill(c)) return '#888888';
   const m = /rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i.exec(c);
   if (m) return '#' + ((1<<24) | (+m[1]<<16) | (+m[2]<<8) | +m[3]).toString(16).slice(1);
   return c;
 }
 function colorWithAlpha(c, a) {
+  if (isGradFill(c) || isPatternFill(c)) return c;
   const hex = getColorHex(c);
   return a >= 1 ? hex : hexToRgba(hex, a);
 }
@@ -894,6 +1234,7 @@ function getLayerIcon(obj) {
   if (obj.type === 'polygon') return '\u2B23';
   if (obj.type === 'rect' && obj._isFrame) return '\u{1F5BC}';
   if (obj.type === 'group' && obj._isBannerGroup) return '\u{1F3F7}';
+  if (obj.type === 'group' && obj._isPanelGroup) return '\u{1F4C4}';
   if (obj.type === 'group' && obj._isHitboxGroup) return '\u{1F517}';
   if (obj.type === 'group') return '\u{1F4C1}';
   return '?';
@@ -977,7 +1318,7 @@ function buildLayerRow(obj, idx, active, isChild, groupObj, childIdx) {
     <span class="layer-actions">
       ${childActions}
       <button onclick="toggleVisibility(${isChild ? -1 : idx}); event.stopPropagation();" title="Toggle visibility">${obj.visible !== false ? '\u{1F441}' : '\u{1F441}\u200D\u{1F5E8}'}</button>
-      <button onclick="toggleLock(${isChild ? -1 : idx}); event.stopPropagation();" title="Toggle lock" class="${obj.lockMovementX ? 'active' : ''}">\u{1F512}</button>
+      <input type="checkbox" ${obj.lockMovementX ? 'checked' : ''} onclick="toggleLock(${isChild ? -1 : idx}); event.stopPropagation();" title="Lock" style="cursor:pointer;accent-color:#7aa2f7;width:13px;height:13px;">
     </span>
   `;
 
@@ -1009,7 +1350,7 @@ function buildLayerRow(obj, idx, active, isChild, groupObj, childIdx) {
 
 function refreshLayers() {
   const panel = document.getElementById('layers-panel');
-  const objects = canvas.getObjects().filter(o => !o._isGuideline);
+  const objects = canvas.getObjects().filter(o => !o._isGuideline && !o._isSpreadGhost);
   const active = canvas.getActiveObject();
 
   panel.innerHTML = '';
@@ -1045,14 +1386,18 @@ function refreshLayers() {
 }
 
 function toggleVisibility(idx) {
-  const obj = canvas.getObjects().filter(o => !o._isGuideline)[idx];
+  if (idx < 0) return;
+  const obj = canvas.getObjects().filter(o => !o._isGuideline && !o._isSpreadGhost)[idx];
+  if (!obj) return;
   obj.visible = obj.visible === false ? true : false;
   canvas.requestRenderAll();
   refreshLayers();
 }
 
 function toggleLock(idx) {
-  const obj = canvas.getObjects().filter(o => !o._isGuideline)[idx];
+  if (idx < 0) return;
+  const obj = canvas.getObjects().filter(o => !o._isGuideline && !o._isSpreadGhost)[idx];
+  if (!obj) return;
   const locked = !obj.lockMovementX;
   obj.set({
     lockMovementX: locked,
@@ -1101,6 +1446,7 @@ function duplicateLayer() {
       cloned._isHitboxGroup = true;
       cloned._padL = obj._padL; cloned._padR = obj._padR;
       cloned._padT = obj._padT; cloned._padB = obj._padB;
+      if (obj._isPanelGroup) cloned._isPanelGroup = true;
     }
     canvas.add(cloned);
     canvas.setActiveObject(cloned);
@@ -1222,13 +1568,21 @@ function updateProps() {
   html += `<label>H</label><input type="number" value="${Math.round(b.height)}" onchange="setObjSize('h', +this.value)"></div>`;
 
   // Rotation
-  html += `<div class="prop-row"><label>Rot</label><input type="number" value="${Math.round(obj.angle || 0)}" onchange="setObjProp('angle', +this.value)"></div>`;
+  const rotDeg = Math.round(obj.angle || 0);
+  html += `<div class="prop-row"><label>Rot</label>
+    <button onclick="setObjProp('angle',(canvas.getActiveObject()?.angle||0)-90)" title="-90°" style="padding:1px 5px;font-size:11px;background:#2a2a2a;border:1px solid #444;color:#ccc;border-radius:3px;cursor:pointer">-90</button>
+    <button onclick="setObjProp('angle',(canvas.getActiveObject()?.angle||0)-15)" title="-15°" style="padding:1px 5px;font-size:11px;background:#2a2a2a;border:1px solid #444;color:#ccc;border-radius:3px;cursor:pointer">-15</button>
+    <input type="number" min="-360" max="360" value="${rotDeg}" style="width:46px;text-align:center;flex:none" onchange="setObjProp('angle',+this.value)"><span style="font-size:10px;color:#666">°</span>
+    <button onclick="setObjProp('angle',(canvas.getActiveObject()?.angle||0)+15)" title="+15°" style="padding:1px 5px;font-size:11px;background:#2a2a2a;border:1px solid #444;color:#ccc;border-radius:3px;cursor:pointer">+15</button>
+    <button onclick="setObjProp('angle',(canvas.getActiveObject()?.angle||0)+90)" title="+90°" style="padding:1px 5px;font-size:11px;background:#2a2a2a;border:1px solid #444;color:#ccc;border-radius:3px;cursor:pointer">+90</button>
+    <button onclick="setObjProp('angle',0)" title="Reset rotation" style="padding:1px 6px;font-size:11px;background:#2a2a2a;border:1px solid #444;color:#888;border-radius:3px;cursor:pointer">↺</button>
+  </div>`;
 
   // Opacity
   const opaVal = Math.round((obj.opacity === undefined ? 1 : obj.opacity) * 100);
   html += `<div class="prop-row"><label>Opa</label><input id="opa-range" type="range" min="0" max="100" value="${opaVal}" oninput="setOpacity(+this.value)"><input id="opa-num" type="number" min="0" max="100" value="${opaVal}" style="width:42px;flex:none" onchange="setOpacity(+this.value)"><span style="font-size:11px;color:#666">%</span></div>`;
 
-  // Banner Group — specialized controls
+  // Banner Group — specialized controls, grouped into TEXT and ELEMENT sections.
   if (obj.type === 'group' && obj._isBannerGroup) {
     html += '<hr style="border-color:#333;margin:8px 0">';
     html += '<div style="font-size:11px;color:#7aa2f7;margin-bottom:6px;font-weight:600;">BANNER GROUP</div>';
@@ -1237,6 +1591,7 @@ function updateProps() {
     const bgPoly = obj._objects ? obj._objects.find(o => o.type === 'polygon') : null;
 
     if (bgText) {
+      html += `<div style="font-size:10px;color:#7aa2f7;letter-spacing:1px;margin:4px 0 4px;border-top:1px solid #2a3a5a;padding-top:6px;font-weight:600">\u25C6 TEXT</div>`;
       html += `<div class="prop-row"><label>Text</label><input type="text" value="${(bgText.text||'').replace(/"/g,'&quot;')}" onchange="setBannerGroupText(this.value)"></div>`;
       const curFont = (bgText.fontFamily || 'Arial').split(',')[0].trim();
       html += `<div class="prop-row"><label>Font</label><select onchange="setBannerGroupFont(this.value)" style="flex:1">`;
@@ -1244,10 +1599,12 @@ function updateProps() {
       if (!FONTS.includes(curFont)) html += `<option value="${curFont}" selected>${curFont}</option>`;
       html += `</select></div>`;
       html += `<div class="prop-row"><label>Size</label><input type="number" value="${bgText.fontSize||24}" onchange="setBannerGroupTextProp('fontSize', +this.value)"></div>`;
-      html += `<div class="prop-row"><label>TCol</label>${brandColorPicker('_bgTextFill', getColorHex(bgText.fill) || '#fff')}</div>`;
-      html += alphaRow('TOpa', '_bgTextFillAlpha', getColorAlpha(bgText.fill));
+      html += `<div class="prop-row" style="align-items:flex-start"><label>TCol</label>${colorControl('_bgTextFill', bgText.fill || '#fff')}</div>`;
+      if (!isGradFill(bgText.fill)) html += alphaRow('TOpa', '_bgTextFillAlpha', getColorAlpha(bgText.fill));
+      const bgIsItalic = bgText.fontStyle === 'italic';
       html += `<div class="prop-row"><label>Bold</label><input type="checkbox" ${bgText.fontWeight==='bold'?'checked':''} onchange="setBannerGroupTextProp('fontWeight', this.checked?'bold':'normal')">`;
-      html += `<label>Algn</label><select onchange="setBannerGroupTextProp('textAlign', this.value)">
+      html += `<label style="margin-left:8px">Ital</label><input type="checkbox" ${bgIsItalic?'checked':''} onchange="setBannerGroupTextProp('fontStyle', this.checked?'italic':'normal')"></div>`;
+      html += `<div class="prop-row"><label>Algn</label><select onchange="setBannerGroupTextProp('textAlign', this.value)">
         <option value="left" ${bgText.textAlign==='left'?'selected':''}>Left</option>
         <option value="center" ${bgText.textAlign==='center'?'selected':''}>Center</option>
         <option value="right" ${bgText.textAlign==='right'?'selected':''}>Right</option>
@@ -1260,11 +1617,28 @@ function updateProps() {
         html += `<div class="prop-row"><label>OWid</label><input type="number" min="0.5" max="10" step="0.5" value="${bgText.strokeWidth||1}" onchange="setBannerGroupTextProp('strokeWidth', +this.value)"></div>`;
         html += strokeOpacityRow('_bgTextStrokeAlpha', getColorAlpha(bgText.stroke));
       }
+      // Text shadow — sits with text controls (moved from end of panel)
+      const tsh = bgText.shadow;
+      const hasTsh = !!tsh;
+      const tshX = (tsh && tsh.offsetX) || 0;
+      const tshY = (tsh && tsh.offsetY) || 0;
+      const tshBlur = (tsh && tsh.blur) || 0;
+      const tshColor = (tsh && tsh.color) || 'rgba(0,0,0,0.6)';
+      html += `<div class="prop-row"><label>TShad</label><input type="checkbox" ${hasTsh?'checked':''} onchange="toggleBannerTextShadow(this.checked)"> <span style="font-size:11px;color:#888">${hasTsh?'On':'Off'}</span><button type="button" title="Apply glow/bloom preset to banner text" onclick="applyBannerTextGlow()" style="margin-left:auto;padding:2px 8px;font-size:11px;background:#333;color:#ccc;border:1px solid #555;border-radius:3px;cursor:pointer">Glow</button></div>`;
+      if (hasTsh) {
+        html += `<div class="prop-row"><label>TSX</label><input type="number" value="${tshX}" onchange="setBannerTextShadowProp('offsetX', +this.value)">`;
+        html += `<label>TSY</label><input type="number" value="${tshY}" onchange="setBannerTextShadowProp('offsetY', +this.value)"></div>`;
+        html += `<div class="prop-row"><label>TBlur</label><input type="number" min="0" value="${tshBlur}" onchange="setBannerTextShadowProp('blur', +this.value)"></div>`;
+        html += `<div class="prop-row"><label>TSCol</label>${brandColorPicker('_bgTextShadowColor', getColorHex(tshColor) || '#000000')}</div>`;
+        html += alphaRow('TSOpa', '_bgTextShadowAlpha', getColorAlpha(tshColor));
+      }
     }
 
+    html += `<div style="font-size:10px;color:#7aa2f7;letter-spacing:1px;margin:10px 0 4px;border-top:1px solid #2a3a5a;padding-top:6px;font-weight:600">\u25C6 ELEMENT</div>`;
+
     if (bgPoly) {
-      html += `<div class="prop-row"><label>BFil</label>${brandColorPicker('_bgBannerFill', getColorHex(bgPoly.fill) || '#333')}</div>`;
-      html += alphaRow('BFOp', '_bgBannerFillAlpha', getColorAlpha(bgPoly.fill));
+      html += `<div class="prop-row" style="align-items:flex-start"><label>BFil</label>${colorControl('_bgBannerFill', bgPoly.fill || '#333')}</div>`;
+      if (!isGradFill(bgPoly.fill) && !isPatternFill(bgPoly.fill)) html += alphaRow('BFOp', '_bgBannerFillAlpha', getColorAlpha(bgPoly.fill));
       const bOpa = Math.round((bgPoly.opacity === undefined ? 1 : bgPoly.opacity) * 100);
       html += `<div class="prop-row"><label>BOpa</label><input type="range" min="0" max="100" value="${bOpa}" oninput="setBannerGroupPolyProp('opacity', +this.value/100)"><input type="number" min="0" max="100" value="${bOpa}" style="width:42px;flex:none" onchange="setBannerGroupPolyProp('opacity', +this.value/100)"><span style="font-size:11px;color:#666">%</span></div>`;
       const bStroke = bgPoly.stroke && bgPoly.strokeWidth > 0;
@@ -1276,17 +1650,7 @@ function updateProps() {
       }
     }
 
-    // Padding controls
-    html += '<div style="font-size:11px;color:#888;margin:8px 0 4px;">Padding</div>';
-    const pL = obj._padL||10, pR = obj._padR||10, pT = obj._padT||10, pB = obj._padB||10;
-    const bgPadLinked = obj._padLinked !== false;
-    html += `<div class="prop-row"><label>PL</label><input type="number" min="0" max="200" value="${pL}" onchange="setBannerGroupPadding('L', +this.value)">`;
-    html += `<label>PR</label><input type="number" min="0" max="200" value="${pR}" onchange="setBannerGroupPadding('R', +this.value)"></div>`;
-    html += `<div class="prop-row"><label>PT</label><input type="number" min="0" max="200" value="${pT}" onchange="setBannerGroupPadding('T', +this.value)">`;
-    html += `<button onclick="toggleBannerPadLink()" title="Link padding" style="background:${bgPadLinked ? '#7aa2f7' : '#333'};border:1px solid ${bgPadLinked ? '#7aa2f7' : '#444'};color:${bgPadLinked ? '#111' : '#888'};border-radius:3px;cursor:pointer;padding:2px 6px;font-size:14px;flex-shrink:0">${bgPadLinked ? '\u{1F517}' : '\u{26D3}\uFE0F'}</button>`;
-    html += `<label>PB</label><input type="number" min="0" max="200" value="${pB}" onchange="setBannerGroupPadding('B', +this.value)"></div>`;
-
-    // Banner shape controls
+    // Banner shape controls (L End / R End / notches / flare)
     const lEnd = obj._bannerLeftEnd || 'flat', rEnd = obj._bannerRightEnd || 'flat';
     const nL = Math.round(obj._bannerNotchL || 20), nR = Math.round(obj._bannerNotchR || 20);
     html += '<div style="font-size:11px;color:#888;margin:8px 0 4px;">Shape</div>';
@@ -1330,14 +1694,25 @@ function updateProps() {
     }
 
     // Banner (polygon) shadow — reads from polygon child
+    // Padding — element concern (affects how much room the polygon leaves around the text)
+    html += '<div style="font-size:11px;color:#888;margin:8px 0 4px;">Padding</div>';
+    const pL = obj._padL||10, pR = obj._padR||10, pT = obj._padT||10, pB = obj._padB||10;
+    const bgPadLinked = obj._padLinked !== false;
+    html += `<div class="prop-row"><label>PL</label><input type="number" min="0" max="200" value="${pL}" onchange="setBannerGroupPadding('L', +this.value)">`;
+    html += `<label>PR</label><input type="number" min="0" max="200" value="${pR}" onchange="setBannerGroupPadding('R', +this.value)"></div>`;
+    html += `<div class="prop-row"><label>PT</label><input type="number" min="0" max="200" value="${pT}" onchange="setBannerGroupPadding('T', +this.value)">`;
+    html += `<button onclick="toggleBannerPadLink()" title="Link padding" style="background:${bgPadLinked ? '#7aa2f7' : '#333'};border:1px solid ${bgPadLinked ? '#7aa2f7' : '#444'};color:${bgPadLinked ? '#111' : '#888'};border-radius:3px;cursor:pointer;padding:2px 6px;font-size:14px;flex-shrink:0">${bgPadLinked ? '\u{1F517}' : '\u{26D3}\uFE0F'}</button>`;
+    html += `<label>PB</label><input type="number" min="0" max="200" value="${pB}" onchange="setBannerGroupPadding('B', +this.value)"></div>`;
+
+    // Banner (polygon) shadow — element concern
     if (bgPoly) {
       const sh = bgPoly.shadow || bgPoly._savedShadow;
       const hasSh = !!sh;
       const shX = (sh && sh.offsetX) || 0;
       const shY = (sh && sh.offsetY) || 0;
       const shBlur = (sh && sh.blur) || 0;
-      html += '<div style="font-size:11px;color:#888;margin:8px 0 4px;">Banner Shadow</div>';
-      html += `<div class="prop-row"><label>Shad</label><input type="checkbox" ${hasSh?'checked':''} onchange="toggleBannerGroupShadow(this.checked)"> <span style="font-size:11px;color:#888">${hasSh?'On':'Off'}</span></div>`;
+      html += '<div style="font-size:11px;color:#888;margin:8px 0 4px;">Shadow</div>';
+      html += `<div class="prop-row"><label>Shad</label><input type="checkbox" ${hasSh?'checked':''} onchange="toggleBannerGroupShadow(this.checked)"> <span style="font-size:11px;color:#888">${hasSh?'On':'Off'}</span><button type="button" title="Apply glow preset to banner shape" onclick="applyBannerPolyGlow()" style="margin-left:auto;padding:2px 8px;font-size:11px;background:#333;color:#ccc;border:1px solid #555;border-radius:3px;cursor:pointer">Glow</button></div>`;
       if (hasSh) {
         const shSpread = (bgPoly && bgPoly._shadowSpread) || 0;
         html += `<div class="prop-row"><label>SX</label><input type="number" value="${shX}" onchange="setBannerGroupShadowProp('offsetX', +this.value)">`;
@@ -1347,17 +1722,87 @@ function updateProps() {
       }
     }
 
-    // Text (child textbox) shadow — separate from banner polygon shadow
-    if (bgText) {
-      const tsh = bgText.shadow;
-      const hasTsh = !!tsh;
-      const tshX = (tsh && tsh.offsetX) || 0;
-      const tshY = (tsh && tsh.offsetY) || 0;
-      const tshBlur = (tsh && tsh.blur) || 0;
-      const tshColor = (tsh && tsh.color) || 'rgba(0,0,0,0.6)';
-      html += '<div style="font-size:11px;color:#888;margin:8px 0 4px;">Text Shadow</div>';
-      html += `<div class="prop-row"><label>TShad</label><input type="checkbox" ${hasTsh?'checked':''} onchange="toggleBannerTextShadow(this.checked)"> <span style="font-size:11px;color:#888">${hasTsh?'On':'Off'}</span></div>`;
-      if (hasTsh) {
+    html += `<div class="prop-row" style="margin-top:8px;justify-content:center;">
+      <button onclick="ungroupSelected()" style="padding:4px 12px;background:#444;color:#ccc;border:1px solid #555;border-radius:4px;cursor:pointer;font-size:11px;">Ungroup</button>
+    </div>`;
+  }
+
+  // Hitbox Group — linked arbitrary shapes + text, auto-centered in bbox.
+  // Panel Group (_isPanelGroup) is the rounded-rect variant: each line is an
+  // independent Textbox child (repeater). A single set of text controls binds
+  // to whichever line is currently selected via `group._selectedLineIdx`.
+  else if (obj.type === 'group' && obj._isHitboxGroup) {
+    const isPanel = !!obj._isPanelGroup;
+    html += '<hr style="border-color:#333;margin:8px 0">';
+    html += `<div style="font-size:11px;color:#7aa2f7;margin-bottom:6px;font-weight:600;">${isPanel ? 'PANEL' : 'LINKED GROUP (HITBOX)'}</div>`;
+
+    // Panel: list of lines at top — click row to select, arrows to reorder, × to delete.
+    if (isPanel) {
+      const panelLines = _panelLines(obj);
+      const selIdx = _panelSelectedIdx(obj);
+      html += `<div style="font-size:10px;color:#7aa2f7;letter-spacing:1px;margin:4px 0 4px;border-top:1px solid #2a3a5a;padding-top:6px;font-weight:600">\u25C6 TEXT</div>`;
+      html += `<div style="font-size:11px;color:#888;margin:4px 0 4px;">Lines</div>`;
+      for (let i = 0; i < panelLines.length; i++) {
+        const ln = panelLines[i];
+        const selected = i === selIdx;
+        const preview = (ln.text || '').replace(/"/g,'&quot;').replace(/</g,'&lt;').substring(0, 32);
+        html += `<div class="prop-row" style="gap:2px;${selected?'background:#2a2f4a;border-radius:3px;padding:2px 4px;':''}">
+          <button onclick="movePanelLine(${i},'up')" title="Move up" ${i===0?'disabled':''} style="background:#333;border:1px solid #444;color:#aaa;cursor:pointer;padding:1px 4px;border-radius:2px;font-size:10px;flex:none">\u25B2</button>
+          <button onclick="movePanelLine(${i},'down')" title="Move down" ${i===panelLines.length-1?'disabled':''} style="background:#333;border:1px solid #444;color:#aaa;cursor:pointer;padding:1px 4px;border-radius:2px;font-size:10px;flex:none">\u25BC</button>
+          <button onclick="selectPanelLine(${i})" style="flex:1;text-align:left;background:${selected?'#3a3f5a':'#222'};border:1px solid ${selected?'#7aa2f7':'#333'};color:#ddd;cursor:pointer;padding:2px 6px;border-radius:2px;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${selected?'\u25CF':'\u25CB'} ${preview || '(empty)'}</button>
+          <button onclick="duplicatePanelLine(${i})" title="Duplicate line with same formatting" style="background:#333;border:1px solid #444;color:#aaa;cursor:pointer;padding:1px 6px;border-radius:2px;font-size:11px;flex:none">\u29C9</button>
+          <button onclick="removePanelLine(${i})" title="Delete line" ${panelLines.length<=1?'disabled':''} style="background:#333;border:1px solid #444;color:#d66;cursor:pointer;padding:1px 6px;border-radius:2px;font-size:11px;flex:none">\u00D7</button>
+        </div>`;
+      }
+      html += `<div class="prop-row" style="margin:4px 0"><button onclick="addPanelLine()" style="flex:1;padding:3px 0;background:#2a4a2a;color:#7acc7a;border:1px solid #3a6a3a;border-radius:3px;cursor:pointer;font-size:11px">+ Add line</button></div>`;
+    }
+
+    const hgText = isPanel ? _panelSelectedLine(obj) :
+      (obj._objects ? obj._objects.find(o => o.type === 'textbox' || o.type === 'text' || o.type === 'i-text') : null);
+
+    if (hgText) {
+      if (isPanel) html += `<div style="font-size:11px;color:#888;margin:8px 0 4px;">Selected line</div>`;
+      html += `<div class="prop-row"><label>Text</label><input type="text" value="${(hgText.text||'').replace(/"/g,'&quot;')}" onchange="setBannerGroupText(this.value)"></div>`;
+      const curFont = (hgText.fontFamily || 'Arial').split(',')[0].trim();
+      html += `<div class="prop-row"><label>Font</label><select onchange="setBannerGroupFont(this.value)" style="flex:1">`;
+      FONTS.forEach(f => { html += `<option value="${f}" ${curFont===f?'selected':''}>${f}</option>`; });
+      if (!FONTS.includes(curFont)) html += `<option value="${curFont}" selected>${curFont}</option>`;
+      html += `</select></div>`;
+      html += `<div class="prop-row"><label>Size</label><input type="number" value="${hgText.fontSize||24}" onchange="setBannerGroupTextProp('fontSize', +this.value)">`;
+      html += `<label>LnH</label><input type="number" min="0.5" max="3" step="0.05" value="${(hgText.lineHeight != null ? hgText.lineHeight : 1.16)}" onchange="setBannerGroupTextProp('lineHeight', +this.value)"></div>`;
+      html += `<div class="prop-row"><label>CSpc</label><input type="number" min="-200" max="800" step="5" value="${hgText.charSpacing || 0}" onchange="setBannerGroupTextProp('charSpacing', +this.value)"><span style="font-size:10px;color:#666;margin-left:4px">1/1000 em</span></div>`;
+      html += `<div class="prop-row" style="align-items:flex-start"><label>TCol</label>${colorControl('_bgTextFill', hgText.fill || '#fff')}</div>`;
+      if (!isGradFill(hgText.fill)) html += alphaRow('TOpa', '_bgTextFillAlpha', getColorAlpha(hgText.fill));
+      const isItalic = hgText.fontStyle === 'italic';
+      html += `<div class="prop-row"><label>Bold</label><input type="checkbox" ${hgText.fontWeight==='bold'?'checked':''} onchange="setBannerGroupTextProp('fontWeight', this.checked?'bold':'normal')">`;
+      html += `<label style="margin-left:8px">Ital</label><input type="checkbox" ${isItalic?'checked':''} onchange="setBannerGroupTextProp('fontStyle', this.checked?'italic':'normal')"></div>`;
+      const hgAlignVal = isPanel ? (hgText._panelLineAlign || 'center') : (hgText.textAlign || 'left');
+      html += `<div class="prop-row"><label>Algn</label><select onchange="setBannerGroupTextProp('textAlign', this.value)">
+        <option value="left" ${hgAlignVal==='left'?'selected':''}>Left</option>
+        <option value="center" ${hgAlignVal==='center'?'selected':''}>Center</option>
+        <option value="right" ${hgAlignVal==='right'?'selected':''}>Right</option>
+      </select></div>`;
+      if (isPanel) {
+        const nx = +hgText._panelLineOffsetX || 0;
+        const ny = +hgText._panelLineOffsetY || 0;
+        html += `<div class="prop-row"><label title="Per-line nudge from auto-layout position — positive X = right, positive Y = down">Nudge</label><span style="font-size:10px;color:#666;margin-right:4px">X</span><input type="number" step="1" value="${nx}" onchange="setPanelLineOffset('x', +this.value)"><span style="font-size:10px;color:#666;margin:0 4px">Y</span><input type="number" step="1" value="${ny}" onchange="setPanelLineOffset('y', +this.value)"></div>`;
+      }
+      const htStroke = hgText.stroke && hgText.strokeWidth > 0;
+      html += `<div class="prop-row"><label>Otln</label><input type="checkbox" ${htStroke?'checked':''} onchange="toggleBannerGroupTextStroke(this.checked)"> <span style="font-size:11px;color:#888">${htStroke?'On':'Off'}</span></div>`;
+      if (htStroke) {
+        html += `<div class="prop-row"><label>OCol</label>${brandColorPicker('_bgTextStroke', getColorHex(hgText.stroke) || '#000')}</div>`;
+        html += `<div class="prop-row"><label>OWid</label><input type="number" min="0.5" max="10" step="0.5" value="${hgText.strokeWidth||1}" onchange="setBannerGroupTextProp('strokeWidth', +this.value)"></div>`;
+        html += strokeOpacityRow('_bgTextStrokeAlpha', getColorAlpha(hgText.stroke));
+      }
+
+      // Text shadow — same controls banners have, now available on panel/hitbox lines
+      const htSh = hgText.shadow;
+      const hasHtSh = !!htSh;
+      html += `<div class="prop-row"><label>TShad</label><input type="checkbox" ${hasHtSh?'checked':''} onchange="toggleBannerTextShadow(this.checked)"> <span style="font-size:11px;color:#888">${hasHtSh?'On':'Off'}</span><button type="button" title="Apply glow/bloom preset to selected line" onclick="applyBannerTextGlow()" style="margin-left:auto;padding:2px 8px;font-size:11px;background:#333;color:#ccc;border:1px solid #555;border-radius:3px;cursor:pointer">Glow</button></div>`;
+      if (hasHtSh) {
+        const tshX = htSh.offsetX || 0, tshY = htSh.offsetY || 0;
+        const tshBlur = htSh.blur || 0;
+        const tshColor = htSh.color || 'rgba(0,0,0,0.6)';
         html += `<div class="prop-row"><label>TSX</label><input type="number" value="${tshX}" onchange="setBannerTextShadowProp('offsetX', +this.value)">`;
         html += `<label>TSY</label><input type="number" value="${tshY}" onchange="setBannerTextShadowProp('offsetY', +this.value)"></div>`;
         html += `<div class="prop-row"><label>TBlur</label><input type="number" min="0" value="${tshBlur}" onchange="setBannerTextShadowProp('blur', +this.value)"></div>`;
@@ -1366,49 +1811,20 @@ function updateProps() {
       }
     }
 
-    html += `<div class="prop-row" style="margin-top:8px;justify-content:center;">
-      <button onclick="ungroupSelected()" style="padding:4px 12px;background:#444;color:#ccc;border:1px solid #555;border-radius:4px;cursor:pointer;font-size:11px;">Ungroup</button>
-    </div>`;
-  }
-
-  // Hitbox Group — linked arbitrary shapes + text, auto-centered in bbox
-  else if (obj.type === 'group' && obj._isHitboxGroup) {
-    html += '<hr style="border-color:#333;margin:8px 0">';
-    html += '<div style="font-size:11px;color:#7aa2f7;margin-bottom:6px;font-weight:600;">LINKED GROUP (HITBOX)</div>';
-
-    const hgText = obj._objects ? obj._objects.find(o => o.type === 'textbox' || o.type === 'text' || o.type === 'i-text') : null;
-
-    if (hgText) {
-      html += `<div class="prop-row"><label>Text</label><input type="text" value="${(hgText.text||'').replace(/"/g,'&quot;')}" onchange="setBannerGroupText(this.value)"></div>`;
-      const curFont = (hgText.fontFamily || 'Arial').split(',')[0].trim();
-      html += `<div class="prop-row"><label>Font</label><select onchange="setBannerGroupFont(this.value)" style="flex:1">`;
-      FONTS.forEach(f => { html += `<option value="${f}" ${curFont===f?'selected':''}>${f}</option>`; });
-      if (!FONTS.includes(curFont)) html += `<option value="${curFont}" selected>${curFont}</option>`;
-      html += `</select></div>`;
-      html += `<div class="prop-row"><label>Size</label><input type="number" value="${hgText.fontSize||24}" onchange="setBannerGroupTextProp('fontSize', +this.value)"></div>`;
-      html += `<div class="prop-row"><label>TCol</label>${brandColorPicker('_bgTextFill', getColorHex(hgText.fill) || '#fff')}</div>`;
-      html += alphaRow('TOpa', '_bgTextFillAlpha', getColorAlpha(hgText.fill));
-      html += `<div class="prop-row"><label>Bold</label><input type="checkbox" ${hgText.fontWeight==='bold'?'checked':''} onchange="setBannerGroupTextProp('fontWeight', this.checked?'bold':'normal')">`;
-      html += `<label>Algn</label><select onchange="setBannerGroupTextProp('textAlign', this.value)">
-        <option value="left" ${hgText.textAlign==='left'?'selected':''}>Left</option>
-        <option value="center" ${hgText.textAlign==='center'?'selected':''}>Center</option>
-        <option value="right" ${hgText.textAlign==='right'?'selected':''}>Right</option>
-      </select></div>`;
-      const htStroke = hgText.stroke && hgText.strokeWidth > 0;
-      html += `<div class="prop-row"><label>Otln</label><input type="checkbox" ${htStroke?'checked':''} onchange="toggleBannerGroupTextStroke(this.checked)"> <span style="font-size:11px;color:#888">${htStroke?'On':'Off'}</span></div>`;
-      if (htStroke) {
-        html += `<div class="prop-row"><label>OCol</label>${brandColorPicker('_bgTextStroke', getColorHex(hgText.stroke) || '#000')}</div>`;
-        html += `<div class="prop-row"><label>OWid</label><input type="number" min="0.5" max="10" step="0.5" value="${hgText.strokeWidth||1}" onchange="setBannerGroupTextProp('strokeWidth', +this.value)"></div>`;
-        html += strokeOpacityRow('_bgTextStrokeAlpha', getColorAlpha(hgText.stroke));
-      }
-    }
-
-    // Shape styling — applies to all non-text children in the group
+    // Element (rect / shape) controls — applies to non-text children.
     const hgShapes = obj._objects ? obj._objects.filter(o => o.type !== 'textbox' && o.type !== 'text' && o.type !== 'i-text') : [];
     if (hgShapes.length > 0) {
       const primary = hgShapes[0];
-      html += `<div class="prop-row"><label>SFil</label>${brandColorPicker('_hbShapeFill', getColorHex(primary.fill) || '#333333')}</div>`;
-      html += alphaRow('SFOp', '_hbShapeFillAlpha', getColorAlpha(primary.fill));
+      if (isPanel) {
+        html += `<div style="font-size:10px;color:#7aa2f7;letter-spacing:1px;margin:10px 0 4px;border-top:1px solid #2a3a5a;padding-top:6px;font-weight:600">\u25C6 ELEMENT</div>`;
+      }
+      // Panel Group: expose rect corner radius directly here.
+      if (isPanel && primary.type === 'rect') {
+        const curRx = +(primary.rx || 0);
+        html += `<div class="prop-row"><label>Rad</label><input type="number" min="0" max="500" value="${curRx}" onchange="setPanelGroupRadius(+this.value)"></div>`;
+      }
+      html += `<div class="prop-row" style="align-items:flex-start"><label>SFil</label>${colorControl('_hbShapeFill', primary.fill || '#333333')}</div>`;
+      if (!isGradFill(primary.fill) && !isPatternFill(primary.fill)) html += alphaRow('SFOp', '_hbShapeFillAlpha', getColorAlpha(primary.fill));
       const hbOpa = Math.round((primary.opacity === undefined ? 1 : primary.opacity) * 100);
       html += `<div class="prop-row"><label>SOpa</label><input type="range" min="0" max="100" value="${hbOpa}" oninput="setHitboxShapeOpacity(+this.value/100)"><input type="number" min="0" max="100" value="${hbOpa}" style="width:42px;flex:none" onchange="setHitboxShapeOpacity(+this.value/100)"><span style="font-size:11px;color:#666">%</span></div>`;
       const hbBdr = primary.stroke && primary.strokeWidth > 0;
@@ -1424,7 +1840,7 @@ function updateProps() {
     }
 
     // Padding controls (based on group bounding box)
-    html += '<div style="font-size:11px;color:#888;margin:8px 0 4px;">Padding (within hitbox)</div>';
+    html += `<div style="font-size:11px;color:#888;margin:8px 0 4px;">${isPanel ? 'Inner padding' : 'Padding (within hitbox)'}</div>`;
     const hpL = obj._padL||0, hpR = obj._padR||0, hpT = obj._padT||0, hpB = obj._padB||0;
     const hbPadLinked = obj._padLinked !== false;
     html += `<div class="prop-row"><label>PL</label><input type="number" min="0" max="500" value="${hpL}" onchange="setBannerGroupPadding('L', +this.value)">`;
@@ -1432,6 +1848,11 @@ function updateProps() {
     html += `<div class="prop-row"><label>PT</label><input type="number" min="0" max="500" value="${hpT}" onchange="setBannerGroupPadding('T', +this.value)">`;
     html += `<button onclick="toggleBannerPadLink()" title="Link padding" style="background:${hbPadLinked ? '#7aa2f7' : '#333'};border:1px solid ${hbPadLinked ? '#7aa2f7' : '#444'};color:${hbPadLinked ? '#111' : '#888'};border-radius:3px;cursor:pointer;padding:2px 6px;font-size:14px;flex-shrink:0">${hbPadLinked ? '\u{1F517}' : '\u{26D3}\uFE0F'}</button>`;
     html += `<label>PB</label><input type="number" min="0" max="500" value="${hpB}" onchange="setBannerGroupPadding('B', +this.value)"></div>`;
+
+    if (isPanel) {
+      const gapVal = obj._panelGap != null ? obj._panelGap : PANEL_GAP_DEFAULT;
+      html += `<div class="prop-row"><label>Gap</label><input type="number" min="0" max="200" value="${gapVal}" onchange="setPanelGap(+this.value)"><span style="font-size:10px;color:#666;margin-left:4px">between lines</span></div>`;
+    }
 
     html += `<div class="prop-row" style="margin-top:4px;justify-content:center;">
       <button onclick="ungroupSelected()" style="padding:4px 12px;background:#444;color:#ccc;border:1px solid #555;border-radius:4px;cursor:pointer;font-size:11px;">Ungroup</button>
@@ -1486,15 +1907,34 @@ function updateProps() {
       html += `<option value="${curFont}" selected>${curFont}</option>`;
     }
     html += `</select></div>`;
-    html += `<div class="prop-row"><label>Size</label><input type="number" value="${obj.fontSize || 24}" onchange="setObjProp('fontSize', +this.value)"></div>`;
-    html += `<div class="prop-row"><label>Col</label>${brandColorPicker('fill', getColorHex(obj.fill) || '#ffffff')}</div>`;
-    html += alphaRow('FOpa', '_fillAlpha', getColorAlpha(obj.fill));
+    html += `<div class="prop-row"><label>Size</label><input type="number" value="${obj.fontSize || 24}" onchange="setObjProp('fontSize', +this.value)">`;
+    html += `<label>LnH</label><input type="number" min="0.5" max="3" step="0.05" value="${(obj.lineHeight != null ? obj.lineHeight : 1.16)}" onchange="setObjProp('lineHeight', +this.value)"></div>`;
+    html += `<div class="prop-row"><label>CSpc</label><input type="number" min="-200" max="800" step="5" value="${obj.charSpacing || 0}" onchange="setObjProp('charSpacing', +this.value)"><span style="font-size:10px;color:#666;margin-left:4px">1/1000 em</span></div>`;
+    html += `<div class="prop-row" style="align-items:flex-start"><label>Col</label>${colorControl('fill', obj.fill || '#ffffff')}</div>`;
+    if (!isGradFill(obj.fill)) html += alphaRow('FOpa', '_fillAlpha', getColorAlpha(obj.fill));
     html += `<div class="prop-row"><label>Bold</label><input type="checkbox" ${obj.fontWeight === 'bold' ? 'checked' : ''} onchange="setObjProp('fontWeight', this.checked ? 'bold' : 'normal')">`;
     html += `<label>Algn</label><select onchange="setObjProp('textAlign', this.value)">
       <option value="left" ${obj.textAlign==='left'?'selected':''}>Left</option>
       <option value="center" ${obj.textAlign==='center'?'selected':''}>Center</option>
       <option value="right" ${obj.textAlign==='right'?'selected':''}>Right</option>
     </select></div>`;
+    // Selection-styling toolbar — applies to the active selection when the
+    // textbox is in editing mode (double-click to enter). Falls back to whole
+    // text when nothing is selected.
+    const selActive = !!(obj.isEditing && obj.selectionStart !== obj.selectionEnd);
+    html += `<div class="prop-row" title="Double-click text to edit, then select characters to style just that range">
+      <label>Sel</label>
+      <button type="button" onclick="toggleSelectionBold()" style="flex:1;padding:3px 0;font-weight:700;background:#2a2a2a;color:#ddd;border:1px solid #444;border-radius:3px;cursor:pointer">B</button>
+      <button type="button" onclick="toggleSelectionItalic()" style="flex:1;padding:3px 0;font-style:italic;background:#2a2a2a;color:#ddd;border:1px solid #444;border-radius:3px;cursor:pointer">I</button>
+      <button type="button" onclick="toggleSelectionUnderline()" style="flex:1;padding:3px 0;text-decoration:underline;background:#2a2a2a;color:#ddd;border:1px solid #444;border-radius:3px;cursor:pointer">U</button>
+      <input type="color" value="${getColorHex(obj.fill) || '#ffffff'}" onchange="setSelectionColor(this.value)" title="Color for selection" style="width:28px;height:24px;padding:0;border:1px solid #444;background:#2a2a2a;cursor:pointer">
+      <button type="button" onclick="clearSelectionStyles()" title="Clear per-char styles in selection" style="padding:3px 6px;font-size:11px;background:#2a2a2a;color:#888;border:1px solid #444;border-radius:3px;cursor:pointer">\u00D7</button>
+    </div>`;
+    if (selActive) {
+      html += `<div style="font-size:10px;color:#7aa2f7;margin:-2px 0 4px 58px;">Selection active (${obj.selectionEnd - obj.selectionStart} chars)</div>`;
+    } else {
+      html += `<div style="font-size:10px;color:#666;margin:-2px 0 4px 58px;">Applies to whole text — double-click to select range</div>`;
+    }
     // Text stroke/outline
     const textHasStroke = obj.stroke && obj.strokeWidth > 0;
     html += `<div class="prop-row"><label>Otln</label><input type="checkbox" ${textHasStroke ? 'checked' : ''} onchange="toggleStroke(this.checked)"> <span style="font-size:11px;color:#888">${textHasStroke ? 'On' : 'Off'}</span></div>`;
@@ -1529,6 +1969,8 @@ function updateProps() {
     </div>`;
     html += `<div class="prop-row"><label>Thk</label><input type="number" min="0" max="100" step="0.5" value="${obj._frameThickness||0}" onchange="setFrameThickness(+this.value)"></div>`;
     html += `<div class="prop-row"><label>Rad</label><input type="number" min="0" max="500" value="${obj._frameRadius||0}" onchange="setFrameRadius(+this.value)"></div>`;
+    const innerR = (obj._frameInnerRadius != null && obj._frameInnerRadius >= 0) ? obj._frameInnerRadius : '';
+    html += `<div class="prop-row"><label>InR</label><input type="number" min="0" max="500" value="${innerR}" placeholder="auto" onchange="setFrameInnerRadius(this.value)"><button onclick="setFrameInnerRadius('')" style="padding:2px 6px;background:#333;border:1px solid #444;color:#ccc;border-radius:3px;cursor:pointer;font-size:10px;flex:none;">auto</button></div>`;
     // Partial-frame controls. Any deviation from "all on + 100% comp" forces
     // flat corners (radius only applies in the classic full-frame fast path).
     const sT = obj._frameTop !== false, sR = obj._frameRight !== false;
@@ -1548,9 +1990,41 @@ function updateProps() {
       `<span style="font-size:11px;color:#666">%</span></div>`;
     html += `<div class="prop-row"><label>Col</label>${brandColorPicker('stroke', getColorHex(obj.stroke) || '#87986A')}</div>`;
     html += strokeOpacityRow('_strokeAlpha', getColorAlpha(obj.stroke));
-    html += `<div class="prop-row"><label>Fill</label>${brandColorPicker('fill', getColorHex(obj.fill) || '#000000')}</div>`;
-    html += alphaRow('FOpa', '_fillAlpha', getColorAlpha(obj.fill));
+    html += `<div class="prop-row" style="align-items:flex-start"><label>Fill</label>${colorControl('fill', obj.fill || '#000000')}</div>`;
+    if (!isGradFill(obj.fill) && !isPatternFill(obj.fill)) html += alphaRow('FOpa', '_fillAlpha', getColorAlpha(obj.fill));
     html += `<div style="font-size:11px;color:#666;margin:4px 0;">Frame follows canvas edges — use padding fields, not X/Y/W/H above.</div>`;
+  }
+  else if (obj._isTextureOverlay) {
+    const ttype = TEXTURE_TYPES.find(t => t.id === obj._textureType) || { name:'Texture', paramDefs:[] };
+    const tp = obj._textureParams || {};
+    html += '<hr style="border-color:#333;margin:8px 0">';
+    html += `<div style="font-size:11px;color:#7aa2f7;font-weight:600;margin-bottom:6px">${ttype.icon||''} ${ttype.name}</div>`;
+    const blendModes = ['overlay','multiply','screen','soft-light','hard-light','color-dodge','color-burn','difference','exclusion','normal'];
+    const curBlend = obj.globalCompositeOperation || 'overlay';
+    html += `<div class="prop-row"><label>Blend</label><select onchange="setTextureBlend(this.value)" style="flex:1;background:#333;border:1px solid #444;color:#e0e0e0;padding:3px 5px;border-radius:3px;font-size:12px">`;
+    blendModes.forEach(m => { html += `<option value="${m}" ${m===curBlend?'selected':''}>${m}</option>`; });
+    html += `</select></div>`;
+    const opaP = Math.round((obj.opacity ?? 1) * 100);
+    html += `<div class="prop-row"><label>Opa</label><input type="range" min="0" max="100" value="${opaP}" oninput="setObjProp('opacity',+this.value/100)"><input type="number" min="0" max="100" value="${opaP}" style="width:42px;flex:none" onchange="setObjProp('opacity',+this.value/100)"><span style="font-size:11px;color:#666">%</span></div>`;
+    ttype.paramDefs.forEach(pd => {
+      const v = tp[pd.key] ?? pd.min;
+      html += `<div class="prop-row"><label style="width:46px">${pd.label}</label>
+        <input type="range" min="${pd.min}" max="${pd.max}" step="${pd.step||1}" value="${v}" oninput="setTextureParam('${pd.key}',+this.value)">
+        <input type="number" min="${pd.min}" max="${pd.max}" step="${pd.step||1}" value="${v}" style="width:48px;flex:none" onchange="setTextureParam('${pd.key}',+this.value)">
+      </div>`;
+    });
+    html += `<div class="prop-row"><button onclick="regenerateTexture()" style="flex:1;padding:4px 0;background:#2a3a4a;color:#7aa2f7;border:1px solid #3a5a7a;border-radius:4px;cursor:pointer;font-size:11px">↺ Regenerate</button></div>`;
+    html += `<hr style="border-color:#333;margin:8px 0">`;
+    const isPicking = canvas._texClipPending === obj;
+    const hasClip   = !!obj.clipPath;
+    if (isPicking) {
+      html += `<div style="font-size:11px;color:#f0a;background:#2a1a2a;border:1px solid #604;border-radius:4px;padding:6px 8px;margin-bottom:6px">Click any shape on the canvas to clip the texture to it. Click empty space to cancel.</div>`;
+    } else {
+      html += `<div class="prop-row"><button onclick="startClipTexturePick()" style="flex:1;padding:4px 0;background:#2a2a3a;color:#aaa;border:1px solid #445;border-radius:4px;cursor:pointer;font-size:11px">⬡ Clip to Shape…</button></div>`;
+    }
+    if (hasClip) {
+      html += `<div class="prop-row"><button onclick="removeTextureClip()" style="flex:1;padding:4px 0;background:#3a1a1a;color:#f88;border:1px solid #644;border-radius:4px;cursor:pointer;font-size:11px">✕ Remove Clip</button></div>`;
+    }
   }
   else if (obj.type === 'image') {
     html += '<hr style="border-color:#333;margin:8px 0">';
@@ -1574,9 +2048,12 @@ function updateProps() {
   }
   else if (obj.type === 'rect' || obj.type === 'circle' || obj.type === 'triangle' || obj.type === 'polygon') {
     html += '<hr style="border-color:#333;margin:8px 0">';
-    html += `<div class="prop-row"><label>Fill</label>${brandColorPicker('fill', getColorHex(obj.fill) || '#333333')}</div>`;
-    html += alphaRow('FOpa', '_fillAlpha', getColorAlpha(obj.fill));
+    html += `<div class="prop-row" style="align-items:flex-start"><label>Fill</label>${colorControl('fill', obj.fill || '#333333')}</div>`;
+    if (!isGradFill(obj.fill) && !isPatternFill(obj.fill)) html += alphaRow('FOpa', '_fillAlpha', getColorAlpha(obj.fill));
     if (obj.type === 'rect') {
+      html += `<div class="prop-row" style="margin:4px 0;justify-content:center">
+        <button onclick="snapRectToCanvas()" style="flex:1;padding:4px 0;background:#2a3a4a;color:#7aa2f7;border:1px solid #3a5a7a;border-radius:4px;cursor:pointer;font-size:11px;font-weight:600">⤢ Snap to Canvas</button>
+      </div>`;
       const c = obj._corners || { tl: obj.rx || 0, tr: obj.rx || 0, br: obj.rx || 0, bl: obj.rx || 0 };
       const linked = obj._cornersLinked !== false; // default linked
       const lockBtn = `<button type="button" onclick="toggleRectCornersLink()" title="${linked ? 'Linked — all corners equal' : 'Independent corners'}" style="margin-left:6px;padding:2px 6px;background:${linked ? '#C8A868' : '#333'};color:${linked ? '#000' : '#ccc'};border:1px solid #555;border-radius:3px;cursor:pointer">${linked ? '🔗' : '🔓'}</button>`;
@@ -1642,7 +2119,7 @@ function updateProps() {
   const shY = (sh && sh.offsetY) || 0;
   const shBlur = (sh && sh.blur) || 6;
 
-  html += `<div class="prop-row shadow-toggle"><label>Shad</label><input type="checkbox" ${hasShadow ? 'checked' : ''} onchange="toggleShadow(this.checked)"> <span style="font-size:11px;color:#888">${hasShadow ? 'On' : 'Off'}</span></div>`;
+  html += `<div class="prop-row shadow-toggle"><label>Shad</label><input type="checkbox" ${hasShadow ? 'checked' : ''} onchange="toggleShadow(this.checked)"> <span style="font-size:11px;color:#888">${hasShadow ? 'On' : 'Off'}</span><button type="button" title="Apply bloom/glow preset (0/0 offset, heavy blur, soft color)" onclick="applyGlowPreset()" style="margin-left:auto;padding:2px 8px;font-size:11px;background:#333;color:#ccc;border:1px solid #555;border-radius:3px;cursor:pointer">Glow</button></div>`;
   if (hasShadow) {
     html += `<div class="shadow-fields">`;
     html += `<div class="prop-row"><label>SX</label><input type="number" value="${shX}" onchange="setShadowProp('offsetX', +this.value)">`;
@@ -2117,17 +2594,17 @@ function linkAsBannerGroup() {
   const active = canvas.getActiveObject();
   if (!active || active.type !== 'activeSelection') return;
   const objs = active._objects;
-  const text = objs.find(o => o.type === 'textbox' || o.type === 'text' || o.type === 'i-text');
-  if (!text) { alert('Select at least one shape + one text to link'); return; }
+  const textboxes = objs.filter(o => o.type === 'textbox' || o.type === 'text' || o.type === 'i-text');
+  if (textboxes.length === 0) { alert('Select at least one shape + one text to link'); return; }
 
-  // Find all non-text objects — these form the hit area
-  const shapes = objs.filter(o => o !== text && o.type !== 'textbox' && o.type !== 'text' && o.type !== 'i-text');
+  const shapes = objs.filter(o => !textboxes.includes(o));
   if (shapes.length === 0) { alert('Select at least one shape + one text to link'); return; }
 
-  // Determine mode: single polygon → full banner group; anything else → hitbox group
+  // Mode: single polygon → banner; single rect → panel (repeater); else → hitbox
   const isBanner = shapes.length === 1 && shapes[0].type === 'polygon';
+  const isPanel = shapes.length === 1 && shapes[0].type === 'rect';
 
-  // Compute the hit box (union of all shape bounding rects)
+  // Shape bbox (union)
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
   shapes.forEach(s => {
     const b = s.getBoundingRect(true);
@@ -2136,17 +2613,18 @@ function linkAsBannerGroup() {
     if (b.left + b.width > maxX) maxX = b.left + b.width;
     if (b.top + b.height > maxY) maxY = b.top + b.height;
   });
-  const hitW = maxX - minX, hitH = maxY - minY;
 
-  // Infer padding from text position relative to hit box
-  const tb = text.getBoundingRect(true);
+  // Padding inferred from first textbox vs shape bbox
+  const firstText = textboxes[0];
+  const tb = firstText.getBoundingRect(true);
   const padL = Math.max(0, Math.round(tb.left - minX));
   const padR = Math.max(0, Math.round(maxX - (tb.left + tb.width)));
   const padT = Math.max(0, Math.round(tb.top - minY));
   const padB = Math.max(0, Math.round(maxY - (tb.top + tb.height)));
 
   const group = active.toGroup();
-  group._customName = text._customName || shapes[0]._customName || (isBanner ? 'Banner' : 'Linked');
+  group._customName = firstText._customName || shapes[0]._customName ||
+    (isBanner ? 'Banner' : isPanel ? 'Panel' : 'Linked');
   group._padL = padL; group._padR = padR;
   group._padT = padT; group._padB = padB;
 
@@ -2159,11 +2637,47 @@ function linkAsBannerGroup() {
     group._bannerNotchR = poly._bannerNotchR || 20;
     attachBannerGroupControls(group);
     rebuildBannerGroupShape(group);
+    recenterBannerText(group, false);
+  } else if (isPanel) {
+    group._isHitboxGroup = true;
+    group._isPanelGroup = true;
+    group._panelGap = PANEL_GAP_DEFAULT;
+    group._selectedLineIdx = 0;
+    // Panels auto-fit height to text, so inferred vertical padding from the
+    // initial text position is misleading (padB inflates when text is near the
+    // top of the rect). Normalize to a symmetric default so the rect hugs the
+    // text cleanly — user can tweak afterward.
+    const defaultPad = 20;
+    group._padL = Math.min(group._padL, defaultPad);
+    group._padR = Math.min(group._padR, defaultPad);
+    group._padT = Math.min(group._padT, defaultPad);
+    group._padB = Math.min(group._padB, defaultPad);
+    // Keep rect stroke crisp after width/height bakes on rebuild.
+    const rectChild = group._objects.find(o => o.type === 'rect');
+    if (rectChild) rectChild.strokeUniform = true;
+    // Convert every selected textbox (and split each on \n) into a repeater line
+    const specs = [];
+    for (const tb of textboxes) {
+      const parts = (tb.text || '').split('\n');
+      for (const p of parts) {
+        specs.push({
+          text: p,
+          fontSize: tb.fontSize, fontFamily: tb.fontFamily,
+          fontWeight: tb.fontWeight, fontStyle: tb.fontStyle,
+          fill: tb.fill, stroke: tb.stroke, strokeWidth: tb.strokeWidth,
+          lineHeight: tb.lineHeight, charSpacing: tb.charSpacing,
+          _panelLineAlign: tb.textAlign || 'center',
+        });
+      }
+      const i = group._objects.indexOf(tb);
+      if (i >= 0) group._objects.splice(i, 1);
+    }
+    for (const s of specs) group._objects.push(_panelMakeLine(s));
+    _rebuildPanelLines(group);
   } else {
     group._isHitboxGroup = true;
+    recenterBannerText(group, false);
   }
-
-  recenterBannerText(group, false);
 
   canvas.requestRenderAll();
   refreshLayers();
@@ -2174,6 +2688,8 @@ function linkAsBannerGroup() {
 // autoSize: if true, scale font to fill available height. Default true.
 function recenterBannerText(group, autoSize) {
   if (!group || (!group._isBannerGroup && !group._isHitboxGroup) || !group._objects) return;
+  // Panel groups use the repeater layout — delegate and skip the single-textbox path.
+  if (group._isPanelGroup) { _rebuildPanelLines(group); return; }
   const text = group._objects.find(o => o.type === 'textbox' || o.type === 'text' || o.type === 'i-text');
   if (!text) return;
   const padL = group._padL || 0, padR = group._padR || 0;
@@ -2254,7 +2770,8 @@ function recenterBannerText(group, autoSize) {
     text.initDimensions();
   }
 
-  // Vertically glyph-tight center; horizontally pad from the BODY (post-inset).
+  // Horizontally pad from the body (post-inset for banners). Single-line
+  // glyph-tight vertical center — panels bypass this code via early return.
   text.set('left', -gW / 2 + leftInset + padL);
   const availH = Math.max(1, gH - padT - padB);
   const visualTop = -gH / 2 + padT + (availH - glyphH) / 2;
@@ -2276,35 +2793,75 @@ function rebuildBannerGroupShape(group) {
   canvas.requestRenderAll();
 }
 
+// For panel groups, text setters route through the currently-selected line.
+// For banner/hitbox, they target the (single) textbox child as before.
+function _getTargetTextbox(g) {
+  if (!g) return null;
+  if (g._isPanelGroup) return _panelSelectedLine(g);
+  return g._objects.find(o => o.type === 'textbox' || o.type === 'text' || o.type === 'i-text');
+}
+
 function setBannerGroupText(value) {
   const g = canvas.getActiveObject();
   if (!g || (!g._isBannerGroup && !g._isHitboxGroup)) return;
-  const t = g._objects.find(o => o.type === 'textbox' || o.type === 'text' || o.type === 'i-text');
+  const t = _getTargetTextbox(g);
   if (!t) return;
-  t.set('text', value); t.dirty = true;
-  recenterBannerText(g);
+  // In panel mode, a newline in the field splits the line into two repeater lines.
+  if (g._isPanelGroup && typeof value === 'string' && value.includes('\n')) {
+    const parts = value.split('\n');
+    t.set('text', parts[0]); t.dirty = true;
+    const origIdx = g._objects.indexOf(t);
+    for (let i = 1; i < parts.length; i++) {
+      const spec = {
+        text: parts[i],
+        fontSize: t.fontSize, fontFamily: t.fontFamily, fontWeight: t.fontWeight,
+        fontStyle: t.fontStyle, fill: t.fill, stroke: t.stroke,
+        strokeWidth: t.strokeWidth, lineHeight: t.lineHeight, charSpacing: t.charSpacing,
+        _panelLineAlign: t._panelLineAlign || 'center',
+      };
+      g._objects.splice(origIdx + i, 0, _panelMakeLine(spec));
+    }
+    _rebuildPanelLines(g);
+  } else {
+    t.set('text', value); t.dirty = true;
+    if (g._isPanelGroup) _rebuildPanelLines(g);
+    else recenterBannerText(g);
+  }
   refreshLayers(); saveUndo();
 }
 
 function setBannerGroupFont(fontName) {
   const g = canvas.getActiveObject();
   if (!g || (!g._isBannerGroup && !g._isHitboxGroup)) return;
-  const t = g._objects.find(o => o.type === 'textbox' || o.type === 'text' || o.type === 'i-text');
+  const t = _getTargetTextbox(g);
   if (!t) return;
   t.set('fontFamily', fontName); t.dirty = true; t.initDimensions();
-  recenterBannerText(g);
+  if (g._isPanelGroup) _rebuildPanelLines(g);
+  else recenterBannerText(g);
   updateProps(); saveUndo();
 }
 
 function setBannerGroupTextProp(prop, value) {
   const g = canvas.getActiveObject();
   if (!g || (!g._isBannerGroup && !g._isHitboxGroup)) return;
-  const t = g._objects.find(o => o.type === 'textbox' || o.type === 'text' || o.type === 'i-text');
+  const t = _getTargetTextbox(g);
   if (!t) return;
+  // Panel lines use a per-line align property (_panelLineAlign) separate from
+  // the textbox's own textAlign, because each line is an independent textbox.
+  if (prop === 'textAlign' && g._isPanelGroup) {
+    t._panelLineAlign = value;
+    _rebuildPanelLines(g);
+    updateProps(); saveUndo();
+    return;
+  }
   t.set(prop, value); t.dirty = true;
-  if (prop === 'fontSize') {
+  if (prop === 'fontSize' || prop === 'lineHeight' || prop === 'charSpacing') {
     t.initDimensions();
-    recenterBannerText(g, false); // manual size — just recenter, don't auto-size
+    if (g._isPanelGroup) _rebuildPanelLines(g);
+    else recenterBannerText(g, false);
+  } else if (prop === 'textAlign') {
+    // Non-panel: standard Fabric textAlign within the textbox
+    recenterBannerText(g, false);
   }
   g.dirty = true; canvas.requestRenderAll();
   updateProps(); saveUndo();
@@ -2322,6 +2879,279 @@ function setBannerGroupPadding(side, value) {
   recenterBannerText(g, false); // don't auto-resize text — padding is exact
   updateProps();
   saveUndo();
+}
+
+function setPanelGroupRadius(r) {
+  const g = canvas.getActiveObject();
+  if (!g || !g._isPanelGroup) return;
+  const rect = g._objects && g._objects.find(o => o.type === 'rect');
+  if (!rect) return;
+  const v = Math.max(0, +r || 0);
+  rect.set({ rx: v, ry: v });
+  rect.dirty = true;
+  g.dirty = true;
+  canvas.requestRenderAll();
+  saveUndo();
+}
+
+// =====================================================================
+// Panel Group — repeater line model
+// Each panel has a rect child + one Textbox per line. Lines stack
+// vertically with a gap between them; each line has its own font, size,
+// color, weight, align, etc. A "currently-selected line" index on the
+// group routes the shared text-properties UI to the right line.
+// =====================================================================
+const PANEL_LINE_DEFAULTS = {
+  fontSize: 36, fontFamily: 'Jost', fontWeight: 'bold', fontStyle: 'normal',
+  fill: '#FFFFFF', stroke: null, strokeWidth: 0,
+  lineHeight: 1.16, charSpacing: 0,
+};
+const PANEL_GAP_DEFAULT = 6;
+
+function _panelMakeLine(spec) {
+  spec = spec || {};
+  const t = new fabric.Textbox(spec.text != null ? String(spec.text) : 'Line', {
+    fontSize: spec.fontSize || PANEL_LINE_DEFAULTS.fontSize,
+    fontFamily: spec.fontFamily || PANEL_LINE_DEFAULTS.fontFamily,
+    fontWeight: spec.fontWeight || PANEL_LINE_DEFAULTS.fontWeight,
+    fontStyle: spec.fontStyle || PANEL_LINE_DEFAULTS.fontStyle,
+    fill: spec.fill || PANEL_LINE_DEFAULTS.fill,
+    stroke: spec.stroke || null,
+    strokeWidth: spec.strokeWidth || 0,
+    lineHeight: spec.lineHeight != null ? spec.lineHeight : PANEL_LINE_DEFAULTS.lineHeight,
+    charSpacing: spec.charSpacing || 0,
+    textAlign: 'left',
+    width: 10000,
+    splitByGrapheme: false,
+  });
+  t._panelLineAlign = spec._panelLineAlign || 'center';
+  t._customName = spec._customName || 'Line';
+  return t;
+}
+
+function _panelLines(group) {
+  return (group && group._objects) ?
+    group._objects.filter(o => o.type === 'textbox' || o.type === 'text' || o.type === 'i-text') : [];
+}
+
+function _panelRect(group) {
+  return (group && group._objects) ? group._objects.find(o => o.type === 'rect') : null;
+}
+
+function _rebuildPanelLines(group) {
+  if (!group || !group._isPanelGroup) return;
+  const lines = _panelLines(group);
+  if (!lines.length) return;
+  const rect = _panelRect(group);
+
+  // Bake any pending group scale into width/height
+  const sx = group.scaleX || 1, sy = group.scaleY || 1;
+  if (sx !== 1 || sy !== 1) {
+    group.width = Math.max(1, Math.round(group.width * sx));
+    group.height = Math.max(1, Math.round(group.height * sy));
+    group.scaleX = 1; group.scaleY = 1;
+  }
+
+  const padL = group._padL || 0, padR = group._padR || 0;
+  const padT = group._padT || 0, padB = group._padB || 0;
+  const gap = group._panelGap != null ? group._panelGap : PANEL_GAP_DEFAULT;
+  const gW = group.width;
+  const innerW = Math.max(1, gW - padL - padR);
+
+  // Measure each line at full natural width, then clamp to innerW
+  const lineW = [], lineH = [];
+  for (const t of lines) {
+    t.set('width', 10000);
+    t.initDimensions();
+    let nw = (typeof t.calcTextWidth === 'function') ? t.calcTextWidth() : t.width;
+    if (t.__lineWidths && t.__lineWidths.length) nw = Math.max.apply(null, t.__lineWidths);
+    const w = Math.min(innerW, Math.max(10, Math.ceil(nw) + 2));
+    t.set('width', w);
+    t.initDimensions();
+    lineW.push(w);
+    lineH.push(t.height || 1);
+  }
+  const totalH = lineH.reduce((a, b) => a + b, 0) + (lines.length - 1) * gap;
+
+  const gH = Math.max(Math.round(lineH[0] + padT + padB), Math.round(totalH + padT + padB));
+  group.height = gH;
+  if (rect) {
+    rect.set({ width: gW, height: gH, left: -gW / 2, top: -gH / 2 });
+    rect.setCoords();
+  }
+
+  // Stack lines vertically inside the padded area, aligned per-line.
+  // Apply any per-line nudge (_panelLineOffsetX/Y) after the auto-computed
+  // position so users can optically tune individual lines without breaking
+  // the layout math.
+  let y = -gH / 2 + padT;
+  for (let i = 0; i < lines.length; i++) {
+    const t = lines[i];
+    const w = lineW[i];
+    const la = t._panelLineAlign || 'center';
+    let lx;
+    if (la === 'left') lx = -gW / 2 + padL;
+    else if (la === 'right') lx = gW / 2 - padR - w;
+    else lx = -w / 2;
+    const ox = +t._panelLineOffsetX || 0;
+    const oy = +t._panelLineOffsetY || 0;
+    t.set({ left: lx + ox, top: y + oy });
+    t.setCoords();
+    y += lineH[i] + gap;
+  }
+  group.dirty = true;
+  group.setCoords();
+  canvas.requestRenderAll();
+}
+
+// Migration: old panels stored a single Textbox with \n-separated text.
+// Split into per-line Textboxes in place on load.
+function _migratePanelIfLegacy(group) {
+  if (!group || !group._isPanelGroup) return false;
+  const lines = _panelLines(group);
+  if (lines.length !== 1) return false;
+  const t = lines[0];
+  const text = t.text || '';
+  if (!text.includes('\n')) return false;
+  const parts = text.split('\n');
+  const baseSpec = {
+    fontSize: t.fontSize, fontFamily: t.fontFamily, fontWeight: t.fontWeight, fontStyle: t.fontStyle,
+    fill: t.fill, stroke: t.stroke, strokeWidth: t.strokeWidth,
+    lineHeight: t.lineHeight, charSpacing: t.charSpacing,
+    _panelLineAlign: t.textAlign || 'center',
+  };
+  const origIdx = group._objects.indexOf(t);
+  group._objects.splice(origIdx, 1);
+  const newLines = parts.map(p => _panelMakeLine({ ...baseSpec, text: p }));
+  group._objects.push(...newLines);
+  return true;
+}
+
+// Which line index is currently selected for editing in the side panel.
+function _panelSelectedIdx(group) {
+  const lines = _panelLines(group);
+  if (!lines.length) return 0;
+  const idx = group._selectedLineIdx;
+  if (idx == null || idx < 0 || idx >= lines.length) return 0;
+  return idx;
+}
+function _panelSelectedLine(group) {
+  const lines = _panelLines(group);
+  return lines[_panelSelectedIdx(group)] || null;
+}
+
+// Public setters (called from UI)
+function selectPanelLine(idx) {
+  const g = canvas.getActiveObject();
+  if (!g || !g._isPanelGroup) return;
+  const lines = _panelLines(g);
+  g._selectedLineIdx = Math.max(0, Math.min(lines.length - 1, +idx || 0));
+  updateProps();
+}
+function addPanelLine() {
+  const g = canvas.getActiveObject();
+  if (!g || !g._isPanelGroup) return;
+  const lines = _panelLines(g);
+  const proto = lines[lines.length - 1];
+  const newLine = _panelMakeLine({
+    text: 'New line',
+    fontSize: proto ? proto.fontSize : PANEL_LINE_DEFAULTS.fontSize,
+    fontFamily: proto ? proto.fontFamily : PANEL_LINE_DEFAULTS.fontFamily,
+    fontWeight: proto ? proto.fontWeight : PANEL_LINE_DEFAULTS.fontWeight,
+    fontStyle: proto ? proto.fontStyle : PANEL_LINE_DEFAULTS.fontStyle,
+    fill: proto ? proto.fill : PANEL_LINE_DEFAULTS.fill,
+    _panelLineAlign: proto ? proto._panelLineAlign : 'center',
+  });
+  g._objects.push(newLine);
+  g._selectedLineIdx = _panelLines(g).length - 1;
+  _rebuildPanelLines(g);
+  refreshLayers(); updateProps(); saveUndo();
+}
+function removePanelLine(idx) {
+  const g = canvas.getActiveObject();
+  if (!g || !g._isPanelGroup) return;
+  const lines = _panelLines(g);
+  if (lines.length <= 1) return;
+  const t = lines[idx];
+  if (!t) return;
+  const i = g._objects.indexOf(t);
+  g._objects.splice(i, 1);
+  g._selectedLineIdx = Math.max(0, Math.min(_panelLines(g).length - 1, idx - 1));
+  _rebuildPanelLines(g);
+  refreshLayers(); updateProps(); saveUndo();
+}
+function movePanelLine(idx, dir) {
+  const g = canvas.getActiveObject();
+  if (!g || !g._isPanelGroup) return;
+  const lines = _panelLines(g);
+  const j = idx + (dir === 'up' ? -1 : 1);
+  if (j < 0 || j >= lines.length) return;
+  const a = lines[idx], b = lines[j];
+  const ia = g._objects.indexOf(a), ib = g._objects.indexOf(b);
+  g._objects[ia] = b; g._objects[ib] = a;
+  g._selectedLineIdx = j;
+  _rebuildPanelLines(g);
+  refreshLayers(); updateProps(); saveUndo();
+}
+function setPanelGap(val) {
+  const g = canvas.getActiveObject();
+  if (!g || !g._isPanelGroup) return;
+  g._panelGap = Math.max(0, +val || 0);
+  _rebuildPanelLines(g);
+  updateProps(); saveUndo();
+}
+function setPanelLineAlignOf(idx, value) {
+  const g = canvas.getActiveObject();
+  if (!g || !g._isPanelGroup) return;
+  const t = _panelLines(g)[idx];
+  if (!t) return;
+  t._panelLineAlign = value;
+  _rebuildPanelLines(g);
+  updateProps(); saveUndo();
+}
+
+function duplicatePanelLine(idx) {
+  const g = canvas.getActiveObject();
+  if (!g || !g._isPanelGroup) return;
+  const lines = _panelLines(g);
+  const src = lines[idx];
+  if (!src) return;
+  // Clone every formatting property including shadow (fabric.Shadow) and
+  // per-char styles if present.
+  const shadow = src.shadow ? new fabric.Shadow(src.shadow.toObject ? src.shadow.toObject() : src.shadow) : null;
+  const clone = _panelMakeLine({
+    text: src.text,
+    fontSize: src.fontSize, fontFamily: src.fontFamily,
+    fontWeight: src.fontWeight, fontStyle: src.fontStyle,
+    fill: src.fill, stroke: src.stroke, strokeWidth: src.strokeWidth,
+    lineHeight: src.lineHeight, charSpacing: src.charSpacing,
+    _panelLineAlign: src._panelLineAlign || 'center',
+  });
+  if (shadow) clone.shadow = shadow;
+  if (src.paintFirst) clone.paintFirst = src.paintFirst;
+  if (src.styles) clone.styles = JSON.parse(JSON.stringify(src.styles));
+  clone._panelLineOffsetX = src._panelLineOffsetX || 0;
+  clone._panelLineOffsetY = src._panelLineOffsetY || 0;
+  // Insert right after src
+  const insertAt = g._objects.indexOf(src) + 1;
+  g._objects.splice(insertAt, 0, clone);
+  // Select the clone so user can tweak its text right away
+  const newLines = _panelLines(g);
+  g._selectedLineIdx = newLines.indexOf(clone);
+  _rebuildPanelLines(g);
+  refreshLayers(); updateProps(); saveUndo();
+}
+
+function setPanelLineOffset(axis, val) {
+  const g = canvas.getActiveObject();
+  if (!g || !g._isPanelGroup) return;
+  const t = _panelSelectedLine(g);
+  if (!t) return;
+  const v = +val || 0;
+  if (axis === 'x') t._panelLineOffsetX = v;
+  else t._panelLineOffsetY = v;
+  _rebuildPanelLines(g);
+  updateProps(); saveUndo();
 }
 
 function toggleBannerPadLink() {
@@ -2393,8 +3223,8 @@ function toggleBannerGroupShadow(on) {
 
 function toggleBannerTextShadow(on) {
   const g = canvas.getActiveObject();
-  if (!g || !g._isBannerGroup) return;
-  const t = g._objects.find(o => o.type === 'textbox' || o.type === 'text' || o.type === 'i-text');
+  if (!g || (!g._isBannerGroup && !g._isHitboxGroup)) return;
+  const t = _getTargetTextbox(g);
   if (!t) return;
   if (on) {
     t.set('shadow', new fabric.Shadow({ color: 'rgba(0,0,0,0.6)', offsetX: 4, offsetY: 2, blur: 0 }));
@@ -2407,8 +3237,8 @@ function toggleBannerTextShadow(on) {
 
 function setBannerTextShadowProp(prop, val) {
   const g = canvas.getActiveObject();
-  if (!g || !g._isBannerGroup) return;
-  const t = g._objects.find(o => o.type === 'textbox' || o.type === 'text' || o.type === 'i-text');
+  if (!g || (!g._isBannerGroup && !g._isHitboxGroup)) return;
+  const t = _getTargetTextbox(g);
   if (!t || !t.shadow) return;
   t.shadow[prop] = val;
   t.dirty = true; g.dirty = true;
@@ -2469,11 +3299,12 @@ function setHitboxShapeOpacity(val) {
 function toggleBannerGroupTextStroke(on) {
   const g = canvas.getActiveObject();
   if (!g || (!g._isBannerGroup && !g._isHitboxGroup)) return;
-  const t = g._objects.find(o => o.type === 'textbox' || o.type === 'text' || o.type === 'i-text');
+  const t = _getTargetTextbox(g);
   if (!t) return;
   if (on) { t.set({ stroke: '#FFFFFF', strokeWidth: 2, paintFirst: 'stroke' }); }
   else { t.set({ stroke: null, strokeWidth: 0 }); }
   t.dirty = true; g.dirty = true;
+  if (g._isPanelGroup) _rebuildPanelLines(g);
   canvas.requestRenderAll(); updateProps(); saveUndo();
 }
 
@@ -2652,6 +3483,14 @@ function reattachBehaviors() {
     if (o._isBannerGroup) {
       attachBannerGroupControls(o);
       recenterBannerText(o, true);
+    } else if (o._isPanelGroup) {
+      // Legacy panels saved before the repeater refactor had a single Textbox
+      // child with \n-separated text. Split it into per-line Textboxes, then
+      // lay out with _rebuildPanelLines.
+      _migratePanelIfLegacy(o);
+      _rebuildPanelLines(o);
+    } else if (o._isHitboxGroup) {
+      recenterBannerText(o, false);
     }
     if (o._shadowSpread && o._shadowSpread > 0 && o.shadow) {
       applyShadowSpread(o, o._shadowSpread);
@@ -2970,6 +3809,9 @@ function applyShadowSpread(obj, spread) {
       ghost._isFrame = true;
       ghost._frameThickness = (obj._frameThickness || 0) + spread * 2;
       ghost._frameRadius = (obj._frameRadius || 0) + spread;
+      if (obj._frameInnerRadius != null && obj._frameInnerRadius >= 0) {
+        ghost._frameInnerRadius = Math.max(0, obj._frameInnerRadius - spread);
+      }
       ghost._render = frameRender;
     }
     const origRender = ghost._render.bind(ghost);
@@ -3006,6 +3848,11 @@ function applyShadowSpread(obj, spread) {
         });
         g._frameThickness = (obj._frameThickness || 0) + spread * 2;
         g._frameRadius = (obj._frameRadius || 0) + spread;
+        if (obj._frameInnerRadius != null && obj._frameInnerRadius >= 0) {
+          g._frameInnerRadius = Math.max(0, obj._frameInnerRadius - spread);
+        } else {
+          delete g._frameInnerRadius;
+        }
       } else {
         const bw = obj.getScaledWidth();
         const bh = obj.getScaledHeight();
@@ -3048,6 +3895,191 @@ function setBannerGroupShadowSpread(val) {
   saveUndo();
 }
 
+// --- Visual-ink centering (panel groups, Center align) ---
+// Fabric centers each line by its typographic advance, which includes the
+// invisible side bearings baked into each glyph. Mixed-case lines then
+// appear a few pixels off center relative to all-caps lines in the same
+// block. We patch _getLineLeftOffset on panel textboxes so Center align
+// positions each line by its VISIBLE ink extent instead — matches what
+// the eye tracks.
+let _visualCenterCtx = null;
+function _getVisualCenterCtx() {
+  if (!_visualCenterCtx) {
+    _visualCenterCtx = document.createElement('canvas').getContext('2d');
+  }
+  return _visualCenterCtx;
+}
+function _measureInkExtents(text, weight, size, family, style) {
+  const ctx = _getVisualCenterCtx();
+  ctx.font = `${style || 'normal'} ${weight || 'normal'} ${size}px ${family || 'sans-serif'}`;
+  const m = ctx.measureText(text || '');
+  return {
+    advance: m.width,
+    left: m.actualBoundingBoxLeft || 0,
+    right: m.actualBoundingBoxRight || m.width,
+  };
+}
+function applyVisualCenteringTo(textbox) {
+  if (!textbox || textbox._visualCenterPatched) return;
+  textbox._visualCenterPatched = true;
+  const orig = textbox._getLineLeftOffset ? textbox._getLineLeftOffset.bind(textbox) : null;
+  textbox._getLineLeftOffset = function(lineIndex) {
+    if (this.textAlign === 'center' && this._visualCenter) {
+      const line = (this.textLines && this.textLines[lineIndex]) || '';
+      const m = _measureInkExtents(line, this.fontWeight, this.fontSize, this.fontFamily, this.fontStyle);
+      // Position line origin so its visual ink center lands at textbox.width/2
+      return Math.round(this.width / 2 - (m.right - m.left) / 2);
+    }
+    if (orig) return orig(lineIndex);
+    // Fallback if original wasn't captured
+    const lw = this.getLineWidth ? this.getLineWidth(lineIndex) : this.width;
+    return this.textAlign === 'center' ? (this.width - lw) / 2 :
+           this.textAlign === 'right' ? this.width - lw : 0;
+  };
+}
+
+// --- Glow / bloom preset ---
+// A glow is just a shadow with 0/0 offset + heavy blur + a soft color (the same
+// thing Photoshop's "Outer Glow" / Figma's glow-style drop shadow produces).
+// The preset sets sensible defaults; users then tweak via the existing
+// SCol / Blur / Sprd controls.
+function _applyGlowTo(obj, opts) {
+  if (!obj) return;
+  opts = opts || {};
+  // Clean up any prior spread ghost so the new shadow renders fresh
+  if (obj._spreadGhost) { canvas.remove(obj._spreadGhost); obj._spreadGhost = null; }
+  delete obj._savedShadow;
+  const color = opts.color || 'rgba(255,255,255,0.9)';
+  const blur = opts.blur != null ? opts.blur : 24;
+  obj.set('shadow', new fabric.Shadow({ offsetX: 0, offsetY: 0, blur: blur, color: color }));
+  const spread = opts.spread != null ? opts.spread : 0;
+  if (spread > 0) applyShadowSpread(obj, spread);
+  else obj._shadowSpread = 0;
+  obj.dirty = true;
+}
+
+function applyGlowPreset() {
+  const obj = canvas.getActiveObject();
+  if (!obj) return;
+  const isText = obj.type === 'textbox' || obj.type === 'text' || obj.type === 'i-text';
+  _applyGlowTo(obj, isText ? { blur: 28 } : { blur: 24, spread: 6 });
+  canvas.requestRenderAll();
+  updateProps();
+  saveUndo();
+}
+
+function applyBannerTextGlow() {
+  const g = canvas.getActiveObject();
+  if (!g || (!g._isBannerGroup && !g._isHitboxGroup)) return;
+  const t = _getTargetTextbox(g);
+  if (!t) return;
+  _applyGlowTo(t, { blur: 28 });
+  g.dirty = true;
+  canvas.requestRenderAll();
+  updateProps();
+  saveUndo();
+}
+
+function applyBannerPolyGlow() {
+  const g = canvas.getActiveObject();
+  if (!g || !g._isBannerGroup) return;
+  const p = g._objects.find(o => o.type === 'polygon');
+  if (!p) return;
+  _applyGlowTo(p, { blur: 24, spread: 6 });
+  g.dirty = true;
+  canvas.requestRenderAll();
+  updateProps();
+  saveUndo();
+}
+
+// --- Selection styling (per-character bold/italic/underline/color) ---
+// Fabric's Textbox stores per-char overrides in `styles[line][charIdx]`.
+// When the textbox is in editing mode with a range selected, setSelectionStyles
+// applies the given style to just that range. Falls back to whole-text set.
+function _getEditableTextbox() {
+  const t = canvas.getActiveObject();
+  if (!t) return null;
+  if (t.type === 'textbox' || t.type === 'i-text' || t.type === 'text') return t;
+  // For grouped text (banner group etc.), Fabric 5.3 doesn't allow editing a
+  // child textbox in-place, so selection styling only targets standalone text.
+  return null;
+}
+
+function _clearPerCharStyle(target, key) {
+  if (!target.styles) return;
+  Object.keys(target.styles).forEach(line => {
+    Object.keys(target.styles[line]).forEach(ch => {
+      delete target.styles[line][ch][key];
+      if (Object.keys(target.styles[line][ch]).length === 0) delete target.styles[line][ch];
+    });
+    if (Object.keys(target.styles[line]).length === 0) delete target.styles[line];
+  });
+}
+
+function _toggleCharStyle(key, onVal, offVal) {
+  const t = _getEditableTextbox();
+  if (!t) return;
+  const hasSel = t.isEditing && t.selectionStart !== t.selectionEnd;
+  if (hasSel) {
+    const styles = t.getSelectionStyles(t.selectionStart, t.selectionEnd);
+    // If the first char of the selection already has the "on" value, toggle off.
+    const firstHas = styles[0] && styles[0][key] === onVal;
+    const newVal = firstHas ? offVal : onVal;
+    const style = {}; style[key] = newVal;
+    t.setSelectionStyles(style, t.selectionStart, t.selectionEnd);
+  } else {
+    const cur = t[key];
+    const newVal = cur === onVal ? offVal : onVal;
+    t.set(key, newVal);
+    _clearPerCharStyle(t, key);
+  }
+  t.dirty = true;
+  canvas.requestRenderAll();
+  updateProps();
+  saveUndo();
+}
+
+function toggleSelectionBold()      { _toggleCharStyle('fontWeight', 'bold', 'normal'); }
+function toggleSelectionItalic()    { _toggleCharStyle('fontStyle', 'italic', 'normal'); }
+function toggleSelectionUnderline() { _toggleCharStyle('underline', true, false); }
+
+function setSelectionColor(hex) {
+  const t = _getEditableTextbox();
+  if (!t) return;
+  const hasSel = t.isEditing && t.selectionStart !== t.selectionEnd;
+  if (hasSel) {
+    t.setSelectionStyles({ fill: hex }, t.selectionStart, t.selectionEnd);
+  } else {
+    t.set('fill', hex);
+    _clearPerCharStyle(t, 'fill');
+  }
+  t.dirty = true;
+  canvas.requestRenderAll();
+  updateProps();
+  saveUndo();
+}
+
+function clearSelectionStyles() {
+  const t = _getEditableTextbox();
+  if (!t) return;
+  const hasSel = t.isEditing && t.selectionStart !== t.selectionEnd;
+  if (hasSel) {
+    // Remove per-char overrides in the range
+    for (let i = t.selectionStart; i < t.selectionEnd; i++) {
+      // Fabric indexes styles by line + char; easier to walk via selection API
+    }
+    // Setting empty styles on the range clears to object defaults
+    t.setSelectionStyles({ fontWeight: undefined, fontStyle: undefined, underline: undefined, fill: undefined }, t.selectionStart, t.selectionEnd);
+  } else {
+    // Nuke all per-char styles so the whole text uses the object-level props
+    t.styles = {};
+  }
+  t.dirty = true;
+  canvas.requestRenderAll();
+  updateProps();
+  saveUndo();
+}
+
 let _opaUndoTimer = null;
 function setOpacity(pct) {
   const obj = canvas.getActiveObject();
@@ -3083,12 +4115,12 @@ function setObjProp(prop, val) {
   if (!obj) return;
   // Special: banner group child properties
   if (prop === '_bgTextFill' && (obj._isBannerGroup || obj._isHitboxGroup)) {
-    const t = obj._objects.find(o => o.type === 'textbox' || o.type === 'text' || o.type === 'i-text');
+    const t = _getTargetTextbox(obj);
     if (t) { t.set('fill', colorWithAlpha(val, getColorAlpha(t.fill))); t.dirty = true; }
     obj.dirty = true; canvas.requestRenderAll(); saveUndo(); return;
   }
   if (prop === '_bgTextFillAlpha' && (obj._isBannerGroup || obj._isHitboxGroup)) {
-    const t = obj._objects.find(o => o.type === 'textbox' || o.type === 'text' || o.type === 'i-text');
+    const t = _getTargetTextbox(obj);
     if (t) { t.set('fill', colorWithAlpha(t.fill || '#fff', +val)); t.dirty = true; }
     obj.dirty = true; canvas.requestRenderAll(); updateProps(); saveUndo(); return;
   }
@@ -3133,22 +4165,22 @@ function setObjProp(prop, val) {
     obj.dirty = true; canvas.requestRenderAll(); updateProps(); saveUndo(); return;
   }
   if (prop === '_bgTextStroke' && (obj._isBannerGroup || obj._isHitboxGroup)) {
-    const t = obj._objects.find(o => o.type === 'textbox' || o.type === 'text' || o.type === 'i-text');
+    const t = _getTargetTextbox(obj);
     if (t) { t.set('stroke', colorWithAlpha(val, getColorAlpha(t.stroke))); t.dirty = true; }
     obj.dirty = true; canvas.requestRenderAll(); saveUndo(); return;
   }
   if (prop === '_bgTextStrokeAlpha' && (obj._isBannerGroup || obj._isHitboxGroup)) {
-    const t = obj._objects.find(o => o.type === 'textbox' || o.type === 'text' || o.type === 'i-text');
+    const t = _getTargetTextbox(obj);
     if (t) { t.set('stroke', colorWithAlpha(t.stroke || '#000', +val)); t.dirty = true; }
     obj.dirty = true; canvas.requestRenderAll(); updateProps(); saveUndo(); return;
   }
-  if (prop === '_bgTextShadowColor' && obj._isBannerGroup) {
-    const t = obj._objects.find(o => o.type === 'textbox' || o.type === 'text' || o.type === 'i-text');
+  if (prop === '_bgTextShadowColor' && (obj._isBannerGroup || obj._isHitboxGroup)) {
+    const t = _getTargetTextbox(obj);
     if (t && t.shadow) { t.shadow.color = colorWithAlpha(val, getColorAlpha(t.shadow.color)); t.dirty = true; }
     obj.dirty = true; canvas.requestRenderAll(); saveUndo(); return;
   }
-  if (prop === '_bgTextShadowAlpha' && obj._isBannerGroup) {
-    const t = obj._objects.find(o => o.type === 'textbox' || o.type === 'text' || o.type === 'i-text');
+  if (prop === '_bgTextShadowAlpha' && (obj._isBannerGroup || obj._isHitboxGroup)) {
+    const t = _getTargetTextbox(obj);
     if (t && t.shadow) { t.shadow.color = colorWithAlpha(t.shadow.color || '#000', +val); t.dirty = true; }
     obj.dirty = true; canvas.requestRenderAll(); updateProps(); saveUndo(); return;
   }
@@ -3179,6 +4211,16 @@ function setObjProp(prop, val) {
   if (prop === '_fillAlpha') {
     obj.set('fill', colorWithAlpha(obj.fill || '#000', +val));
     obj.dirty = true; canvas.requestRenderAll(); updateProps(); saveUndo();
+    return;
+  }
+  // Text-metric props need initDimensions so wrap + height recompute.
+  if ((prop === 'lineHeight' || prop === 'charSpacing' || prop === 'fontSize')
+      && (obj.type === 'textbox' || obj.type === 'i-text' || obj.type === 'text')) {
+    obj.set(prop, +val);
+    if (typeof obj.initDimensions === 'function') obj.initDimensions();
+    obj.dirty = true;
+    canvas.requestRenderAll();
+    updateProps(); saveUndo();
     return;
   }
   obj.set(prop, val);
@@ -3220,7 +4262,7 @@ function toggleAspectLock() {
 }
 
 function toHex6(c) {
-  if (!c) return '#000000';
+  if (!c || typeof c !== 'string') return '#000000';
   if (c.startsWith('#') && c.length === 7) return c;
   if (c.startsWith('#') && c.length === 4) {
     return '#' + c[1]+c[1] + c[2]+c[2] + c[3]+c[3];
@@ -3278,7 +4320,12 @@ function frameRender(ctx) {
   const rO = Math.min(this._frameRadius || 0, w / 2, h / 2);
   const innerW = Math.max(0, w - th * 2);
   const innerH = Math.max(0, h - th * 2);
-  const rI = Math.max(0, Math.min(rO - th, innerW / 2, innerH / 2));
+  // Inner radius: if _frameInnerRadius is set (>=0), use it independently;
+  // otherwise derive from outer radius minus thickness (classic behavior).
+  const rIraw = (this._frameInnerRadius != null && this._frameInnerRadius >= 0)
+    ? this._frameInnerRadius
+    : (rO - th);
+  const rI = Math.max(0, Math.min(rIraw, innerW / 2, innerH / 2));
   // Draw in object-local coords; fabric has already translated to object center
   const x = -w / 2, y = -h / 2;
 
@@ -3377,7 +4424,10 @@ function frameRender(ctx) {
     }
     // Both arms — rounded L-bracket. Clamp radius to arm lengths so the curve fits.
     const rO2 = Math.max(0, Math.min(rO, armH, armV));
-    const rI2 = Math.max(0, rO2 - th);
+    const rIbase = (this._frameInnerRadius != null && this._frameInnerRadius >= 0)
+      ? this._frameInnerRadius
+      : (rO2 - th);
+    const rI2 = Math.max(0, Math.min(rIbase, armH - th, armV - th));
     ctx.beginPath();
     ctx.moveTo(cx + sx * armH, cy);                              // outer H-arm end
     ctx.lineTo(cx + sx * rO2, cy);                                // approach curve
@@ -3474,6 +4524,16 @@ function togglePadLink() {
   updateProps();
 }
 
+function snapRectToCanvas() {
+  const obj = canvas.getActiveObject();
+  if (!obj || obj.type !== 'rect' || obj._isFrame) return;
+  obj.set({ left: 0, top: 0, width: canvasW, height: canvasH, scaleX: 1, scaleY: 1 });
+  obj.setCoords();
+  canvas.requestRenderAll();
+  updateProps();
+  saveUndo();
+}
+
 function snapFrameToCanvas() {
   const f = canvas.getActiveObject();
   if (!f || !f._isFrame) return;
@@ -3544,6 +4604,20 @@ function setFrameRadius(val) {
   const f = canvas.getActiveObject();
   if (!f || !f._isFrame) return;
   f._frameRadius = Math.max(0, +val);
+  f.dirty = true;
+  canvas.requestRenderAll();
+  updateProps();
+  saveUndo();
+}
+// Inner radius: pass '' (or negative) to clear back to auto (rO - thickness).
+function setFrameInnerRadius(val) {
+  const f = canvas.getActiveObject();
+  if (!f || !f._isFrame) return;
+  if (val === '' || val == null || +val < 0) {
+    delete f._frameInnerRadius;
+  } else {
+    f._frameInnerRadius = Math.max(0, +val);
+  }
   f.dirty = true;
   canvas.requestRenderAll();
   updateProps();
@@ -3826,7 +4900,7 @@ function saveJSON() {
   clearGuidelines();
   canvas.requestRenderAll();
 
-  const json = canvas.toJSON(['_customName', 'lockUniScaling', 'lockMovementX', 'lockMovementY', 'lockScalingX', 'lockScalingY', 'lockRotation', '_bannerLeftEnd', '_bannerRightEnd', '_bannerNotchL', '_bannerNotchR', '_bannerFlareL', '_bannerFlareR', '_isBannerGroup','_isHitboxGroup','_isFrame','_frameOffset','_framePadT','_framePadR','_framePadB','_framePadL', '_padL', '_padR', '_padT', '_padB', 'paintFirst','_shadowSpread','_spreadStrokeBackup','_frameThickness','_frameRadius','_frameTop','_frameRight','_frameBottom','_frameLeft','_frameTL','_frameTR','_frameBR','_frameBL','_frameCompleteness','_padLinked','_cornerRadius','_innerShadow','_corners','_cornersLinked']);
+  const json = canvas.toJSON(['_customName', 'lockUniScaling', 'lockMovementX', 'lockMovementY', 'lockScalingX', 'lockScalingY', 'lockRotation', '_bannerLeftEnd', '_bannerRightEnd', '_bannerNotchL', '_bannerNotchR', '_bannerFlareL', '_bannerFlareR', '_isBannerGroup','_isHitboxGroup','_isPanelGroup','_panelGap','_selectedLineIdx','_panelLineAlign','_panelLineOffsetX','_panelLineOffsetY','_panelAlignBlock','_visualCenter','_isFrame','_frameOffset','_framePadT','_framePadR','_framePadB','_framePadL', '_padL', '_padR', '_padT', '_padB', 'paintFirst','_shadowSpread','_spreadStrokeBackup','_frameThickness','_frameRadius','_frameInnerRadius','_frameTop','_frameRight','_frameBottom','_frameLeft','_frameTL','_frameTR','_frameBR','_frameBL','_frameCompleteness','_padLinked','_cornerRadius','_innerShadow','_corners','_cornersLinked']);
 
   // Relativize image URLs — Fabric's toJSON bakes the resolved absolute URL,
   // which breaks portability across hosts/ports. Strip origin so src stays
@@ -3995,7 +5069,7 @@ function saveAsPattern() {
   ) || '';
 
   // Same extra-prop list saveJSON uses, so banner/frame/etc. metadata is preserved
-  const EXTRA = ['_customName', 'lockUniScaling', 'lockMovementX', 'lockMovementY', 'lockScalingX', 'lockScalingY', 'lockRotation', '_bannerLeftEnd', '_bannerRightEnd', '_bannerNotchL', '_bannerNotchR', '_bannerFlareL', '_bannerFlareR', '_isBannerGroup','_isHitboxGroup','_isFrame','_frameOffset','_framePadT','_framePadR','_framePadB','_framePadL', '_padL', '_padR', '_padT', '_padB', 'paintFirst','_shadowSpread','_spreadStrokeBackup','_frameThickness','_frameRadius','_frameTop','_frameRight','_frameBottom','_frameLeft','_frameTL','_frameTR','_frameBR','_frameBL','_frameCompleteness','_padLinked','_cornerRadius','_innerShadow','_corners','_cornersLinked'];
+  const EXTRA = ['_customName', 'lockUniScaling', 'lockMovementX', 'lockMovementY', 'lockScalingX', 'lockScalingY', 'lockRotation', '_bannerLeftEnd', '_bannerRightEnd', '_bannerNotchL', '_bannerNotchR', '_bannerFlareL', '_bannerFlareR', '_isBannerGroup','_isHitboxGroup','_isFrame','_frameOffset','_framePadT','_framePadR','_framePadB','_framePadL', '_padL', '_padR', '_padT', '_padB', 'paintFirst','_shadowSpread','_spreadStrokeBackup','_frameThickness','_frameRadius','_frameInnerRadius','_frameTop','_frameRight','_frameBottom','_frameLeft','_frameTL','_frameTR','_frameBR','_frameBL','_frameCompleteness','_padLinked','_cornerRadius','_innerShadow','_corners','_cornersLinked'];
 
   const objsJson = selected.map(o => o.toObject(EXTRA));
 
@@ -4163,7 +5237,7 @@ const MAX_UNDO = 40;
 
 function saveUndo() {
   if (undoLocked || !canvas) return;
-  const json = JSON.stringify(canvas.toJSON(['_customName','selectable','evented','lockMovementX','lockMovementY','lockScalingX','lockScalingY','lockRotation','_bannerLeftEnd','_bannerRightEnd','_bannerNotchL','_bannerNotchR','_isBannerGroup','_isHitboxGroup','_isFrame','_frameOffset','_framePadT','_framePadR','_framePadB','_framePadL','_padL','_padR','_padT','_padB','paintFirst','_shadowSpread','_spreadStrokeBackup','_frameThickness','_frameRadius','_padLinked','_cornerRadius','_innerShadow','_corners','_cornersLinked']));
+  const json = JSON.stringify(canvas.toJSON(['_customName','selectable','evented','lockMovementX','lockMovementY','lockScalingX','lockScalingY','lockRotation','_bannerLeftEnd','_bannerRightEnd','_bannerNotchL','_bannerNotchR','_isBannerGroup','_isHitboxGroup','_isFrame','_frameOffset','_framePadT','_framePadR','_framePadB','_framePadL','_padL','_padR','_padT','_padB','paintFirst','_shadowSpread','_spreadStrokeBackup','_frameThickness','_frameRadius','_frameInnerRadius','_padLinked','_cornerRadius','_innerShadow','_corners','_cornersLinked']));
   // Don't push if identical to top of stack
   if (undoStack.length && undoStack[undoStack.length - 1] === json) return;
   undoStack.push(json);
@@ -4174,7 +5248,7 @@ function saveUndo() {
 function undo() {
   if (!canvas || undoStack.length < 1) return;
   // Save current state to redo
-  const cur = JSON.stringify(canvas.toJSON(['_customName','selectable','evented','lockMovementX','lockMovementY','lockScalingX','lockScalingY','lockRotation','_bannerLeftEnd','_bannerRightEnd','_bannerNotchL','_bannerNotchR','_isBannerGroup','_isHitboxGroup','_isFrame','_frameOffset','_framePadT','_framePadR','_framePadB','_framePadL','_padL','_padR','_padT','_padB','paintFirst','_shadowSpread','_spreadStrokeBackup','_frameThickness','_frameRadius','_padLinked','_cornerRadius','_innerShadow','_corners','_cornersLinked']));
+  const cur = JSON.stringify(canvas.toJSON(['_customName','selectable','evented','lockMovementX','lockMovementY','lockScalingX','lockScalingY','lockRotation','_bannerLeftEnd','_bannerRightEnd','_bannerNotchL','_bannerNotchR','_isBannerGroup','_isHitboxGroup','_isFrame','_frameOffset','_framePadT','_framePadR','_framePadB','_framePadL','_padL','_padR','_padT','_padB','paintFirst','_shadowSpread','_spreadStrokeBackup','_frameThickness','_frameRadius','_frameInnerRadius','_padLinked','_cornerRadius','_innerShadow','_corners','_cornersLinked']));
   redoStack.push(cur);
   const prev = undoStack.pop();
   restoreState(prev);
@@ -4183,7 +5257,7 @@ function undo() {
 function redo() {
   if (!canvas || redoStack.length < 1) return;
   // Save current to undo
-  const cur = JSON.stringify(canvas.toJSON(['_customName','selectable','evented','lockMovementX','lockMovementY','lockScalingX','lockScalingY','lockRotation','_bannerLeftEnd','_bannerRightEnd','_bannerNotchL','_bannerNotchR','_isBannerGroup','_isHitboxGroup','_isFrame','_frameOffset','_framePadT','_framePadR','_framePadB','_framePadL','_padL','_padR','_padT','_padB','paintFirst','_shadowSpread','_spreadStrokeBackup','_frameThickness','_frameRadius','_padLinked','_cornerRadius','_innerShadow','_corners','_cornersLinked']));
+  const cur = JSON.stringify(canvas.toJSON(['_customName','selectable','evented','lockMovementX','lockMovementY','lockScalingX','lockScalingY','lockRotation','_bannerLeftEnd','_bannerRightEnd','_bannerNotchL','_bannerNotchR','_isBannerGroup','_isHitboxGroup','_isFrame','_frameOffset','_framePadT','_framePadR','_framePadB','_framePadL','_padL','_padR','_padT','_padB','paintFirst','_shadowSpread','_spreadStrokeBackup','_frameThickness','_frameRadius','_frameInnerRadius','_padLinked','_cornerRadius','_innerShadow','_corners','_cornersLinked']));
   undoStack.push(cur);
   const next = redoStack.pop();
   restoreState(next);
@@ -4429,10 +5503,433 @@ async function autoLoadFromURL() {
   }
 }
 
+// --- Brand panel ---
+let _bspCb = null;
+let _bspNativeId = null;
+
+function _buildBrandPanel() {
+  const panel = document.createElement('div');
+  panel.id = 'brand-panel';
+  let html = '<div class="bp-title">Brand Colors</div><div class="bp-grid">';
+  for (const c of BRAND) {
+    html += `<div class="bp-swatch" style="background:${c.hex}" title="${c.name} (${c.hex})" onclick="applyBrandSwatch('${c.hex}')"></div>`;
+  }
+  html += '</div>';
+  panel.innerHTML = html;
+  document.body.appendChild(panel);
+  document.addEventListener('click', (e) => {
+    // Stay open if click is inside the panel or on the triggering color input
+    if (panel.contains(e.target)) return;
+    if (_bspNativeId && e.target.id === _bspNativeId) return;
+    panel.style.display = 'none';
+    _bspCb = null;
+    _bspNativeId = null;
+  }, true);
+}
+
+function showBrandPanel(event, cb, nativeId) {
+  _bspCb = cb;
+  _bspNativeId = nativeId || null;
+  const panel = document.getElementById('brand-panel');
+  const sidebar = document.getElementById('sidebar');
+  const sidebarRect = sidebar ? sidebar.getBoundingClientRect() : { right: 260, left: 0 };
+  const trigRect = event.currentTarget.getBoundingClientRect();
+  let left = sidebarRect.right + 6;
+  if (left + 175 > window.innerWidth) left = sidebarRect.left - 180;
+  let top = trigRect.top;
+  if (top + 220 > window.innerHeight) top = window.innerHeight - 224;
+  panel.style.left = left + 'px';
+  panel.style.top = Math.max(4, top) + 'px';
+  panel.style.display = 'block';
+  event.stopPropagation();
+}
+
+function applyBrandSwatch(hex) {
+  if (_bspCb) { _bspCb(hex); } // may trigger updateProps(), rebuilding DOM
+  // Re-open native color picker with new color (find element by stable ID after rebuild)
+  if (_bspNativeId) {
+    const el = document.getElementById(_bspNativeId);
+    if (el && el.type === 'color') {
+      el.value = hex;
+      el.click(); // re-opens browser picker; our click handler keeps brand panel open
+    }
+  }
+  // panel stays open — click outside closes it
+}
+
+// ── Texture fill modal ───────────────────────────────────────────────────────
+window._texModal = null; // { prop, typeId, params, blend, opacity }
+let _texPreviewTimer = null;
+
+function _getTargetFill(obj, prop) {
+  if (!obj) return null;
+  if (prop === '_bgBannerFill') { const p = obj._objects?.find(o => o.type === 'polygon'); return p?.fill; }
+  if (prop === '_hbShapeFill')  { const s = obj._objects?.find(o => o.type !== 'textbox' && o.type !== 'text' && o.type !== 'i-text'); return s?.fill; }
+  if (prop === '_bgTextFill')   { const t = _getTargetTextbox(obj); return t?.fill; }
+  return obj.fill;
+}
+
+function _fabricGradToCanvas(fg, w, h, ctx) {
+  if (!fg || !fg.coords) return null;
+  const c = fg.coords;
+  let cg;
+  if (fg.type === 'linear')  cg = ctx.createLinearGradient(c.x1*w, c.y1*h, c.x2*w, c.y2*h);
+  else if (fg.type === 'radial') { const cx=(c.x1||.5)*w, cy=(c.y1||.5)*h, r=Math.max(w,h)*.5; cg = ctx.createRadialGradient(cx,cy,0,cx,cy,r); }
+  if (cg) (fg.colorStops||[]).forEach(s => cg.addColorStop(s.offset, s.color));
+  return cg;
+}
+
+function showTextureFillModal(prop) {
+  const gs = _gS[prop];
+  const obj = canvas.getActiveObject();
+  const typeId = (gs && gs.texType) || 'grain';
+  const ttype  = TEXTURE_TYPES.find(t => t.id === typeId) || TEXTURE_TYPES[0];
+  const curBlend = (gs?.texParams?.blend) || ttype.defaults.blend || 'overlay';
+  const curOpa   = (gs?.texParams?.opacity != null ? gs.texParams.opacity : ttype.defaults.opacity) ?? 0.8;
+
+  // Capture base fill (pre-texture) for compositing
+  const rawFill = _getTargetFill(obj, prop);
+  const meta = obj?._texFillMetas?.[prop];
+  const baseFill = isPatternFill(rawFill) ? (meta?.baseFill || '#333333') : (rawFill || '#333333');
+
+  window._texModal = {
+    prop, typeId, baseFill,
+    params:  { ...ttype.defaults, ...(gs?.texParams || {}) },
+    blend:   curBlend,
+    opacity: curOpa,
+  };
+  _texModalRebuildUI();
+  document.getElementById('tex-modal').classList.add('show');
+  _texModalUpdatePreview();
+}
+
+function hideTextureModal() {
+  document.getElementById('tex-modal').classList.remove('show');
+  window._texModal = null;
+}
+
+function _texModalRebuildUI() {
+  const m = window._texModal; if (!m) return;
+  // Type grid
+  const grid = document.getElementById('tex-type-grid');
+  grid.innerHTML = '';
+  TEXTURE_TYPES.forEach(t => {
+    const btn = document.createElement('button');
+    btn.className = 'tex-type-btn' + (t.id === m.typeId ? ' active' : '');
+    btn.innerHTML = `${t.icon} ${t.name}`;
+    btn.onclick = () => {
+      const tt = TEXTURE_TYPES.find(x => x.id === t.id);
+      m.typeId = t.id;
+      m.params = { ...tt.defaults };
+      _texModalRebuildUI();
+      _texModalUpdatePreview();
+    };
+    grid.appendChild(btn);
+  });
+  // Param rows
+  const ttype = TEXTURE_TYPES.find(t => t.id === m.typeId) || TEXTURE_TYPES[0];
+  const rows = document.getElementById('tex-param-rows');
+  rows.innerHTML = '';
+  ttype.paramDefs.forEach(pd => {
+    const val = m.params[pd.key] ?? pd.min;
+    const row = document.createElement('div');
+    row.className = 'prop-row';
+    row.style.marginBottom = '6px';
+    row.innerHTML = `<label style="width:52px;font-size:11px;color:#888">${pd.label}</label>
+      <input type="range" min="${pd.min}" max="${pd.max}" step="${pd.step||1}" value="${val}"
+        oninput="window._texModal.params['${pd.key}']=+this.value;document.getElementById('tv_${pd.key}').textContent=this.value;_texModalUpdatePreview()">
+      <span id="tv_${pd.key}" style="width:30px;font-size:11px;color:#888;flex:none">${val}</span>`;
+    rows.appendChild(row);
+  });
+  // Blend + opacity
+  const blendSel = document.getElementById('tex-blend-select');
+  if (blendSel) blendSel.value = m.blend;
+  const opaRange = document.getElementById('tex-opa-range');
+  const opaVal   = document.getElementById('tex-opa-val');
+  if (opaRange) { opaRange.value = Math.round(m.opacity * 100); }
+  if (opaVal)   { opaVal.textContent = Math.round(m.opacity * 100) + '%'; }
+  if (opaRange) opaRange.oninput = function() {
+    m.opacity = +this.value / 100;
+    if (opaVal) opaVal.textContent = this.value + '%';
+  };
+}
+
+function _texModalUpdatePreview() {
+  clearTimeout(_texPreviewTimer);
+  _texPreviewTimer = setTimeout(async () => {
+    const m = window._texModal; if (!m) return;
+    const previewCanvas = document.getElementById('tex-preview-canvas');
+    if (!previewCanvas) return;
+    const pw = previewCanvas.width, ph = previewCanvas.height;
+    const dataURL = await _generateTextureDataURL(m.typeId, pw, ph, m.params);
+    if (!dataURL) return;
+    const img = new Image();
+    img.onload = () => {
+      const ctx = previewCanvas.getContext('2d');
+      ctx.clearRect(0, 0, pw, ph);
+      // Draw a sample gradient background so blend modes are visible
+      const bg = ctx.createLinearGradient(0, 0, pw, ph);
+      bg.addColorStop(0, '#5C6B4F'); bg.addColorStop(1, '#C9A155');
+      ctx.fillStyle = bg; ctx.fillRect(0, 0, pw, ph);
+      ctx.globalAlpha = m.opacity || 1;
+      ctx.globalCompositeOperation = m.blend || 'overlay';
+      ctx.drawImage(img, 0, 0, pw, ph);
+      ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+    };
+    img.src = dataURL;
+  }, 120);
+}
+
+function _getTargetSubObj(group, prop) {
+  if (!group || !group._objects) return null;
+  if (prop === '_bgBannerFill') return group._objects.find(o => o.type === 'polygon') || null;
+  if (prop === '_hbShapeFill')  return group._objects.find(o => o.type !== 'textbox' && o.type !== 'text' && o.type !== 'i-text') || null;
+  return null;
+}
+
+async function applyTextureFill() {
+  const m = window._texModal; if (!m) return;
+  const obj = canvas.getActiveObject(); if (!obj) return;
+
+  // Use the actual target sub-object size when filling a group child.
+  // fabric.Pattern renders from the object's centered local-space origin,
+  // so we need offsetX/Y = -w/2, -h/2 to align the top-left of the baked
+  // composite image with the object's top-left corner.
+  const sub = _getTargetSubObj(obj, m.prop);
+  const target = sub || obj;
+  const gScale = sub ? { x: (obj.scaleX || 1), y: (obj.scaleY || 1) } : { x: 1, y: 1 };
+  const w = Math.max(64, Math.round((target.width  || 1) * (target.scaleX || 1) * gScale.x));
+  const h = Math.max(64, Math.round((target.height || 1) * (target.scaleY || 1) * gScale.y));
+
+  const dataURL = await _generateTextureDataURL(m.typeId, w, h, m.params);
+  if (!dataURL) return;
+
+  const texImg = new Image();
+  texImg.onload = () => {
+    // Off-screen canvas: bake base fill + texture composite
+    const oc = document.createElement('canvas');
+    oc.width = w; oc.height = h;
+    const ctx = oc.getContext('2d');
+
+    // 1. Draw base fill (solid colour or gradient)
+    const base = m.baseFill;
+    if (isGradFill(base)) {
+      const cg = _fabricGradToCanvas(base, w, h, ctx);
+      ctx.fillStyle = cg || '#333333';
+    } else {
+      ctx.fillStyle = base || '#333333';
+    }
+    ctx.fillRect(0, 0, w, h);
+
+    // 2. Composite texture on top
+    ctx.globalAlpha = m.opacity ?? 1;
+    ctx.globalCompositeOperation = m.blend || 'overlay';
+    ctx.drawImage(texImg, 0, 0, w, h);
+    ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = 'source-over';
+
+    // 3. Bake to a pattern. Fabric 5 handles pattern offset internally.
+    const compositeImg = new Image();
+    compositeImg.onload = () => {
+      const pattern = new fabric.Pattern({ source: compositeImg, repeat: 'no-repeat' });
+      obj._texFillMetas = obj._texFillMetas || {};
+      obj._texFillMetas[m.prop] = {
+        type: m.typeId,
+        params: { ...m.params },
+        blend: m.blend,
+        opacity: m.opacity,
+        baseFill: m.baseFill,
+      };
+      setObjProp(m.prop, pattern);
+      if (_gS[m.prop]) {
+        _gS[m.prop].mode = 'texture';
+        _gS[m.prop].texType = m.typeId;
+        _gS[m.prop].texParams = { ...m.params, blend: m.blend, opacity: m.opacity };
+      }
+      hideTextureModal();
+      updateProps();
+      saveUndo();
+    };
+    compositeImg.src = oc.toDataURL();
+  };
+  texImg.src = dataURL;
+}
+
+// ── Texture generation ───────────────────────────────────────────────────────
+
+function _genGrainDataURL(w, h, params) {
+  const size   = Math.max(0.5, params.size   || 1);
+  const coarse = Math.max(0,   params.coarse || 40) / 100;
+  const gw = Math.ceil(w / size), gh = Math.ceil(h / size);
+  const oc = document.createElement('canvas');
+  oc.width = gw; oc.height = gh;
+  const ctx = oc.getContext('2d');
+  const id = ctx.createImageData(gw, gh); const d = id.data;
+  for (let y = 0; y < gh; y++) for (let x = 0; x < gw; x++) {
+    const i = (y * gw + x) * 4;
+    const cv = Math.sin(x * 0.9 + y * 1.4) * 0.5 + 0.5;
+    const v = Math.floor((cv * coarse + Math.random() * (1 - coarse)) * 255);
+    d[i] = d[i+1] = d[i+2] = v; d[i+3] = 255;
+  }
+  ctx.putImageData(id, 0, 0);
+  const fc = document.createElement('canvas'); fc.width = w; fc.height = h;
+  const fctx = fc.getContext('2d'); fctx.imageSmoothingEnabled = false;
+  fctx.drawImage(oc, 0, 0, w, h);
+  return Promise.resolve(fc.toDataURL());
+}
+
+function _svgToDataURL(svgStr, w, h) {
+  return new Promise(resolve => {
+    const blob = new Blob([svgStr], { type:'image/svg+xml' });
+    const url  = URL.createObjectURL(blob);
+    const img  = new Image();
+    img.onload = () => {
+      const oc = document.createElement('canvas'); oc.width = w; oc.height = h;
+      oc.getContext('2d').drawImage(img, 0, 0, w, h);
+      URL.revokeObjectURL(url);
+      resolve(oc.toDataURL());
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
+    img.src = url;
+  });
+}
+
+function _buildTextureSVG(typeId, w, h, params) {
+  if (typeId === 'bump') {
+    const freq = (params.freq || 4) / 100;
+    const az   = params.azimuth   || 45;
+    const el   = params.elevation || 35;
+    const diff = (params.intensity || 15) / 10;
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}">
+      <defs><filter id="f" x="0%" y="0%" width="100%" height="100%">
+        <feTurbulence type="fractalNoise" baseFrequency="${freq}" numOctaves="4" result="noise"/>
+        <feDiffuseLighting in="noise" lighting-color="#ffffff" diffuseConstant="${diff}" result="lit">
+          <feDistantLight azimuth="${az}" elevation="${el}"/>
+        </feDiffuseLighting>
+        <feBlend in="SourceGraphic" in2="lit" mode="multiply"/>
+      </filter></defs>
+      <rect width="${w}" height="${h}" fill="white" filter="url(#f)"/>
+    </svg>`;
+  }
+  if (typeId === 'paper') {
+    const freq = (params.freq || 12) / 100;
+    const el   = params.elevation || 50;
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}">
+      <defs><filter id="f" x="0%" y="0%" width="100%" height="100%">
+        <feTurbulence type="fractalNoise" baseFrequency="${freq}" numOctaves="5" result="noise"/>
+        <feDiffuseLighting in="noise" lighting-color="#f5e6c8" diffuseConstant="1.2" result="lit">
+          <feDistantLight azimuth="60" elevation="${el}"/>
+        </feDiffuseLighting>
+        <feColorMatrix in="lit" type="saturate" values="0.25"/>
+      </filter></defs>
+      <rect width="${w}" height="${h}" fill="#f0ddb8" filter="url(#f)"/>
+    </svg>`;
+  }
+  if (typeId === 'noise') {
+    const freq = (params.freq || 8) / 100;
+    const oct  = params.octaves || 4;
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}">
+      <defs><filter id="f" x="0%" y="0%" width="100%" height="100%">
+        <feTurbulence type="turbulence" baseFrequency="${freq}" numOctaves="${oct}" result="noise"/>
+        <feColorMatrix in="noise" type="saturate" values="0"/>
+      </filter></defs>
+      <rect width="${w}" height="${h}" fill="white" filter="url(#f)"/>
+    </svg>`;
+  }
+  return null;
+}
+
+async function _generateTextureDataURL(typeId, w, h, params) {
+  if (typeId === 'grain') return _genGrainDataURL(w, h, params);
+  const svg = _buildTextureSVG(typeId, w, h, params);
+  if (!svg) return null;
+  return _svgToDataURL(svg, w, h);
+}
+
+async function addTextureOverlay(typeId) {
+  hideAddModal();
+  const ttype = TEXTURE_TYPES.find(t => t.id === typeId);
+  if (!ttype) return;
+  const params = { ...ttype.defaults };
+  const dataURL = await _generateTextureDataURL(typeId, canvasW, canvasH, params);
+  if (!dataURL) return;
+  fabric.Image.fromURL(dataURL, img => {
+    img.set({
+      left:0, top:0, width:canvasW, height:canvasH, scaleX:1, scaleY:1,
+      opacity: params.opacity || 0.5,
+      globalCompositeOperation: params.blend || 'overlay',
+      _isTextureOverlay: true, _textureType: typeId,
+      _textureParams: { ...params },
+      _customName: ttype.name,
+      selectable: true, evented: true,
+    });
+    canvas.add(img);
+    canvas.setActiveObject(img);
+    canvas.requestRenderAll();
+    refreshLayers(); updateProps(); saveUndo();
+  });
+}
+
+function setTextureParam(key, val) {
+  const obj = canvas.getActiveObject();
+  if (!obj || !obj._isTextureOverlay) return;
+  obj._textureParams = obj._textureParams || {};
+  obj._textureParams[key] = val;
+  regenerateTexture();
+}
+
+async function regenerateTexture() {
+  const obj = canvas.getActiveObject();
+  if (!obj || !obj._isTextureOverlay) return;
+  const dataURL = await _generateTextureDataURL(obj._textureType, canvasW, canvasH, obj._textureParams || {});
+  if (!dataURL) return;
+  const el = document.createElement('img');
+  el.onload = () => { obj.setElement(el); obj.dirty = true; canvas.requestRenderAll(); saveUndo(); };
+  el.src = dataURL;
+}
+
+function startClipTexturePick() {
+  const obj = canvas.getActiveObject();
+  if (!obj || !obj._isTextureOverlay) return;
+  canvas._texClipPending = obj;
+  canvas.defaultCursor = 'crosshair';
+  canvas.hoverCursor = 'crosshair';
+  updateProps();
+}
+
+function removeTextureClip() {
+  const obj = canvas.getActiveObject();
+  if (!obj || !obj._isTextureOverlay) return;
+  obj.clipPath = null;
+  obj.dirty = true;
+  canvas.requestRenderAll(); updateProps(); saveUndo();
+}
+
+function setTextureBlend(mode) {
+  const obj = canvas.getActiveObject();
+  if (!obj || !obj._isTextureOverlay) return;
+  obj.globalCompositeOperation = mode;
+  if (obj._textureParams) obj._textureParams.blend = mode;
+  canvas.requestRenderAll(); saveUndo();
+}
+
 // --- Boot ---
 initCanvas(1280, 720);
 renderTabs();
 autoLoadFromURL();
+_buildBrandPanel();
+// Populate texture options in add modal
+(function() {
+  const grid = document.getElementById('texture-options');
+  if (!grid) return;
+  TEXTURE_TYPES.forEach(t => {
+    const el = document.createElement('div');
+    el.className = 'add-option';
+    el.innerHTML = `<span class="icon">${t.icon}</span>${t.name}`;
+    el.onclick = () => addTextureOverlay(t.id);
+    grid.appendChild(el);
+  });
+})();
 </script>
 </body>
 </html>
