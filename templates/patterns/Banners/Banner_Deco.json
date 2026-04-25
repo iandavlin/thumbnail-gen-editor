@@ -1,0 +1,309 @@
+{
+  "name": "Deco Banner",
+  "description": "Art-deco title plaque: dark plate with gold hairline, stepped ziggurat ends (sage/gold/dark), reed lines top and bottom, gold corner diamonds, coral keystone hang with gold dots, centered title.",
+  "canvasRef": {
+    "w": 1280,
+    "h": 720
+  },
+  "objects": [
+    {
+      "type": "rect",
+      "left": 320,
+      "top": 125,
+      "width": 640,
+      "height": 110,
+      "fill": "#2B2318",
+      "stroke": "#ECB351",
+      "strokeWidth": 1.5,
+      "_customName": "Plate"
+    },
+    {
+      "type": "rect",
+      "left": 960,
+      "top": 132,
+      "width": 26,
+      "height": 96,
+      "fill": "#87986A",
+      "stroke": null,
+      "strokeWidth": 0,
+      "_customName": "R step0"
+    },
+    {
+      "type": "rect",
+      "left": 986,
+      "top": 143,
+      "width": 18,
+      "height": 74,
+      "fill": "#ECB351",
+      "stroke": null,
+      "strokeWidth": 0,
+      "_customName": "R step1"
+    },
+    {
+      "type": "rect",
+      "left": 1004,
+      "top": 155,
+      "width": 10,
+      "height": 50,
+      "fill": "#2B2318",
+      "stroke": "#ECB351",
+      "strokeWidth": 1,
+      "_customName": "R step2"
+    },
+    {
+      "type": "rect",
+      "left": 294,
+      "top": 132,
+      "width": 26,
+      "height": 96,
+      "fill": "#87986A",
+      "stroke": null,
+      "strokeWidth": 0,
+      "_customName": "L step0"
+    },
+    {
+      "type": "rect",
+      "left": 276,
+      "top": 143,
+      "width": 18,
+      "height": 74,
+      "fill": "#ECB351",
+      "stroke": null,
+      "strokeWidth": 0,
+      "_customName": "L step1"
+    },
+    {
+      "type": "rect",
+      "left": 266,
+      "top": 155,
+      "width": 10,
+      "height": 50,
+      "fill": "#2B2318",
+      "stroke": "#ECB351",
+      "strokeWidth": 1,
+      "_customName": "L step2"
+    },
+    {
+      "type": "rect",
+      "left": 360,
+      "top": 135,
+      "width": 560,
+      "height": 1,
+      "fill": "#F1DE83",
+      "_customName": "Top Reed 0"
+    },
+    {
+      "type": "rect",
+      "left": 360,
+      "top": 139,
+      "width": 560,
+      "height": 1,
+      "fill": "#F1DE83",
+      "_customName": "Top Reed 1"
+    },
+    {
+      "type": "rect",
+      "left": 360,
+      "top": 143,
+      "width": 560,
+      "height": 1,
+      "fill": "#F1DE83",
+      "_customName": "Top Reed 2"
+    },
+    {
+      "type": "rect",
+      "left": 360,
+      "top": 217,
+      "width": 560,
+      "height": 1,
+      "fill": "#F1DE83",
+      "_customName": "Bot Reed 0"
+    },
+    {
+      "type": "rect",
+      "left": 360,
+      "top": 221,
+      "width": 560,
+      "height": 1,
+      "fill": "#F1DE83",
+      "_customName": "Bot Reed 1"
+    },
+    {
+      "type": "rect",
+      "left": 360,
+      "top": 225,
+      "width": 560,
+      "height": 1,
+      "fill": "#F1DE83",
+      "_customName": "Bot Reed 2"
+    },
+    {
+      "type": "polygon",
+      "points": [
+        {
+          "x": 4,
+          "y": 0
+        },
+        {
+          "x": 8,
+          "y": 4
+        },
+        {
+          "x": 4,
+          "y": 8
+        },
+        {
+          "x": 0,
+          "y": 4
+        }
+      ],
+      "left": 332,
+      "top": 137,
+      "width": 8,
+      "height": 8,
+      "fill": "#ECB351",
+      "_customName": "TL dia"
+    },
+    {
+      "type": "polygon",
+      "points": [
+        {
+          "x": 4,
+          "y": 0
+        },
+        {
+          "x": 8,
+          "y": 4
+        },
+        {
+          "x": 4,
+          "y": 8
+        },
+        {
+          "x": 0,
+          "y": 4
+        }
+      ],
+      "left": 940,
+      "top": 137,
+      "width": 8,
+      "height": 8,
+      "fill": "#ECB351",
+      "_customName": "TR dia"
+    },
+    {
+      "type": "polygon",
+      "points": [
+        {
+          "x": 4,
+          "y": 0
+        },
+        {
+          "x": 8,
+          "y": 4
+        },
+        {
+          "x": 4,
+          "y": 8
+        },
+        {
+          "x": 0,
+          "y": 4
+        }
+      ],
+      "left": 332,
+      "top": 215,
+      "width": 8,
+      "height": 8,
+      "fill": "#ECB351",
+      "_customName": "BL dia"
+    },
+    {
+      "type": "polygon",
+      "points": [
+        {
+          "x": 4,
+          "y": 0
+        },
+        {
+          "x": 8,
+          "y": 4
+        },
+        {
+          "x": 4,
+          "y": 8
+        },
+        {
+          "x": 0,
+          "y": 4
+        }
+      ],
+      "left": 940,
+      "top": 215,
+      "width": 8,
+      "height": 8,
+      "fill": "#ECB351",
+      "_customName": "BR dia"
+    },
+    {
+      "type": "polygon",
+      "points": [
+        {
+          "x": 12,
+          "y": 0
+        },
+        {
+          "x": 46,
+          "y": 0
+        },
+        {
+          "x": 58,
+          "y": 16
+        },
+        {
+          "x": 0,
+          "y": 16
+        }
+      ],
+      "left": 611,
+      "top": 235,
+      "width": 58,
+      "height": 16,
+      "fill": "#FE6B4F",
+      "stroke": "#ECB351",
+      "strokeWidth": 1,
+      "_customName": "Keystone"
+    },
+    {
+      "type": "circle",
+      "left": 607.5,
+      "top": 227,
+      "radius": 2.5,
+      "fill": "#F1DE83",
+      "_customName": "Keystone Dot 0"
+    },
+    {
+      "type": "circle",
+      "left": 667.5,
+      "top": 227,
+      "radius": 2.5,
+      "fill": "#F1DE83",
+      "_customName": "Keystone Dot 1"
+    },
+    {
+      "type": "textbox",
+      "left": 380,
+      "top": 158,
+      "width": 520,
+      "text": "TITLE",
+      "fontSize": 40,
+      "fontFamily": "Georgia, serif",
+      "fontWeight": "bold",
+      "fill": "#ECB351",
+      "textAlign": "center",
+      "charSpacing": 400,
+      "styles": {},
+      "_customName": "Title"
+    }
+  ]
+}

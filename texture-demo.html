@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Texture Demo</title>
+<style>
+  body { margin:0; background:#111; display:flex; flex-direction:column; align-items:center; padding:24px; gap:24px; font-family:sans-serif; color:#ccc; }
+  h2 { margin:0 0 4px; font-size:14px; color:#7aa2f7; }
+  p { margin:0 0 8px; font-size:12px; color:#888; }
+  canvas { border:1px solid #333; display:block; }
+  .demo { background:#1e1e1e; border:1px solid #333; border-radius:8px; padding:16px; }
+  label { font-size:12px; color:#888; }
+  input[type=range] { width:200px; vertical-align:middle; }
+  .controls { display:flex; flex-direction:column; gap:6px; margin-top:10px; }
+</style>
+</head>
+<body>
+
+<div class="demo">
+  <h2>Demo 1 — Film Grain Overlay</h2>
+  <p>Procedural noise blended over a gradient fill. Adjust opacity and style.</p>
+  <canvas id="grainCanvas" width="640" height="360"></canvas>
+  <div class="controls">
+    <label>Opacity <input type="range" id="grainOpa" min="0" max="40" value="12"> <span id="grainOpaVal">12%</span></label>
+    <label>Blend &nbsp;&nbsp;
+      <select id="grainMode">
+        <option value="overlay" selected>Overlay</option>
+        <option value="multiply">Multiply</option>
+        <option value="screen">Screen</option>
+        <option value="soft-light">Soft Light</option>
+        <option value="hard-light">Hard Light</option>
+      </select>
+    </label>
+    <label>Grain size <input type="range" id="grainSize" min="1" max="6" value="1" step="0.5"> <span id="grainSizeVal">1px</span></label>
+  </div>
+</div>
+
+<div class="demo">
+  <h2>Demo 2 — SVG Bump / Emboss (feDiffuseLighting)</h2>
+  <p>Fractal noise used as a height map, lit by a distant light source.</p>
+  <svg width="0" height="0" style="position:absolute">
+    <defs>
+      <filter id="bump" x="0%" y="0%" width="100%" height="100%">
+        <feTurbulence id="bumpTurb" type="fractalNoise" baseFrequency="0.04" numOctaves="4" result="noise"/>
+        <feDiffuseLighting id="bumpLight" in="noise" lighting-color="#ffffff" diffuseConstant="1.5" result="lit">
+          <feDistantLight id="bumpSun" azimuth="45" elevation="35"/>
+        </feDiffuseLighting>
+        <feBlend in="SourceGraphic" in2="lit" mode="multiply"/>
+      </filter>
+    </defs>
+  </svg>
+  <canvas id="bumpCanvas" width="640" height="360"></canvas>
+  <div class="controls">
+    <label>Roughness &nbsp;<input type="range" id="bumpFreq" min="1" max="20" value="4"> <span id="bumpFreqVal">0.04</span></label>
+    <label>Light dir &nbsp;&nbsp;<input type="range" id="bumpAz" min="0" max="360" value="45"> <span id="bumpAzVal">45°</span></label>
+    <label>Elevation &nbsp;&nbsp;<input type="range" id="bumpEl" min="5" max="85" value="35"> <span id="bumpElVal">35°</span></label>
+    <label>Intensity &nbsp;&nbsp;<input type="range" id="bumpDiff" min="5" max="40" value="15"> <span id="bumpDiffVal">1.5</span></label>
+  </div>
+</div>
+
+<script>
+// ── Demo 1: Grain ──────────────────────────────────────────────────────────
+
+const grainC = document.getElementById('grainCanvas');
+const grainCtx = grainC.getContext('2d');
+let grainTex = null;
+
+function buildGrain(pixelSize) {
+  const oc = document.createElement('canvas');
+  const w = Math.ceil(640 / pixelSize), h = Math.ceil(360 / pixelSize);
+  oc.width = w; oc.height = h;
+  const ctx = oc.getContext('2d');
+  const id = ctx.createImageData(w, h);
+  const d = id.data;
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const i = (y * w + x) * 4;
+      const coarse = Math.sin(x * 0.9 + y * 1.4) * 0.5 + 0.5;
+      const v = Math.floor((coarse * 0.4 + Math.random() * 0.6) * 255);
+      d[i] = d[i+1] = d[i+2] = v; d[i+3] = 255;
+    }
+  }
+  ctx.putImageData(id, 0, 0);
+  return oc;
+}
+
+function drawGrain() {
+  const opa = +document.getElementById('grainOpa').value / 100;
+  const mode = document.getElementById('grainMode').value;
+  const size = +document.getElementById('grainSize').value;
+
+  // Base gradient
+  grainCtx.clearRect(0, 0, 640, 360);
+  const grad = grainCtx.createLinearGradient(0, 0, 640, 360);
+  grad.addColorStop(0, '#3D4F2A');
+  grad.addColorStop(1, '#C9A155');
+  grainCtx.fillStyle = grad;
+  grainCtx.fillRect(0, 0, 640, 360);
+
+  // Grain overlay
+  if (!grainTex || grainTex._size !== size) {
+    grainTex = buildGrain(size);
+    grainTex._size = size;
+  }
+  grainCtx.save();
+  grainCtx.globalAlpha = opa;
+  grainCtx.globalCompositeOperation = mode;
+  grainCtx.drawImage(grainTex, 0, 0, 640, 360);
+  grainCtx.restore();
+}
+
+document.getElementById('grainOpa').oninput = function() {
+  document.getElementById('grainOpaVal').textContent = this.value + '%';
+  drawGrain();
+};
+document.getElementById('grainMode').onchange = drawGrain;
+document.getElementById('grainSize').oninput = function() {
+  document.getElementById('grainSizeVal').textContent = this.value + 'px';
+  grainTex = null;
+  drawGrain();
+};
+drawGrain();
+
+
+// ── Demo 2: SVG Bump ───────────────────────────────────────────────────────
+
+const bumpC = document.getElementById('bumpCanvas');
+const bumpCtx = bumpC.getContext('2d');
+
+// Draw base gradient to an img, then apply SVG filter via an <img> element trick
+// We actually render to an offscreen canvas then draw through a filtered <img>
+const bumpWrapper = document.createElement('div');
+bumpWrapper.style.cssText = 'position:absolute;left:-9999px;top:0';
+const bumpImg = document.createElement('canvas');
+bumpImg.width = 640; bumpImg.height = 360;
+bumpWrapper.appendChild(bumpImg);
+document.body.appendChild(bumpWrapper);
+
+function drawBumpBase() {
+  const ctx = bumpImg.getContext('2d');
+  const grad = ctx.createLinearGradient(0, 0, 640, 360);
+  grad.addColorStop(0, '#5C6B4F');
+  grad.addColorStop(1, '#BF7237');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, 640, 360);
+  // Some shapes for visual interest
+  ctx.fillStyle = '#C9A155';
+  ctx.beginPath(); ctx.roundRect(60, 80, 520, 200, 20); ctx.fill();
+  ctx.fillStyle = '#343D2E';
+  ctx.font = 'bold 64px sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText('BUMP DEMO', 320, 180);
+}
+
+function applyBump() {
+  const freq = +document.getElementById('bumpFreq').value / 100;
+  const az   = +document.getElementById('bumpAz').value;
+  const el   = +document.getElementById('bumpEl').value;
+  const diff = +document.getElementById('bumpDiff').value / 10;
+
+  document.getElementById('bumpFreqVal').textContent = freq.toFixed(2);
+  document.getElementById('bumpAzVal').textContent   = az + '°';
+  document.getElementById('bumpElVal').textContent   = el + '°';
+  document.getElementById('bumpDiffVal').textContent = diff.toFixed(1);
+
+  document.getElementById('bumpTurb').setAttribute('baseFrequency', freq);
+  document.getElementById('bumpSun').setAttribute('azimuth', az);
+  document.getElementById('bumpSun').setAttribute('elevation', el);
+  document.getElementById('bumpLight').setAttribute('diffuseConstant', diff);
+
+  // Render base to offscreen, then draw filtered to visible canvas
+  drawBumpBase();
+  bumpCtx.clearRect(0, 0, 640, 360);
+
+  // Apply filter via SVG <image> element rendered to the canvas
+  const blob = new Blob([`
+    <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="640" height="360">
+      <defs>
+        <filter id="f" x="0%" y="0%" width="100%" height="100%">
+          <feTurbulence type="fractalNoise" baseFrequency="${freq}" numOctaves="4" result="noise"/>
+          <feDiffuseLighting in="noise" lighting-color="#ffffff" diffuseConstant="${diff}" result="lit">
+            <feDistantLight azimuth="${az}" elevation="${el}"/>
+          </feDiffuseLighting>
+          <feBlend in="SourceGraphic" in2="lit" mode="multiply"/>
+        </filter>
+      </defs>
+      <image href="${bumpImg.toDataURL()}" width="640" height="360" filter="url(#f)"/>
+    </svg>`], {type:'image/svg+xml'});
+  const url = URL.createObjectURL(blob);
+  const img = new Image();
+  img.onload = () => { bumpCtx.drawImage(img, 0, 0); URL.revokeObjectURL(url); };
+  img.src = url;
+}
+
+['bumpFreq','bumpAz','bumpEl','bumpDiff'].forEach(id => {
+  document.getElementById(id).oninput = applyBump;
+});
+
+drawBumpBase();
+applyBump();
+</script>
+</body>
+</html>

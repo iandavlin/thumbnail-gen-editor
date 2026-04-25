@@ -191,6 +191,19 @@ Once layout and images are approved:
 
 Before starting from scratch, check `templates/*.json` for a successful layout worth reskinning (see `templates/README.md` → `toReskin` / `useWhen` notes on each).
 
+### Pattern / frame generators
+
+Reusable decorative patterns (frames, borders, banners, badges) live under `templates/patterns/<Category>/` and are loaded via **Insert Pattern** in the editor. Build them the same way as full layouts — via a `generate_*.js` that emits Fabric JSON, not by drawing in the editor.
+
+Existing example: `generate_border_deco_16x9.js` → `templates/patterns/Frames/Deco_Border_16x9.json`. Art-deco geometric border (double frame, corner brackets with gold inlays, midpoint chevrons, corner diamond clusters, side dashes). Palette pulls from the show's sage/gold/dark scheme.
+
+Conventions for pattern generators:
+- Filename: `generate_<what>_<ratio>.js` (ratio only if the pattern is aspect-specific; otherwise just `generate_<what>.js`)
+- Output path: `templates/patterns/<Category>/<Name>_<ratio>.json`
+- JSON shape: `{ name, description, canvasRef: {w,h}, objects: [...] }` — same as other templates, Fabric-compatible
+- Use `rect` and `polygon` objects with full Fabric field set (see `generate_thorell.js` or `generate_border_deco_16x9.js` for a boilerplate helper). Include `_customName` on every object so layers are readable.
+- When a generator ships: add it to `generate*.js` sync glob in the push procedure if the user wants to run it on the deploy box (usually not — generators stay local, only the resulting JSON ships).
+
 ### Phase 5: Iterate
 
 User reviews and requests tweaks. Adjust and regenerate.
@@ -209,6 +222,13 @@ Everything else (photos, layout, colors, badge) is discovered and decided during
 ## HTML Editor Reference (`editor.html`)
 
 Launch with any static server: `npx http-server . -p 8080 -c-1` then open `http://localhost:8080/editor.html`.
+
+**Auto-load via URL param** — append `?load=` to open the editor with a JSON already loaded:
+```
+http://localhost:8080/editor.html?load=/output/16x9/my_layout.json
+```
+Multiple files: `?load=/output/16x9/a.json,/output/1x1/b.json` (comma-separated, opens each as a tab).
+Always use this format when referencing output JSON files so the user can click straight into the editor.
 
 ### Canvas
 - Default 1280×720 (16:9). Background + photo rect + right panel are usually pre-built.

@@ -1,0 +1,188 @@
+{
+  "name": "Bauhaus Border 16x9",
+  "description": "Bauhaus-style border: off-white field, thick black frame, primary-color primitives (circle, diamond, bars, triangle, stacked squares, dot clusters).",
+  "canvasRef": {
+    "w": 1280,
+    "h": 720
+  },
+  "objects": [
+    {
+      "type": "rect",
+      "left": 0,
+      "top": 0,
+      "width": 1280,
+      "height": 720,
+      "fill": "#FAF6EE",
+      "_customName": "BG"
+    },
+    {
+      "type": "rect",
+      "left": 18,
+      "top": 18,
+      "width": 1244,
+      "height": 684,
+      "fill": null,
+      "stroke": "#2B2318",
+      "strokeWidth": 10,
+      "_customName": "Outer Frame"
+    },
+    {
+      "type": "circle",
+      "left": -80,
+      "top": -80,
+      "radius": 140,
+      "fill": "#ECB351",
+      "_customName": "TL Gold Circle"
+    },
+    {
+      "type": "rect",
+      "left": 1170,
+      "top": 12,
+      "width": 90,
+      "height": 90,
+      "fill": "#FE6B4F",
+      "angle": 45,
+      "_customName": "TR Coral Diamond"
+    },
+    {
+      "type": "rect",
+      "left": 42,
+      "top": 150,
+      "width": 18,
+      "height": 420,
+      "fill": "#87986A",
+      "_customName": "L Sage Bar"
+    },
+    {
+      "type": "triangle",
+      "left": 1120,
+      "top": 590,
+      "width": 115,
+      "height": 95,
+      "fill": "#2B2318",
+      "_customName": "BR Dark Triangle"
+    },
+    {
+      "type": "rect",
+      "left": 190,
+      "top": 56,
+      "width": 260,
+      "height": 4,
+      "fill": "#FE6B4F",
+      "_customName": "Top Coral Line"
+    },
+    {
+      "type": "rect",
+      "left": 70,
+      "top": 658,
+      "width": 384,
+      "height": 16,
+      "fill": "#ECB351",
+      "_customName": "Bot Gold Bar"
+    },
+    {
+      "type": "rect",
+      "left": 70,
+      "top": 682,
+      "width": 537.6,
+      "height": 3,
+      "fill": "#87986A",
+      "_customName": "Bot Sage Line"
+    },
+    {
+      "type": "rect",
+      "left": 1205,
+      "top": 170,
+      "width": 30,
+      "height": 30,
+      "fill": "#87986A",
+      "_customName": "Stack 0"
+    },
+    {
+      "type": "rect",
+      "left": 1205,
+      "top": 212,
+      "width": 30,
+      "height": 30,
+      "fill": "#ECB351",
+      "_customName": "Stack 1"
+    },
+    {
+      "type": "rect",
+      "left": 1205,
+      "top": 254,
+      "width": 30,
+      "height": 30,
+      "fill": "#FE6B4F",
+      "_customName": "Stack 2"
+    },
+    {
+      "type": "circle",
+      "left": 144,
+      "top": 134,
+      "radius": 6,
+      "fill": "#2B2318",
+      "_customName": "TL Dot 0"
+    },
+    {
+      "type": "circle",
+      "left": 184,
+      "top": 174,
+      "radius": 4,
+      "fill": "#2B2318",
+      "_customName": "TL Dot 1"
+    },
+    {
+      "type": "circle",
+      "left": 219,
+      "top": 209,
+      "radius": 3,
+      "fill": "#2B2318",
+      "_customName": "TL Dot 2"
+    },
+    {
+      "type": "circle",
+      "left": 1043,
+      "top": 503,
+      "radius": 7,
+      "fill": "#2B2318",
+      "_customName": "BR Dot 0"
+    },
+    {
+      "type": "circle",
+      "left": 1081,
+      "top": 541,
+      "radius": 4,
+      "fill": "#2B2318",
+      "_customName": "BR Dot 1"
+    },
+    {
+      "type": "triangle",
+      "left": 1020,
+      "top": 90,
+      "width": 32,
+      "height": 32,
+      "fill": "#ECB351",
+      "angle": -18,
+      "_customName": "TR Gold Tri Accent"
+    },
+    {
+      "type": "rect",
+      "left": 1195,
+      "top": 70,
+      "width": 3,
+      "height": 140,
+      "fill": "#FE6B4F",
+      "_customName": "R Coral Hairline"
+    },
+    {
+      "type": "rect",
+      "left": 80,
+      "top": 490,
+      "width": 3,
+      "height": 130,
+      "fill": "#A8BE8B",
+      "_customName": "L Sage Hairline"
+    }
+  ]
+}

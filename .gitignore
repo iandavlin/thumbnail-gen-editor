@@ -20,3 +20,19 @@ Thumbs.db
 *.log
 .env
 .env.*
+
+# Build artifacts and tooling
+dist/
+skills/
+
+# Claude Code session data + local launch config
+.claude/
+
+# Stray top-level images (don't commit ad-hoc reference photos)
+/*.jpg
+/*.jpeg
+/*.png
+
+# Tooling backups
+*.bak
+*.bak.*

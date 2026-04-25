@@ -58,6 +58,15 @@
   #toolbar { height: 48px; background: #242424; border-bottom: 1px solid #333; display: flex; align-items: center; padding: 0 16px; gap: 8px; flex-shrink: 0; }
   #toolbar button, #toolbar select { padding: 6px 12px; background: #333; border: 1px solid #444; color: #ccc; border-radius: 4px; cursor: pointer; font-size: 12px; }
   #toolbar button:hover { background: #444; color: #fff; }
+  /* Subtle color coding by file type */
+  #toolbar .btn-add      { background:#2a2340; border-color:#463a6a; color:#d9cfff; }
+  #toolbar .btn-add:hover      { background:#382e55; color:#fff; }
+  #toolbar .btn-json     { background:#1f2e26; border-color:#355a46; color:#b8e3c8; }
+  #toolbar .btn-json:hover     { background:#2a4036; color:#fff; }
+  #toolbar .btn-pattern  { background:#342a1c; border-color:#5c4a2a; color:#e8d39a; }
+  #toolbar .btn-pattern:hover  { background:#473a28; color:#fff; }
+  #toolbar .btn-asset    { background:#1d2f33; border-color:#36626c; color:#a8d6de; }
+  #toolbar .btn-asset:hover    { background:#26444a; color:#fff; }
   #toolbar .sep { width: 1px; height: 24px; background: #444; margin: 0 4px; }
   #toolbar .group { display: flex; align-items: center; gap: 4px; }
   #toolbar label { font-size: 12px; color: #888; }
@@ -103,8 +112,19 @@
   #add-modal .modal { background: #2a2a2a; border: 1px solid #444; border-radius: 8px; padding: 24px; width: 360px; }
   #add-modal h3 { margin-bottom: 16px; }
   #add-modal .add-options { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
-  #add-modal .add-option { padding: 12px 8px; background: #333; border: 1px solid #444; border-radius: 6px; text-align: center; cursor: pointer; font-size: 12px; }
+  #add-modal .add-option { padding: 12px 8px; background: #333; border: 1px solid #444; border-radius: 6px; text-align: center; cursor: pointer; font-size: 12px; color:#ccc; }
   #add-modal .add-option:hover { background: #444; border-color: #7aa2f7; }
+  /* Color-coded element categories */
+  #add-modal .opt-text    { background:#1f2a3d; border-color:#3a5380; color:#b9cde8; }
+  #add-modal .opt-text:hover    { background:#283a55; color:#fff; }
+  #add-modal .opt-shape   { background:#2c2c2c; border-color:#4a4a4a; color:#cfcfcf; }
+  #add-modal .opt-shape:hover   { background:#3a3a3a; color:#fff; }
+  #add-modal .opt-arrow   { background:#1d2f33; border-color:#36626c; color:#a8d6de; }
+  #add-modal .opt-arrow:hover   { background:#26444a; color:#fff; }
+  #add-modal .opt-banner  { background:#342a1c; border-color:#5c4a2a; color:#e8d39a; }
+  #add-modal .opt-banner:hover  { background:#473a28; color:#fff; }
+  #add-modal .opt-media   { background:#1f2e26; border-color:#355a46; color:#b8e3c8; }
+  #add-modal .opt-media:hover   { background:#2a4036; color:#fff; }
   #add-modal .add-option .icon { font-size: 22px; display: block; margin-bottom: 4px; }
 
   /* Brand color picker */
@@ -178,21 +198,87 @@
 
   /* Status bar */
   #statusbar { height: 28px; background: #242424; border-top: 1px solid #333; display: flex; align-items: center; padding: 0 16px; font-size: 11px; color: #666; gap: 16px; flex-shrink: 0; }
+
+  /* Pattern picker modal */
+  #pattern-picker-modal, #asset-picker-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:100; align-items:center; justify-content:center; }
+  #pattern-picker-modal.show, #asset-picker-modal.show { display:flex; }
+  #asset-edit-modal { display:none; }
+  #asset-edit-modal.show { display:flex; }
+  #term-manager-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:102; align-items:center; justify-content:center; }
+  #term-manager-modal.show { display:flex; }
+  .pp-thumb.asset { object-fit:contain; background:repeating-conic-gradient(#222 0% 25%, #181818 0% 50%) 0 0/16px 16px; }
+  .pp-card:hover .ap-actions { opacity:1 !important; }
+  .pp-modal { background:#1e1e1e; border:1px solid #3a3a3a; border-radius:10px; padding:20px; width:720px; max-width:94vw; max-height:82vh; display:flex; flex-direction:column; }
+  .pp-modal h3 { margin:0 0 14px; font-size:14px; color:#e0e0e0; }
+  .pp-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:12px; overflow-y:auto; flex:1; padding-right:4px; }
+  .pp-card { background:#2a2a2a; border:2px solid #3a3a3a; border-radius:6px; cursor:pointer; overflow:hidden; transition:border-color .15s; }
+  .pp-card:hover { border-color:#7aa2f7; }
+  .pp-card.selected { border-color:#7aa2f7; background:#1a2535; }
+  .pp-thumb { width:100%; aspect-ratio:16/9; object-fit:cover; background:#111; display:block; }
+  .pp-thumb.sq { aspect-ratio:1/1; }
+  .pp-thumb-placeholder { width:100%; aspect-ratio:16/9; background:#222; display:flex; align-items:center; justify-content:center; font-size:22px; color:#444; }
+  .pp-thumb-placeholder.sq { aspect-ratio:1/1; }
+  .pp-info { padding:7px 9px 9px; }
+  .pp-name { font-size:12px; font-weight:600; color:#ccc; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .pp-desc { font-size:10px; color:#666; margin-top:2px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .pp-ratio { font-size:9px; color:#555; margin-top:3px; font-family:monospace; }
+  .pp-footer { display:flex; gap:8px; margin-top:14px; justify-content:flex-end; align-items:center; }
+  .pp-footer-left { flex:1; font-size:11px; color:#555; }
+  .pp-btn { padding:7px 16px; border-radius:4px; border:1px solid #444; cursor:pointer; font-size:13px; background:#333; color:#ccc; }
+  .pp-btn-primary { background:#7aa2f7; color:#111; border-color:#7aa2f7; font-weight:600; }
+  .pp-empty { color:#555; font-size:13px; padding:24px; text-align:center; }
+  /* Pattern folder tabs */
+  .pp-tabs { display:flex; gap:4px; margin-bottom:10px; flex-wrap:wrap; align-items:center; }
+  .pp-tab { padding:4px 13px; border-radius:12px; border:1px solid #3a3a3a; background:#2a2a2a; color:#888; font-size:11px; cursor:pointer; white-space:nowrap; transition:all .12s; display:inline-flex; align-items:center; gap:5px; }
+  .pp-tab:hover { border-color:#555; color:#ccc; }
+  .pp-tab.active { background:#253045; border-color:#7aa2f7; color:#7aa2f7; font-weight:600; }
+  .pp-tab-del { font-size:10px; color:#555; line-height:1; padding:0 1px; }
+  .pp-tab:hover .pp-tab-del { color:#999; }
+  .pp-tab-del:hover { color:#e06c75 !important; }
+  .pp-tab-add { padding:4px 10px; font-size:13px; color:#555; border-style:dashed; }
+  .pp-tab-add:hover { color:#7aa2f7; border-color:#7aa2f7; }
+  /* Pattern search */
+  .pp-search-row { margin-bottom:10px; }
+  .pp-search { width:100%; box-sizing:border-box; background:#1a1a1a; border:1px solid #3a3a3a; border-radius:6px; padding:7px 11px; color:#e0e0e0; font-size:12px; font-family:inherit; }
+  .pp-search:focus { outline:none; border-color:#7aa2f7; }
+  /* Pattern card move picker */
+  .pp-move-picker { position:fixed; background:#252525; border:1px solid #555; border-radius:6px; padding:8px; display:flex; gap:6px; align-items:center; z-index:300; box-shadow:0 4px 16px rgba(0,0,0,0.6); }
+  .pp-move-sel { background:#1a1a1a; border:1px solid #444; border-radius:4px; color:#e0e0e0; font-size:12px; padding:4px 8px; max-width:160px; }
+  .pp-move-ok { background:#7aa2f7; border:none; border-radius:4px; color:#111; font-size:12px; padding:4px 10px; cursor:pointer; font-weight:600; }
+  .pp-move-btn { font-size:11px; color:#555; line-height:1; padding:0 2px; }
+  .pp-card:hover .pp-move-btn { color:#888; }
+  .pp-move-btn:hover { color:#7aa2f7 !important; }
+  /* Pattern save modal */
+  /* Custom tooltip */
+  #custom-tooltip { position:fixed; z-index:9999; background:#111; color:#eee; border:1px solid #444; border-radius:4px; padding:5px 9px; font-size:11px; line-height:1.3; max-width:240px; pointer-events:none; box-shadow:0 2px 6px rgba(0,0,0,0.4); display:none; }
+  #custom-tooltip.show { display:block; }
+  #toolbar .btn-tips { background:#2a2a2a; border-color:#444; color:#bbb; }
+  #toolbar .btn-tips.on { background:#2a3a25; border-color:#4a6a3a; color:#c8e0b4; }
+  #pattern-save-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:101; align-items:center; justify-content:center; }
+  #pattern-save-modal.show { display:flex; }
+  .ps-modal { background:#1e1e1e; border:1px solid #3a3a3a; border-radius:10px; padding:22px; width:400px; max-width:94vw; display:flex; flex-direction:column; gap:13px; }
+  .ps-modal h3 { margin:0; font-size:14px; color:#e0e0e0; }
+  .ps-row { display:flex; flex-direction:column; gap:5px; }
+  .ps-label { font-size:11px; color:#888; }
+  .ps-input { background:#2a2a2a; border:1px solid #444; border-radius:4px; padding:7px 10px; color:#e0e0e0; font-size:13px; width:100%; box-sizing:border-box; font-family:inherit; }
+  .ps-input:focus { outline:none; border-color:#7aa2f7; }
+  .ps-footer { display:flex; gap:8px; justify-content:flex-end; margin-top:2px; }
 </style>
 </head>
 <body>
+<div id="custom-tooltip"></div>
 
 <!-- Sidebar: Layers + Properties -->
 <div id="sidebar">
   <h2>Layers</h2>
   <div id="layer-controls">
-    <button onclick="moveLayer('up')" title="Move Up">&#9650;</button>
-    <button onclick="moveLayer('down')" title="Move Down">&#9660;</button>
-    <button onclick="duplicateLayer()" title="Duplicate (Ctrl+D)">&#10697;</button>
-    <button onclick="deleteLayer()" title="Delete">&#10005;</button>
-    <button onclick="groupSelected()" title="Group (Ctrl+G)">Grp</button>
-    <button onclick="ungroupSelected()" title="Ungroup (Ctrl+Shift+G)">Ungrp</button>
-    <button onclick="linkAsBannerGroup()" title="Link polygon+text as Banner Group">&#128279; Link</button>
+    <button onclick="moveLayer('up')" data-tip="Move layer up (forward in stacking order)">&#9650;</button>
+    <button onclick="moveLayer('down')" data-tip="Move layer down (backward in stacking order)">&#9660;</button>
+    <button onclick="duplicateLayer()" data-tip="Duplicate selected layer (Ctrl+D)">&#10697;</button>
+    <button onclick="deleteLayer()" data-tip="Delete selected layer">&#10005;</button>
+    <button onclick="groupSelected()" data-tip="Combine selection into a group (Ctrl+G). Group moves and scales as one.">Grp</button>
+    <button onclick="ungroupSelected()" data-tip="Break a group apart into its members (Ctrl+Shift+G)">Ungrp</button>
+    <button onclick="linkAsBannerGroup()" data-tip="Link a polygon and text as a Banner Group — text re-pads on polygon resize">&#128279; Link</button>
   </div>
   <div id="layers-panel"></div>
 
@@ -216,8 +302,6 @@
       </select>
     </div>
     <div class="sep"></div>
-    <button onclick="showAddModal()">+ Add Element</button>
-    <div class="sep"></div>
     <div class="group">
       <label>Snap:</label>
       <input type="checkbox" id="snap-toggle" checked onchange="snapEnabled=this.checked">
@@ -235,10 +319,23 @@
       <button onclick="setZoom(1)">Fit</button>
     </div>
     <div style="flex:1"></div>
-    <button onclick="loadJSON()">Load JSON(s)</button>
-    <button onclick="insertPattern()">Insert Pattern</button>
-    <button onclick="saveAsPattern()">Save as Pattern</button>
-    <button onclick="saveJSON()">Save JSON</button>
+    <button class="btn-add" onclick="showAddModal()" data-tip="Add a new text, shape, or image element to the canvas">+ Add Element</button>
+    <button class="btn-tips" id="btn-tips" onclick="toggleTips()" data-tip="Toggle hover tooltips on all controls">💡 Tips</button>
+    <div class="sep"></div>
+    <div class="group">
+      <button class="btn-json" onclick="loadJSON()">Load JSON(s)</button>
+      <button class="btn-json" onclick="saveJSON()">Save JSON</button>
+    </div>
+    <div class="sep"></div>
+    <div class="group">
+      <button class="btn-pattern" onclick="showPatternPicker()">Insert Pattern</button>
+      <button class="btn-pattern" onclick="saveAsPattern()">Save as Pattern</button>
+    </div>
+    <div class="sep"></div>
+    <div class="group">
+      <button class="btn-asset" onclick="showAssetPicker()">Insert Asset</button>
+      <button class="btn-asset" onclick="saveSelectionAsAsset()">Save as Asset</button>
+    </div>
     <div class="sep"></div>
     <button onclick="showExportModal()" style="background:#7aa2f7;color:#111;font-weight:600;border-color:#7aa2f7">Export</button>
   </div>
@@ -294,44 +391,44 @@
   <div class="modal">
     <h3>Add Element</h3>
     <div class="add-options">
-      <div class="add-option" onclick="addText(); hideAddModal();">
+      <div class="add-option opt-text" onclick="addText(); hideAddModal();">
         <span class="icon">T</span>Text
       </div>
-      <div class="add-option" onclick="addRect(); hideAddModal();">
+      <div class="add-option opt-media" onclick="addImageFromFile(); hideAddModal();">
+        <span class="icon">&#128247;</span>Image
+      </div>
+      <div class="add-option opt-shape" onclick="addRect(); hideAddModal();">
         <span class="icon">&#9632;</span>Rectangle
       </div>
-      <div class="add-option" onclick="addRoundedRect(); hideAddModal();">
+      <div class="add-option opt-shape" onclick="addRoundedRect(); hideAddModal();">
         <span class="icon" style="font-size:20px">&#9644;</span>Rounded Rect
       </div>
-      <div class="add-option" onclick="addCircle(); hideAddModal();">
+      <div class="add-option opt-shape" onclick="addCircle(); hideAddModal();">
         <span class="icon">&#9679;</span>Circle
       </div>
-      <div class="add-option" onclick="addPill(); hideAddModal();">
+      <div class="add-option opt-shape" onclick="addPill(); hideAddModal();">
         <span class="icon" style="font-size:18px">&#9898;</span>Pill
       </div>
-      <div class="add-option" onclick="addTriangle(); hideAddModal();">
+      <div class="add-option opt-shape" onclick="addTriangle(); hideAddModal();">
         <span class="icon">&#9650;</span>Triangle
       </div>
-      <div class="add-option" onclick="addArrow(); hideAddModal();">
-        <span class="icon">&#10148;</span>Arrow
-      </div>
-      <div class="add-option" onclick="addBannerCombo(); hideAddModal();">
-        <span class="icon" style="font-size:18px">&#127988;</span>Banner
-      </div>
-      <div class="add-option" onclick="addAngledBanner(); hideAddModal();">
-        <span class="icon" style="font-size:16px">&#11153;</span>Angled Banner
-      </div>
-      <div class="add-option" onclick="addChevron(); hideAddModal();">
-        <span class="icon">&#10095;</span>Chevron
-      </div>
-      <div class="add-option" onclick="addDiamond(); hideAddModal();">
+      <div class="add-option opt-shape" onclick="addDiamond(); hideAddModal();">
         <span class="icon">&#9670;</span>Diamond
       </div>
-      <div class="add-option" onclick="addFrame(); hideAddModal();">
-        <span class="icon" style="font-size:18px">&#9634;</span>Frame
+      <div class="add-option opt-arrow" onclick="addArrow(); hideAddModal();">
+        <span class="icon">&#10148;</span>Arrow
       </div>
-      <div class="add-option" onclick="addImageFromFile(); hideAddModal();">
-        <span class="icon">&#128247;</span>Image
+      <div class="add-option opt-arrow" onclick="addChevron(); hideAddModal();">
+        <span class="icon">&#10095;</span>Chevron
+      </div>
+      <div class="add-option opt-banner" onclick="addBannerCombo(); hideAddModal();">
+        <span class="icon" style="font-size:18px">&#127988;</span>Banner
+      </div>
+      <div class="add-option opt-banner" onclick="addAngledBanner(); hideAddModal();">
+        <span class="icon" style="font-size:16px">&#11153;</span>Angled Banner
+      </div>
+      <div class="add-option opt-banner" onclick="addFrame(); hideAddModal();">
+        <span class="icon" style="font-size:18px">&#9634;</span>Frame
       </div>
     </div>
     <div style="font-size:11px;color:#888;margin:14px 0 6px;font-weight:600;text-transform:uppercase;letter-spacing:.05em">Textures</div>
@@ -370,6 +467,16 @@
           <input type="range" min="0" max="100" id="tex-opa-range" style="flex:1" oninput="window._texModal&&(_texModal.opacity=+this.value/100)">
           <span id="tex-opa-val" style="width:32px">80%</span>
         </div>
+        <div class="tex-blend-row">
+          <span>Scale</span>
+          <input type="range" min="2" max="400" step="1" id="tex-scale-range" style="flex:1" oninput="window._texModal&&(_texModal.texScale=+this.value/100,document.getElementById('tex-scale-val').textContent=this.value+'%',_texModalUpdatePreview())">
+          <span id="tex-scale-val" style="width:42px">100%</span>
+        </div>
+        <div class="tex-blend-row">
+          <span>Base</span>
+          <input type="color" id="tex-base-color" style="width:36px;height:24px;padding:0;border:1px solid #444;background:#222;cursor:pointer" oninput="_texSetBaseColor(this.value)" onclick="showBrandPanel(event, function(h){ _texSetBaseColor(h); }, 'tex-base-color')">
+          <input type="text" id="tex-base-hex" style="flex:1;background:#222;border:1px solid #444;color:#ccc;padding:3px 6px;border-radius:3px;font-family:monospace;font-size:12px" oninput="_texSetBaseColor(this.value)">
+        </div>
       </div>
     </div>
     <div class="tex-actions">
@@ -383,6 +490,78 @@
 <input type="file" id="image-input" accept="image/*" style="display:none">
 <input type="file" id="json-input" accept=".json" multiple style="display:none">
 <input type="file" id="pattern-input" accept=".json" style="display:none">
+
+<!-- Drop overlay -->
+<div id="drop-overlay" style="display:none;position:fixed;inset:0;background:rgba(122,162,247,0.15);border:3px dashed #7aa2f7;z-index:9998;pointer-events:none;align-items:center;justify-content:center;">
+  <div style="background:#1a1a1a;color:#eee;padding:20px 28px;border-radius:8px;font-size:16px;font-weight:600;">Drop image to import</div>
+</div>
+
+<!-- Asset import modal -->
+<div id="asset-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:#1a1a1a;color:#eee;padding:24px;border-radius:8px;width:520px;max-width:92vw;border:1px solid #333;">
+    <div style="font-size:16px;font-weight:600;margin-bottom:4px;">Import image</div>
+    <div style="font-size:12px;color:#888;margin-bottom:14px;" id="asset-modal-filename"></div>
+
+    <div style="display:flex;gap:12px;margin-bottom:16px;">
+      <img id="asset-modal-preview" style="width:120px;height:120px;object-fit:contain;background:#111;border:1px solid #333;border-radius:4px;">
+      <div style="flex:1;font-size:12px;color:#aaa;" id="asset-modal-meta"></div>
+    </div>
+
+    <div style="font-size:12px;color:#888;margin-bottom:6px;">Destination</div>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;">
+      <label style="display:flex;gap:8px;align-items:flex-start;cursor:pointer;font-size:13px;">
+        <input type="radio" name="asset-dest" value="permanent" style="margin-top:3px;">
+        <div>
+          <div style="font-weight:600;">Save as permanent asset</div>
+          <div style="color:#888;font-size:11px;">Copies to assets/_permanent/ and registers in the manifest. Use for logos, textures, reusable brand assets.</div>
+        </div>
+      </label>
+      <label style="display:flex;gap:8px;align-items:flex-start;cursor:pointer;font-size:13px;">
+        <input type="radio" name="asset-dest" value="episode" checked>
+        <div>
+          <div style="font-weight:600;">Use for this episode</div>
+          <div style="color:#888;font-size:11px;">Copies into an episode folder under assets/. Good for guest photos, one-off imagery.</div>
+        </div>
+      </label>
+      <label style="display:flex;gap:8px;align-items:flex-start;cursor:pointer;font-size:13px;">
+        <input type="radio" name="asset-dest" value="oneoff">
+        <div>
+          <div style="font-weight:600;">One-off (embed inline)</div>
+          <div style="color:#888;font-size:11px;">Don't save to disk — embed the image data in this thumbnail only.</div>
+        </div>
+      </label>
+    </div>
+
+    <div id="asset-modal-permanent-fields" style="display:none;margin-bottom:12px;border-top:1px solid #2a2a2a;padding-top:12px;">
+      <div style="display:grid;grid-template-columns:90px 1fr;gap:8px;font-size:12px;align-items:center;">
+        <label>Subfolder</label>
+        <input id="asset-modal-subfolder" value="misc" style="background:#0e0e0e;border:1px solid #333;color:#eee;padding:5px 7px;border-radius:3px;">
+        <label>Filename</label>
+        <input id="asset-modal-name" style="background:#0e0e0e;border:1px solid #333;color:#eee;padding:5px 7px;border-radius:3px;">
+        <label>Tags</label>
+        <input id="asset-modal-tags" placeholder="logo, brand" style="background:#0e0e0e;border:1px solid #333;color:#eee;padding:5px 7px;border-radius:3px;">
+        <label>Description</label>
+        <input id="asset-modal-desc" placeholder="One sentence for AI/humans" style="background:#0e0e0e;border:1px solid #333;color:#eee;padding:5px 7px;border-radius:3px;">
+        <label>Usage</label>
+        <input id="asset-modal-usage" placeholder="e.g. dark bg only, min 120px" style="background:#0e0e0e;border:1px solid #333;color:#eee;padding:5px 7px;border-radius:3px;">
+      </div>
+    </div>
+
+    <div id="asset-modal-episode-fields" style="margin-bottom:12px;border-top:1px solid #2a2a2a;padding-top:12px;">
+      <div style="display:grid;grid-template-columns:90px 1fr;gap:8px;font-size:12px;align-items:center;">
+        <label>Episode</label>
+        <select id="asset-modal-episode" style="background:#0e0e0e;border:1px solid #333;color:#eee;padding:5px 7px;border-radius:3px;"></select>
+        <label>Filename</label>
+        <input id="asset-modal-episode-name" style="background:#0e0e0e;border:1px solid #333;color:#eee;padding:5px 7px;border-radius:3px;">
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:6px;">
+      <button onclick="cancelAssetModal()" style="padding:7px 18px;background:#333;border:1px solid #444;color:#ccc;border-radius:4px;cursor:pointer;">Cancel</button>
+      <button onclick="confirmAssetModal()" style="padding:7px 18px;background:#7aa2f7;color:#111;border:none;border-radius:4px;cursor:pointer;font-weight:600;">Add to canvas</button>
+    </div>
+  </div>
+</div>
 
 <!-- Context Menu -->
 <div id="context-menu"></div>
@@ -428,7 +607,7 @@ const TEXTURE_TYPES = [
     id: 'grain', name: 'Film Grain', icon: '◫',
     defaults: { blend:'overlay',  opacity:0.15, size:1,  coarse:40 },
     paramDefs: [
-      { key:'size',   label:'Grain Size', min:0.5, max:8,   step:0.5 },
+      { key:'size',   label:'Grain Size', min:0.1, max:8,   step:0.1 },
       { key:'coarse', label:'Coarse Mix', min:0,   max:100, step:5   },
     ]
   },
@@ -436,26 +615,26 @@ const TEXTURE_TYPES = [
     id: 'bump', name: 'Bump / Stone', icon: '⬛',
     defaults: { blend:'multiply', opacity:0.80, freq:4,  azimuth:45, elevation:35, intensity:15 },
     paramDefs: [
-      { key:'freq',      label:'Roughness', min:1,  max:20,  step:1 },
-      { key:'azimuth',   label:'Light Dir', min:0,  max:360, step:5 },
-      { key:'elevation', label:'Elevation', min:5,  max:85,  step:5 },
-      { key:'intensity', label:'Intensity', min:5,  max:40,  step:1 },
+      { key:'freq',      label:'Roughness', min:0.2, max:20,  step:0.2 },
+      { key:'azimuth',   label:'Light Dir', min:0,   max:360, step:5 },
+      { key:'elevation', label:'Elevation', min:1,   max:85,  step:1 },
+      { key:'intensity', label:'Intensity', min:1,   max:40,  step:1 },
     ]
   },
   {
     id: 'paper', name: 'Paper', icon: '📄',
     defaults: { blend:'multiply', opacity:0.30, freq:12, elevation:50 },
     paramDefs: [
-      { key:'freq',      label:'Texture',   min:4,  max:30,  step:1 },
-      { key:'elevation', label:'Angle',     min:10, max:80,  step:5 },
+      { key:'freq',      label:'Texture',   min:0.5, max:30,  step:0.5 },
+      { key:'elevation', label:'Angle',     min:1,   max:80,  step:1 },
     ]
   },
   {
     id: 'noise', name: 'Noise', icon: '▒',
     defaults: { blend:'overlay',  opacity:0.20, freq:8,  octaves:4 },
     paramDefs: [
-      { key:'freq',    label:'Frequency', min:1, max:20, step:1 },
-      { key:'octaves', label:'Octaves',   min:1, max:8,  step:1 },
+      { key:'freq',    label:'Frequency', min:0.2, max:20, step:0.2 },
+      { key:'octaves', label:'Octaves',   min:1,   max:8,  step:1 },
     ]
   },
 ];
@@ -789,6 +968,8 @@ function initCanvas(w, h) {
       if (o._isPanelGroup) _rebuildPanelLines(o);
       else recenterBannerText(o, false);
     }
+    // Texture fills: re-bake at the new size so they don't leave empty regions
+    if (o && o._texFillMetas) _rebakeTextureFills(o);
     saveUndo(); refreshLayers(); updateProps();
   });
   canvas.on('mouse:move', onMouseMove);
@@ -1037,8 +1218,42 @@ function setImageCornerRadius(r) {
 }
 
 // --- Image filters (Fabric.Image.filters.*) ---
-// Sliders: Blur / Brightness / Contrast / Saturation. Toggles: Grayscale / Sepia / Invert.
+// Sliders: Blur / Brightness / Contrast / Saturation / Hue / Vibrance / Noise / Pixelate.
+// Toggles: Grayscale / Sepia / Invert. Custom: Duotone (two-color luminance map).
 // Stored on image.filters array, serialized automatically into saved JSON.
+
+// Custom Duotone filter — maps image luminance onto a gradient between two colors.
+// Canvas2D-only (no WebGL shader). When an image has a Duotone filter we force the
+// Canvas2D backend so the filter actually runs.
+(function registerDuotone() {
+  if (!window.fabric || !fabric.Image || !fabric.Image.filters) return;
+  if (fabric.Image.filters.Duotone) return;
+  const hexToRgb = (hex) => {
+    const h = (hex || '').replace('#', '');
+    const v = h.length === 3 ? h.split('').map(c => c + c).join('') : h;
+    const n = parseInt(v || '000000', 16);
+    return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
+  };
+  fabric.Image.filters.Duotone = fabric.util.createClass(fabric.Image.filters.BaseFilter, {
+    type: 'Duotone',
+    dark: '#2B2318',
+    light: '#ECB351',
+    applyTo2d(options) {
+      const d = options.imageData.data;
+      const dk = hexToRgb(this.dark), lt = hexToRgb(this.light);
+      for (let i = 0; i < d.length; i += 4) {
+        const lum = (0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2]) / 255;
+        d[i]   = dk.r + (lt.r - dk.r) * lum;
+        d[i+1] = dk.g + (lt.g - dk.g) * lum;
+        d[i+2] = dk.b + (lt.b - dk.b) * lum;
+      }
+    },
+    toObject() {
+      return fabric.util.object.extend(this.callSuper('toObject'), { dark: this.dark, light: this.light });
+    },
+  });
+  fabric.Image.filters.Duotone.fromObject = fabric.Image.filters.BaseFilter.fromObject;
+})();
 
 function _getActiveImage() {
   const img = canvas.getActiveObject();
@@ -1090,6 +1305,39 @@ function toggleImageFilter(type, enabled) {
   const existing = img.filters.find(x => x.type === type);
   if (enabled && !existing) img.filters.push(new FilterClass());
   else if (!enabled && existing) img.filters = img.filters.filter(x => x !== existing);
+  _safeApplyFilters(img);
+  canvas.requestRenderAll();
+  saveUndo();
+}
+
+function toggleImageDuotone(enabled) {
+  const img = _getActiveImage();
+  if (!img) return;
+  const FilterClass = fabric.Image.filters.Duotone;
+  if (!FilterClass) return;
+  if (!img.filters) img.filters = [];
+  const existing = img.filters.find(x => x.type === 'Duotone');
+  if (enabled && !existing) {
+    img.filters.push(new FilterClass({ dark: '#2B2318', light: '#ECB351' }));
+    // Duotone is 2D-only — force Canvas2D backend so it renders.
+    if (fabric.Canvas2dFilterBackend && !(fabric.filterBackend instanceof fabric.Canvas2dFilterBackend)) {
+      fabric.filterBackend = new fabric.Canvas2dFilterBackend();
+    }
+  } else if (!enabled && existing) {
+    img.filters = img.filters.filter(x => x !== existing);
+  }
+  _safeApplyFilters(img);
+  canvas.requestRenderAll();
+  updateProps();
+  saveUndo();
+}
+
+function setImageDuotoneColor(which, color) {
+  const img = _getActiveImage();
+  if (!img) return;
+  const f = (img.filters || []).find(x => x.type === 'Duotone');
+  if (!f) return;
+  f[which] = color;
   _safeApplyFilters(img);
   canvas.requestRenderAll();
   saveUndo();
@@ -1252,34 +1500,84 @@ function getLayerName(obj) {
   return obj.type || 'Object';
 }
 
+let _lastLayerClickIdx = null;
+
 function layerClickHandler(obj, evt) {
-  if (evt.ctrlKey || evt.shiftKey) {
+  const objects = canvas.getObjects().filter(o => !o._isGuideline && !o._isSpreadGhost);
+  const idx = objects.indexOf(obj);
+
+  if (evt.shiftKey && _lastLayerClickIdx !== null) {
+    // Range select: everything between last click and current (inclusive)
+    const lo = Math.min(_lastLayerClickIdx, idx);
+    const hi = Math.max(_lastLayerClickIdx, idx);
+    const range = objects.slice(lo, hi + 1).filter(o => o.selectable !== false);
+    if (range.length === 1) {
+      canvas.setActiveObject(range[0]);
+    } else if (range.length > 1) {
+      canvas.setActiveObject(new fabric.ActiveSelection(range, { canvas }));
+    }
+  } else if (evt.ctrlKey) {
+    // Ctrl: toggle individual item in/out of selection
     const active = canvas.getActiveObject();
     if (!active) {
       canvas.setActiveObject(obj);
     } else if (active.type === 'activeSelection') {
       if (active.contains(obj)) {
         active.removeWithUpdate(obj);
-        if (active._objects.length === 1) {
-          canvas.setActiveObject(active._objects[0]);
-        } else if (active._objects.length === 0) {
-          canvas.discardActiveObject();
-        }
+        if (active._objects.length === 1) canvas.setActiveObject(active._objects[0]);
+        else if (active._objects.length === 0) canvas.discardActiveObject();
       } else {
         active.addWithUpdate(obj);
       }
     } else if (active === obj) {
       canvas.discardActiveObject();
     } else {
-      const sel = new fabric.ActiveSelection([active, obj], { canvas: canvas });
-      canvas.setActiveObject(sel);
+      canvas.setActiveObject(new fabric.ActiveSelection([active, obj], { canvas }));
     }
+    _lastLayerClickIdx = idx;
   } else {
+    // Plain click
     canvas.setActiveObject(obj);
+    _lastLayerClickIdx = idx;
   }
+
   canvas.requestRenderAll();
   refreshLayers();
   updateProps();
+}
+
+function selectAllLayers() {
+  const objects = canvas.getObjects().filter(o => !o._isGuideline && !o._isSpreadGhost);
+  if (!objects.length) return;
+  if (objects.length === 1) canvas.setActiveObject(objects[0]);
+  else canvas.setActiveObject(new fabric.ActiveSelection(objects, { canvas }));
+  canvas.requestRenderAll();
+  refreshLayers();
+  updateProps();
+}
+
+function showLayerContextMenu(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  const objects = canvas.getObjects().filter(o => !o._isGuideline && !o._isSpreadGhost);
+  const active = canvas.getActiveObject();
+  const hasSelection = !!active;
+  const menu = document.getElementById('context-menu');
+  let html = '';
+  html += `<div class="ctx-item" onclick="selectAllLayers(); hideContextMenu()">Select All <span class="shortcut">Ctrl+A</span></div>`;
+  html += `<div class="ctx-item${!hasSelection ? ' disabled' : ''}" onclick="${hasSelection ? 'canvas.discardActiveObject();canvas.requestRenderAll();refreshLayers();updateProps();' : ''}hideContextMenu()">Deselect All</div>`;
+  if (hasSelection) {
+    html += '<div class="ctx-sep"></div>';
+    html += `<div class="ctx-item" onclick="duplicateLayer(); hideContextMenu()">Duplicate <span class="shortcut">Ctrl+D</span></div>`;
+    html += `<div class="ctx-item" onclick="deleteLayer(); hideContextMenu()">Delete <span class="shortcut">Del</span></div>`;
+    html += '<div class="ctx-sep"></div>';
+    html += `<div class="ctx-item" onclick="moveLayer('up'); hideContextMenu()">Move Up</div>`;
+    html += `<div class="ctx-item" onclick="moveLayer('down'); hideContextMenu()">Move Down</div>`;
+  }
+  menu.innerHTML = html;
+  menu.style.left = e.clientX + 'px';
+  menu.style.top = e.clientY + 'px';
+  menu.classList.add('show');
 }
 
 function buildLayerRow(obj, idx, active, isChild, groupObj, childIdx) {
@@ -1616,6 +1914,8 @@ function updateProps() {
         html += `<div class="prop-row"><label>OCol</label>${brandColorPicker('_bgTextStroke', getColorHex(bgText.stroke) || '#000')}</div>`;
         html += `<div class="prop-row"><label>OWid</label><input type="number" min="0.5" max="10" step="0.5" value="${bgText.strokeWidth||1}" onchange="setBannerGroupTextProp('strokeWidth', +this.value)"></div>`;
         html += strokeOpacityRow('_bgTextStrokeAlpha', getColorAlpha(bgText.stroke));
+        const bgRound = (bgText.strokeLineJoin === 'round');
+        html += `<div class="prop-row" title="Round corners — gives a bubble/sticker look with thick strokes"><label>Shape</label><input type="checkbox" ${bgRound?'checked':''} onchange="setBannerGroupTextOutlineRound(this.checked)"> <span style="font-size:11px;color:#888">${bgRound?'Round (bubble)':'Sharp'}</span></div>`;
       }
       // Text shadow — sits with text controls (moved from end of panel)
       const tsh = bgText.shadow;
@@ -1793,6 +2093,8 @@ function updateProps() {
         html += `<div class="prop-row"><label>OCol</label>${brandColorPicker('_bgTextStroke', getColorHex(hgText.stroke) || '#000')}</div>`;
         html += `<div class="prop-row"><label>OWid</label><input type="number" min="0.5" max="10" step="0.5" value="${hgText.strokeWidth||1}" onchange="setBannerGroupTextProp('strokeWidth', +this.value)"></div>`;
         html += strokeOpacityRow('_bgTextStrokeAlpha', getColorAlpha(hgText.stroke));
+        const htRound = (hgText.strokeLineJoin === 'round');
+        html += `<div class="prop-row" title="Round corners — gives a bubble/sticker look with thick strokes"><label>Shape</label><input type="checkbox" ${htRound?'checked':''} onchange="setBannerGroupTextOutlineRound(this.checked)"> <span style="font-size:11px;color:#888">${htRound?'Round (bubble)':'Sharp'}</span></div>`;
       }
 
       // Text shadow — same controls banners have, now available on panel/hitbox lines
@@ -1940,7 +2242,9 @@ function updateProps() {
     html += `<div class="prop-row"><label>Otln</label><input type="checkbox" ${textHasStroke ? 'checked' : ''} onchange="toggleStroke(this.checked)"> <span style="font-size:11px;color:#888">${textHasStroke ? 'On' : 'Off'}</span></div>`;
     if (textHasStroke) {
       html += `<div class="prop-row"><label>OCol</label>${brandColorPicker('stroke', getColorHex(obj.stroke) || '#000000')}</div>`;
-      html += `<div class="prop-row"><label>OWid</label><input type="number" min="0.5" max="10" step="0.5" value="${obj.strokeWidth || 1}" onchange="setObjProp('strokeWidth', +this.value)"></div>`;
+      html += `<div class="prop-row"><label>OWid</label><input type="number" min="0.5" max="40" step="0.5" value="${obj.strokeWidth || 1}" onchange="setObjProp('strokeWidth', +this.value)"></div>`;
+      const isRound = (obj.strokeLineJoin === 'round');
+      html += `<div class="prop-row" title="Round corners — gives a bubble/sticker look with thick strokes"><label>Shape</label><input type="checkbox" ${isRound?'checked':''} onchange="setTextOutlineRound(this.checked)"> <span style="font-size:11px;color:#888">${isRound?'Round (bubble)':'Sharp'}</span></div>`;
       html += strokeOpacityRow('_strokeAlpha', getColorAlpha(obj.stroke));
     }
   }
@@ -2031,10 +2335,17 @@ function updateProps() {
     html += `<div class="prop-row"><label>Rad</label><input type="number" min="0" max="2000" value="${obj._cornerRadius || 0}" onchange="setImageCornerRadius(+this.value)"></div>`;
     // Filters
     const getF = (t) => (obj.filters || []).find(f => f.type === t);
-    const blur   = (getF('Blur')       || {}).blur        ?? 0;
-    const brit   = (getF('Brightness') || {}).brightness  ?? 0;
-    const con    = (getF('Contrast')   || {}).contrast    ?? 0;
-    const sat    = (getF('Saturation') || {}).saturation  ?? 0;
+    const blur   = (getF('Blur')         || {}).blur         ?? 0;
+    const brit   = (getF('Brightness')   || {}).brightness   ?? 0;
+    const con    = (getF('Contrast')     || {}).contrast     ?? 0;
+    const sat    = (getF('Saturation')   || {}).saturation   ?? 0;
+    const hue    = (getF('HueRotation')  || {}).rotation     ?? 0;
+    const vib    = (getF('Vibrance')     || {}).vibrance     ?? 0;
+    const noise  = (getF('Noise')        || {}).noise        ?? 0;
+    const pix    = (getF('Pixelate')     || {}).blocksize    ?? 0;
+    const duo    = getF('Duotone');
+    const dark   = duo ? duo.dark  : '#2B2318';
+    const light  = duo ? duo.light : '#ECB351';
     const gray   = !!getF('Grayscale');
     const sepia  = !!getF('Sepia');
     const invert = !!getF('Invert');
@@ -2043,7 +2354,12 @@ function updateProps() {
     html += `<div class="prop-row"><label>Brit</label><input type="range" min="-1" max="1" step="0.01" value="${brit}" oninput="setImageFilter('Brightness','brightness',+this.value)"><input type="number" min="-1" max="1" step="0.01" value="${brit}" onchange="setImageFilter('Brightness','brightness',+this.value)" style="width:50px"></div>`;
     html += `<div class="prop-row"><label>Con</label><input type="range" min="-1" max="1" step="0.01" value="${con}" oninput="setImageFilter('Contrast','contrast',+this.value)"><input type="number" min="-1" max="1" step="0.01" value="${con}" onchange="setImageFilter('Contrast','contrast',+this.value)" style="width:50px"></div>`;
     html += `<div class="prop-row"><label>Sat</label><input type="range" min="-1" max="1" step="0.01" value="${sat}" oninput="setImageFilter('Saturation','saturation',+this.value)"><input type="number" min="-1" max="1" step="0.01" value="${sat}" onchange="setImageFilter('Saturation','saturation',+this.value)" style="width:50px"></div>`;
+    html += `<div class="prop-row"><label>Hue</label><input type="range" min="-1" max="1" step="0.01" value="${hue}" oninput="setImageFilter('HueRotation','rotation',+this.value)"><input type="number" min="-1" max="1" step="0.01" value="${hue}" onchange="setImageFilter('HueRotation','rotation',+this.value)" style="width:50px"></div>`;
+    html += `<div class="prop-row"><label>Vib</label><input type="range" min="-1" max="1" step="0.01" value="${vib}" oninput="setImageFilter('Vibrance','vibrance',+this.value)"><input type="number" min="-1" max="1" step="0.01" value="${vib}" onchange="setImageFilter('Vibrance','vibrance',+this.value)" style="width:50px"></div>`;
+    html += `<div class="prop-row"><label>Noise</label><input type="range" min="0" max="200" step="1" value="${noise}" oninput="setImageFilter('Noise','noise',+this.value)"><input type="number" min="0" max="200" step="1" value="${noise}" onchange="setImageFilter('Noise','noise',+this.value)" style="width:50px"></div>`;
+    html += `<div class="prop-row"><label>Pixel</label><input type="range" min="0" max="40" step="1" value="${pix}" oninput="setImageFilter('Pixelate','blocksize',+this.value)"><input type="number" min="0" max="40" step="1" value="${pix}" onchange="setImageFilter('Pixelate','blocksize',+this.value)" style="width:50px"></div>`;
     html += `<div class="prop-row" style="gap:12px"><label><input type="checkbox" ${gray?'checked':''} onchange="toggleImageFilter('Grayscale', this.checked)"> Gray</label><label><input type="checkbox" ${sepia?'checked':''} onchange="toggleImageFilter('Sepia', this.checked)"> Sepia</label><label><input type="checkbox" ${invert?'checked':''} onchange="toggleImageFilter('Invert', this.checked)"> Inv</label></div>`;
+    html += `<div class="prop-row" style="gap:8px;align-items:center"><label><input type="checkbox" ${duo?'checked':''} onchange="toggleImageDuotone(this.checked)"> Duotone</label><label style="font-size:10px;color:#888">Dk</label><input type="color" value="${dark}" oninput="setImageDuotoneColor('dark', this.value)" style="width:28px;height:22px;padding:0;border:1px solid #444;background:transparent"><label style="font-size:10px;color:#888">Lt</label><input type="color" value="${light}" oninput="setImageDuotoneColor('light', this.value)" style="width:28px;height:22px;padding:0;border:1px solid #444;background:transparent"></div>`;
     html += `<div class="prop-row"><button onclick="clearImageFilters()" style="flex:1">Clear filters</button></div>`;
   }
   else if (obj.type === 'rect' || obj.type === 'circle' || obj.type === 'triangle' || obj.type === 'polygon') {
@@ -3327,6 +3643,35 @@ function setBannerGroupPolyProp(prop, value) {
   p.set(prop, value); p.dirty = true; g.dirty = true;
   if (prop === 'strokeWidth') rebuildBannerGroupShape(g);
   canvas.requestRenderAll(); saveUndo();
+}
+
+function setTextOutlineRound(on) {
+  const obj = canvas.getActiveObject();
+  if (!obj) return;
+  if (on) {
+    obj.set({ strokeLineJoin: 'round', strokeLineCap: 'round', strokeMiterLimit: 10 });
+  } else {
+    obj.set({ strokeLineJoin: 'miter', strokeLineCap: 'butt' });
+  }
+  canvas.requestRenderAll();
+  updateProps();
+  saveUndo();
+}
+
+function setBannerGroupTextOutlineRound(on) {
+  const g = canvas.getActiveObject();
+  if (!g || (!g._isBannerGroup && !g._isHitboxGroup)) return;
+  const t = _getTargetTextbox(g);
+  if (!t) return;
+  if (on) {
+    t.set({ strokeLineJoin: 'round', strokeLineCap: 'round', strokeMiterLimit: 10 });
+  } else {
+    t.set({ strokeLineJoin: 'miter', strokeLineCap: 'butt' });
+  }
+  t.dirty = true; g.dirty = true;
+  canvas.requestRenderAll();
+  updateProps();
+  saveUndo();
 }
 
 function toggleStroke(on) {
@@ -4779,34 +5124,565 @@ function addDiamond() {
   canvas.add(d); canvas.setActiveObject(d); canvas.requestRenderAll(); refreshLayers(); updateProps();
 }
 
+// --- Asset import (drag-drop + modal) ------------------------------------
+let _pendingAsset = null; // { dataUrl, file: {name}, width, height }
+
+function placeImageOnCanvas(src, name) {
+  const isSvg = /^data:image\/svg/.test(src) || /\.svg(\?|$)/i.test(src);
+  const clean = (name || 'image').replace(/\.[^.]+$/, '');
+  if (isSvg) {
+    fabric.loadSVGFromURL(src, function(objects, options) {
+      if (!objects || !objects.length) return;
+      const group = fabric.util.groupSVGElements(objects, options);
+      const w = group.width || options.width || 100;
+      const h = group.height || options.height || 100;
+      const maxW = canvasW * 0.6, maxH = canvasH * 0.6;
+      const scale = Math.min(maxW / w, maxH / h, 1);
+      group.set({
+        left: canvasW / 2 - (w * scale) / 2,
+        top: canvasH / 2 - (h * scale) / 2,
+        scaleX: scale, scaleY: scale,
+        _customName: clean,
+      });
+      canvas.add(group); canvas.setActiveObject(group);
+      canvas.requestRenderAll(); refreshLayers(); updateProps();
+    });
+    return;
+  }
+  fabric.Image.fromURL(src, function(img) {
+    const maxW = canvasW * 0.6, maxH = canvasH * 0.6;
+    const scale = Math.min(maxW / img.width, maxH / img.height, 1);
+    img.set({
+      left: canvasW / 2 - (img.width * scale) / 2,
+      top: canvasH / 2 - (img.height * scale) / 2,
+      scaleX: scale, scaleY: scale,
+      _customName: clean,
+    });
+    setupImageControls(img);
+    canvas.add(img); canvas.setActiveObject(img);
+    canvas.requestRenderAll(); refreshLayers(); updateProps();
+  });
+}
+
+// --- Custom tooltips ---
+let _tipsEnabled = localStorage.getItem('tipsEnabled') !== '0';
+function toggleTips() {
+  _tipsEnabled = !_tipsEnabled;
+  localStorage.setItem('tipsEnabled', _tipsEnabled ? '1' : '0');
+  updateTipsBtn();
+  if (!_tipsEnabled) document.getElementById('custom-tooltip').classList.remove('show');
+}
+function updateTipsBtn() {
+  const b = document.getElementById('btn-tips');
+  if (!b) return;
+  b.classList.toggle('on', _tipsEnabled);
+  b.textContent = _tipsEnabled ? '💡 Tips: on' : '💡 Tips: off';
+}
+(function wireTooltips() {
+  const tip = () => document.getElementById('custom-tooltip');
+  // Migrate any existing title= to data-tip so native tooltips don't fight us
+  function migrate(root) {
+    (root.querySelectorAll ? root.querySelectorAll('[title]') : []).forEach(el => {
+      const t = el.getAttribute('title');
+      if (t && !el.getAttribute('data-tip')) el.setAttribute('data-tip', t);
+      el.removeAttribute('title');
+    });
+  }
+  document.addEventListener('DOMContentLoaded', () => {
+    migrate(document);
+    updateTipsBtn();
+    const mo = new MutationObserver(muts => {
+      muts.forEach(m => m.addedNodes.forEach(n => { if (n.nodeType === 1) migrate(n); }));
+    });
+    mo.observe(document.body, { childList: true, subtree: true });
+  });
+  function positionTip(t, cx, cy) {
+    const pad = 14;
+    t.style.left = (cx + pad) + 'px';
+    t.style.top = (cy + pad) + 'px';
+    const rect = t.getBoundingClientRect();
+    if (rect.right > window.innerWidth) t.style.left = (cx - rect.width - pad) + 'px';
+    if (rect.bottom > window.innerHeight) t.style.top = (cy - rect.height - pad) + 'px';
+  }
+  document.addEventListener('mouseover', (e) => {
+    if (!_tipsEnabled) return;
+    const el = e.target.closest && e.target.closest('[data-tip]');
+    const t = tip();
+    if (!el || !t) { if (t) t.classList.remove('show'); return; }
+    t.textContent = el.getAttribute('data-tip');
+    t.classList.add('show');
+    positionTip(t, e.clientX, e.clientY);
+  });
+  document.addEventListener('mousemove', (e) => {
+    if (!_tipsEnabled) return;
+    const t = tip();
+    if (!t || !t.classList.contains('show')) return;
+    const pad = 14;
+    let x = e.clientX + pad, y = e.clientY + pad;
+    const rect = t.getBoundingClientRect();
+    if (x + rect.width > window.innerWidth) x = e.clientX - rect.width - pad;
+    if (y + rect.height > window.innerHeight) y = e.clientY - rect.height - pad;
+    t.style.left = x + 'px'; t.style.top = y + 'px';
+  });
+  document.addEventListener('mouseout', (e) => {
+    if (!e.relatedTarget || !e.relatedTarget.closest || !e.relatedTarget.closest('[data-tip]')) {
+      const t = tip(); if (t) t.classList.remove('show');
+    }
+  });
+})();
+
+function saveSelectionAsAsset() {
+  const obj = canvas.getActiveObject();
+  if (!obj) { alert('Select an image on the canvas first.'); return; }
+  const imgs = obj.type === 'activeSelection' ? obj.getObjects().filter(o => o.type === 'image') : (obj.type === 'image' ? [obj] : []);
+  if (!imgs.length) { alert('Selection must be an image (or group of images).'); return; }
+  const img = imgs[0];
+  const el = img.getElement && img.getElement();
+  if (!el) { alert('Could not read image data.'); return; }
+  const w = el.naturalWidth || el.width;
+  const h = el.naturalHeight || el.height;
+  if (!w || !h) { alert('Image has no pixel dimensions yet.'); return; }
+  const tmp = document.createElement('canvas');
+  tmp.width = w; tmp.height = h;
+  try {
+    tmp.getContext('2d').drawImage(el, 0, 0);
+    const dataUrl = tmp.toDataURL('image/png');
+    const guessName = (img.src || '').split('/').pop().split('?')[0] || 'asset.png';
+    const pseudoFile = { name: guessName, type: 'image/png', size: Math.round(dataUrl.length * 0.75) };
+    _pendingAsset = { dataUrl, filename: pseudoFile.name, width: w, height: h, size: pseudoFile.size };
+    document.getElementById('asset-modal-filename').textContent = pseudoFile.name + ' (from canvas)';
+    document.getElementById('asset-modal-preview').src = dataUrl;
+    document.getElementById('asset-modal-meta').innerHTML = `<div>${w} × ${h}</div><div>${(pseudoFile.size/1024).toFixed(1)} KB</div><div>png (from canvas)</div>`;
+    const baseName = pseudoFile.name.replace(/\.[^.]+$/, '').replace(/[^a-zA-Z0-9_\-]/g, '-').toLowerCase();
+    document.getElementById('asset-modal-name').value = baseName || 'asset';
+    document.querySelector('input[name="asset-dest"][value="permanent"]').checked = true;
+    updateAssetModalFields();
+    document.getElementById('asset-modal').style.display = 'flex';
+  } catch (e) {
+    alert('Could not capture image (may be tainted by CORS): ' + e.message);
+  }
+}
+
+function openAssetModal(file) {
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const dataUrl = e.target.result;
+    const isSvg = /^image\/svg/.test(file.type) || /\.svg$/i.test(file.name);
+    const showModal = (w, h) => {
+      _pendingAsset = { dataUrl, filename: file.name, width: w, height: h, size: file.size };
+      document.getElementById('asset-modal-filename').textContent = file.name;
+      document.getElementById('asset-modal-preview').src = dataUrl;
+      document.getElementById('asset-modal-meta').innerHTML =
+        `<div>${w || '?'} × ${h || '?'}${isSvg ? ' (svg)' : ''}</div>` +
+        `<div>${(file.size/1024).toFixed(1)} KB</div>` +
+        `<div>${file.type || 'image'}</div>`;
+      const baseName = file.name.replace(/\.[^.]+$/, '').replace(/[^a-zA-Z0-9_\-]/g, '-').toLowerCase();
+      document.getElementById('asset-modal-name').value = baseName;
+      document.getElementById('asset-modal-episode-name').value = file.name;
+      fetch('/api/episodes').then(r => r.json()).then(eps => {
+        const sel = document.getElementById('asset-modal-episode');
+        sel.innerHTML = eps.map(e => `<option value="${e}">${e}</option>`).join('');
+      }).catch(() => {});
+      document.getElementById('asset-modal').style.display = 'flex';
+      updateAssetModalFields();
+    };
+
+    const probe = new Image();
+    let settled = false;
+    const settle = (w, h) => { if (settled) return; settled = true; showModal(w, h); };
+    probe.onload = () => settle(probe.naturalWidth || probe.width || 0, probe.naturalHeight || probe.height || 0);
+    probe.onerror = () => settle(0, 0);
+    // Safety net: if probe never fires (rare for SVGs without viewport), force-show after 500ms
+    setTimeout(() => settle(0, 0), 500);
+    probe.src = dataUrl;
+  };
+  reader.onerror = () => alert('Could not read file: ' + file.name);
+  reader.readAsDataURL(file);
+}
+
+function updateAssetModalFields() {
+  const dest = document.querySelector('input[name="asset-dest"]:checked').value;
+  document.getElementById('asset-modal-permanent-fields').style.display = dest === 'permanent' ? 'block' : 'none';
+  document.getElementById('asset-modal-episode-fields').style.display = dest === 'episode' ? 'block' : 'none';
+}
+
+function cancelAssetModal() {
+  document.getElementById('asset-modal').style.display = 'none';
+  _pendingAsset = null;
+}
+
+async function confirmAssetModal() {
+  if (!_pendingAsset) return;
+  const dest = document.querySelector('input[name="asset-dest"]:checked').value;
+  const asset = _pendingAsset;
+  try {
+    if (dest === 'oneoff') {
+      placeImageOnCanvas(asset.dataUrl, asset.filename);
+    } else if (dest === 'permanent') {
+      const subfolder = document.getElementById('asset-modal-subfolder').value.trim() || 'misc';
+      const filename = document.getElementById('asset-modal-name').value.trim() || 'asset';
+      const tags = document.getElementById('asset-modal-tags').value.split(',').map(s => s.trim()).filter(Boolean);
+      const description = document.getElementById('asset-modal-desc').value.trim();
+      const usage = document.getElementById('asset-modal-usage').value.trim();
+      const r = await fetch('/api/assets', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dataUrl: asset.dataUrl, destination: 'permanent', filename, subfolder, tags, description, usage }),
+      });
+      const text = await r.text();
+      let j; try { j = JSON.parse(text); } catch { throw new Error(`server returned non-JSON (status ${r.status}): ${text.slice(0,120)}`); }
+      if (!r.ok) throw new Error(j.error || 'upload failed');
+      placeImageOnCanvas(j.url, filename);
+    } else if (dest === 'episode') {
+      const episode = document.getElementById('asset-modal-episode').value;
+      const filename = document.getElementById('asset-modal-episode-name').value.trim() || asset.filename;
+      if (!episode) { alert('No episode selected'); return; }
+      const r = await fetch('/api/assets', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dataUrl: asset.dataUrl, destination: 'episode', episode, filename }),
+      });
+      const text = await r.text();
+      let j; try { j = JSON.parse(text); } catch { throw new Error(`server returned non-JSON (status ${r.status}): ${text.slice(0,120)}`); }
+      if (!r.ok) throw new Error(j.error || 'upload failed');
+      placeImageOnCanvas(j.url, filename);
+    }
+  } catch (err) {
+    alert('Import failed: ' + err.message);
+  } finally {
+    cancelAssetModal();
+  }
+}
+
+(function wireDragDrop() {
+  const overlay = document.getElementById('drop-overlay');
+  let depth = 0;
+  window.addEventListener('dragenter', (e) => {
+    if (!e.dataTransfer || !Array.from(e.dataTransfer.types).includes('Files')) return;
+    depth++; overlay.style.display = 'flex';
+  });
+  window.addEventListener('dragover', (e) => {
+    if (e.dataTransfer && Array.from(e.dataTransfer.types).includes('Files')) { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; }
+  });
+  window.addEventListener('dragleave', (e) => {
+    depth--; if (depth <= 0) { depth = 0; overlay.style.display = 'none'; }
+  });
+  window.addEventListener('drop', (e) => {
+    if (!e.dataTransfer || !e.dataTransfer.files.length) return;
+    e.preventDefault();
+    depth = 0; overlay.style.display = 'none';
+    const files = Array.from(e.dataTransfer.files);
+    const image = files.find(f => /^image\//.test(f.type));
+    const json = files.find(f => /\.json$/i.test(f.name));
+    if (image) openAssetModal(image);
+    else if (json) loadJSONFiles([json], 0);
+  });
+  document.querySelectorAll('input[name="asset-dest"]').forEach(el => el.addEventListener('change', updateAssetModalFields));
+})();
+
+// --- Asset picker (browse permanent manifest) ---------------------------
+let _apAssets = [];          // [{ id, path, url, tags, description, ... }]
+let _apActiveFolder = null;  // null = All
+let _apActiveTags = new Set(); // multi-select tag filter
+let _apSelectedId = null;
+
+async function showAssetPicker() {
+  try {
+    const r = await fetch('/api/assets');
+    const data = await r.json();
+    _apAssets = Object.entries(data.assets || {}).map(([id, a]) => ({ id, ...a, folder: (a.path.includes('/') ? a.path.split('/')[0] : '') }));
+  } catch (e) {
+    _apAssets = [];
+  }
+  _apSelectedId = null;
+  _apActiveFolder = null;
+  _apActiveTags = new Set();
+  document.getElementById('ap-search').value = '';
+  _apRenderTabs();
+  _apRenderTagFilter();
+  _apRender();
+  document.getElementById('asset-picker-modal').classList.add('show');
+}
+
+function hideAssetPicker() {
+  document.getElementById('asset-picker-modal').classList.remove('show');
+}
+
+function _apRenderTabs() {}  // folder tabs removed — unified into tag filter row
+
+function _apRenderTagFilter() {
+  const row = document.getElementById('ap-tag-filter');
+  if (!row) return;
+  const counts = {};
+  _apAssets.forEach(a => (a.tags || []).forEach(t => { counts[t] = (counts[t] || 0) + 1; }));
+  const tags = Object.keys(counts).sort();
+  const allOn = _apActiveTags.size === 0;
+  const allChip = `<span onclick="_apClearTags()" style="background:${allOn?'#2a5a8a':'#222'};border:1px solid ${allOn?'#4a8ac0':'#444'};color:${allOn?'#fff':'#bbb'};border-radius:10px;padding:3px 10px;font-size:12px;cursor:pointer;user-select:none;">All <span style="color:${allOn?'#cfe':'#666'}">${_apAssets.length}</span></span>`;
+  row.innerHTML = allChip + tags.map(t => {
+    const on = _apActiveTags.has(t);
+    const safe = t.replace(/'/g, "\\'");
+    const bg = on ? '#2a5a8a' : '#222';
+    const bd = on ? '#4a8ac0' : '#444';
+    const col = on ? '#fff' : '#bbb';
+    return `<span onclick="_apToggleTagFilter('${safe}')" style="background:${bg};border:1px solid ${bd};color:${col};border-radius:10px;padding:3px 10px;font-size:12px;cursor:pointer;user-select:none;">${t} <span style="color:${on?'#cfe':'#666'}">${counts[t]}</span></span>`;
+  }).join('');
+}
+function _apToggleTagFilter(tag) {
+  if (_apActiveTags.has(tag)) _apActiveTags.delete(tag); else _apActiveTags.add(tag);
+  _apRenderTagFilter();
+  _apRender();
+}
+function _apClearTags() {
+  _apActiveTags = new Set();
+  _apRenderTagFilter();
+  _apRender();
+}
+
+function _apFilter() { _apRender(); }
+
+function _apRender() {
+  const grid = document.getElementById('ap-grid');
+  const query = document.getElementById('ap-search').value.trim().toLowerCase();
+  let list = _apAssets;
+  if (_apActiveTags.size) {
+    list = list.filter(a => (a.tags || []).some(t => _apActiveTags.has(t)));
+  }
+  if (query) {
+    list = list.filter(a => {
+      const hay = [a.id, a.path, a.description || '', (a.tags || []).join(' '), a.usage || ''].join(' ').toLowerCase();
+      return hay.includes(query);
+    });
+  }
+  if (!list.length) {
+    grid.innerHTML = `<div class="pp-empty">${query ? `No assets match "${query}".` : 'No permanent assets yet. Drag an image into the editor to add one.'}</div>`;
+    return;
+  }
+  grid.innerHTML = list.map(a => {
+    const selected = a.id === _apSelectedId ? ' selected' : '';
+    const ratio = a.width && a.height ? `${a.width}×${a.height}` : '';
+    const tags = (a.tags || []).slice(0, 3).join(', ');
+    const label = a.displayName || a.id;
+    return `
+      <div class="pp-card${selected}" onclick="_apSelect('${a.id}')" ondblclick="_apSelect('${a.id}');_apInsert()" style="position:relative">
+        <div style="position:absolute;top:4px;right:4px;display:flex;gap:4px;opacity:0.85;transition:opacity .12s;" class="ap-actions">
+          <button title="Edit" onclick="event.stopPropagation();_apEdit('${a.id}')" style="background:#222;border:1px solid #444;color:#ccc;border-radius:4px;padding:5px 10px;font-size:12px;line-height:1;cursor:pointer;">Edit</button>
+          <button title="Delete" onclick="event.stopPropagation();_apDelete('${a.id}')" style="background:#3a1a1a;border:1px solid #552;color:#e88;border-radius:4px;padding:5px 9px;font-size:14px;line-height:1;cursor:pointer;">×</button>
+        </div>
+        <img class="pp-thumb asset" src="${a.url}" alt="${a.id}" loading="lazy">
+        <div class="pp-info">
+          <div class="pp-name">${label}</div>
+          <div class="pp-desc">${a.description || tags || '&nbsp;'}</div>
+          <div class="pp-ratio">${ratio}${tags ? ' · ' + tags : ''}</div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function _apSelect(id) {
+  _apSelectedId = id;
+  _apRender();
+}
+
+function _apInsert() {
+  const a = _apAssets.find(x => x.id === _apSelectedId);
+  if (!a) { alert('Select an asset first.'); return; }
+  placeImageOnCanvas(a.url, a.displayName || a.id);
+  hideAssetPicker();
+}
+
+async function _apDelete(id) {
+  const a = _apAssets.find(x => x.id === id);
+  if (!a) return;
+  if (!confirm(`Delete "${a.displayName || a.id}"?\n\nThis removes the file and its manifest entry. Thumbnails that already reference the URL will break.`)) return;
+  try {
+    const r = await fetch(`/api/assets/${encodeURIComponent(id)}`, { method: 'DELETE' });
+    const text = await r.text(); let j; try { j = JSON.parse(text); } catch { throw new Error(`status ${r.status}: ${text.slice(0,120)}`); }
+    if (!r.ok) throw new Error(j.error || 'delete failed');
+    _apAssets = _apAssets.filter(x => x.id !== id);
+    if (_apSelectedId === id) _apSelectedId = null;
+    _apRenderTabs();
+    _apRenderTagFilter();
+    _apRender();
+  } catch (e) { alert('Delete failed: ' + e.message); }
+}
+
+function _apEdit(id) {
+  const a = _apAssets.find(x => x.id === id);
+  if (!a) return;
+  document.getElementById('ae-id').textContent = a.id;
+  document.getElementById('ae-path').textContent = a.path;
+  document.getElementById('ae-rename').value = (a.path.split('/').pop() || '').replace(/\.[^.]+$/, '');
+  document.getElementById('ae-displayname').value = a.displayName || '';
+  document.getElementById('ae-tags').value = (a.tags || []).join(', ');
+  document.getElementById('ae-desc').value = a.description || '';
+  document.getElementById('ae-usage').value = a.usage || '';
+  document.getElementById('asset-edit-modal').dataset.id = a.id;
+  const newTagInput = document.getElementById('ae-new-tag');
+  if (newTagInput) newTagInput.value = '';
+  _aeRenderTagChips();
+  document.getElementById('asset-edit-modal').classList.add('show');
+}
+
+function _aeCancel() {
+  document.getElementById('asset-edit-modal').classList.remove('show');
+}
+
+let _pendingTerms = new Set();
+function _tmOpen() {
+  const input = document.getElementById('tm-new-term');
+  if (input) input.value = '';
+  _tmRender();
+  document.getElementById('term-manager-modal').classList.add('show');
+}
+function _tmAddTerm() {
+  const input = document.getElementById('tm-new-term');
+  const val = (input.value || '').trim();
+  if (!val) return;
+  val.split(',').map(s => s.trim()).filter(Boolean).forEach(t => _pendingTerms.add(t));
+  input.value = '';
+  _tmRender();
+}
+function _tmClose() {
+  document.getElementById('term-manager-modal').classList.remove('show');
+}
+function _tmTagCounts() {
+  const counts = {};
+  (_apAssets || []).forEach(a => (a.tags || []).forEach(t => { counts[t] = (counts[t] || 0) + 1; }));
+  return counts;
+}
+function _tmRender() {
+  const list = document.getElementById('tm-list');
+  const counts = _tmTagCounts();
+  const tagSet = new Set([...Object.keys(counts), ..._pendingTerms]);
+  const tags = [...tagSet].sort();
+  if (!tags.length) { list.innerHTML = '<div style="padding:12px;color:#666;font-size:12px;">No tags yet. Add one below.</div>'; return; }
+  list.innerHTML = tags.map(t => {
+    const safe = t.replace(/"/g, '&quot;').replace(/'/g, "\\'");
+    const c = counts[t] || 0;
+    const pending = c === 0;
+    return `<div style="display:flex;align-items:center;gap:6px;padding:4px 6px;border-bottom:1px solid #222;">
+      <span style="flex:1;font-size:12px;color:${pending?'#888':'#ddd'};font-style:${pending?'italic':'normal'};">${t}${pending?' <span style="font-size:10px;color:#666;">(pending)</span>':''}</span>
+      <span style="font-size:10px;color:#888;">${c} asset${c===1?'':'s'}</span>
+      <button class="pp-btn" style="font-size:11px;padding:3px 8px;" onclick="_tmRename('${safe}')" ${pending?'disabled style="opacity:.4"':''}>Rename</button>
+      <button class="pp-btn" style="font-size:11px;padding:3px 8px;background:#3a1a1a;border-color:#552;color:#e88;" onclick="_tmDelete('${safe}')">Delete</button>
+    </div>`;
+  }).join('');
+}
+async function _tmApplyChange(transform, verb) {
+  const affected = (_apAssets || []).filter(a => (a.tags || []).some(t => transform(t) !== t || transform(t) === null));
+  if (!affected.length) return;
+  let ok = 0, fail = 0;
+  for (const a of affected) {
+    const newTags = [...new Set((a.tags || []).map(transform).filter(t => t !== null && t !== ''))];
+    try {
+      const r = await fetch(`/api/assets/${encodeURIComponent(a.id)}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tags: newTags }),
+      });
+      if (!r.ok) throw new Error(await r.text());
+      ok++;
+    } catch (e) { fail++; console.error(verb, 'failed for', a.id, e); }
+  }
+  await showAssetPicker();
+  _tmRender();
+  if (fail) alert(`${verb} completed with ${fail} failure(s). ${ok} updated.`);
+}
+async function _tmRename(oldTag) {
+  const newTag = prompt(`Rename tag "${oldTag}" to:`, oldTag);
+  if (!newTag || newTag.trim() === oldTag) return;
+  const nt = newTag.trim();
+  await _tmApplyChange(t => t === oldTag ? nt : t, 'Rename');
+}
+async function _tmDelete(tag) {
+  const counts = _tmTagCounts();
+  const c = counts[tag] || 0;
+  if (c === 0) {
+    _pendingTerms.delete(tag);
+    _tmRender();
+    return;
+  }
+  if (!confirm(`Delete tag "${tag}" from ${c} asset(s)?`)) return;
+  _pendingTerms.delete(tag);
+  await _tmApplyChange(t => t === tag ? null : t, 'Delete');
+}
+
+function _aeGetTags() {
+  return document.getElementById('ae-tags').value.split(',').map(s => s.trim()).filter(Boolean);
+}
+function _aeSetTags(tags) {
+  const uniq = [...new Set(tags.map(t => t.trim()).filter(Boolean))];
+  document.getElementById('ae-tags').value = uniq.join(', ');
+  _aeRenderTagChips();
+}
+function _aeAllKnownTags() {
+  const s = new Set();
+  (_apAssets || []).forEach(a => (a.tags || []).forEach(t => s.add(t)));
+  _pendingTerms.forEach(t => s.add(t));
+  return [...s].sort();
+}
+function _aeToggleTag(tag) {
+  const cur = _aeGetTags();
+  const i = cur.indexOf(tag);
+  if (i >= 0) cur.splice(i, 1); else cur.push(tag);
+  _aeSetTags(cur);
+}
+function _aeAddNewTag() {
+  const input = document.getElementById('ae-new-tag');
+  const val = input.value.trim();
+  if (!val) return;
+  const cur = _aeGetTags();
+  val.split(',').map(s => s.trim()).filter(Boolean).forEach(t => { if (!cur.includes(t)) cur.push(t); });
+  _aeSetTags(cur);
+  input.value = '';
+}
+function _aeRenderTagChips() {
+  const container = document.getElementById('ae-tag-chips');
+  if (!container) return;
+  const selected = new Set(_aeGetTags());
+  const all = _aeAllKnownTags();
+  selected.forEach(t => { if (!all.includes(t)) all.push(t); });
+  if (!all.length) { container.innerHTML = '<div style="font-size:10px;color:#666;">No tags yet — add one below.</div>'; return; }
+  container.innerHTML = all.map(t => {
+    const on = selected.has(t);
+    const safe = t.replace(/"/g, '&quot;');
+    const bg = on ? '#2a5a8a' : '#222';
+    const bd = on ? '#4a8ac0' : '#444';
+    const col = on ? '#fff' : '#bbb';
+    return `<span onclick="_aeToggleTag('${safe}')" style="background:${bg};border:1px solid ${bd};color:${col};border-radius:10px;padding:2px 8px;font-size:11px;cursor:pointer;user-select:none;">${t}${on ? ' ×' : ''}</span>`;
+  }).join('');
+}
+
+async function _aeSave() {
+  const modal = document.getElementById('asset-edit-modal');
+  const id = modal.dataset.id;
+  const a = _apAssets.find(x => x.id === id);
+  if (!a) return;
+  const currentBase = (a.path.split('/').pop() || '').replace(/\.[^.]+$/, '');
+  const newBase = document.getElementById('ae-rename').value.trim();
+  const body = {
+    displayName: document.getElementById('ae-displayname').value.trim(),
+    tags: document.getElementById('ae-tags').value.split(',').map(s => s.trim()).filter(Boolean),
+    description: document.getElementById('ae-desc').value.trim(),
+    usage: document.getElementById('ae-usage').value.trim(),
+  };
+  if (newBase && newBase !== currentBase) body.rename = newBase;
+  try {
+    const r = await fetch(`/api/assets/${encodeURIComponent(id)}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const text = await r.text(); let j; try { j = JSON.parse(text); } catch { throw new Error(`status ${r.status}: ${text.slice(0,120)}`); }
+    if (!r.ok) throw new Error(j.error || 'update failed');
+    modal.classList.remove('show');
+    // Reload the picker data from the server
+    await showAssetPicker();
+  } catch (e) { alert('Update failed: ' + e.message); }
+}
+
 function addImageFromFile() {
   const input = document.getElementById('image-input');
   input.onchange = function() {
     const file = this.files[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      fabric.Image.fromURL(e.target.result, function(img) {
-        // Scale to fit within canvas
-        const maxW = canvasW * 0.6;
-        const maxH = canvasH * 0.6;
-        const scale = Math.min(maxW / img.width, maxH / img.height, 1);
-        img.set({
-          left: canvasW / 2 - (img.width * scale) / 2,
-          top: canvasH / 2 - (img.height * scale) / 2,
-          scaleX: scale,
-          scaleY: scale,
-          _customName: file.name.replace(/\.[^.]+$/, ''),
-        });
-        setupImageControls(img);
-        canvas.add(img);
-        canvas.setActiveObject(img);
-        canvas.requestRenderAll();
-        refreshLayers();
-        updateProps();
-      });
-    };
-    reader.readAsDataURL(file);
+    openAssetModal(file);
     this.value = '';
   };
   input.click();
@@ -4814,6 +5690,15 @@ function addImageFromFile() {
 
 // --- Zoom ---
 function setZoom(z) {
+  // z === 1 is the "Fit" button — calculate fit-to-screen zoom
+  if (z === 1) {
+    const area = document.getElementById('canvas-area');
+    const fitZ = Math.min(
+      (area.clientWidth  - 48) / canvasW,
+      (area.clientHeight - 48) / canvasH
+    );
+    z = Math.max(0.1, Math.min(3, fitZ));
+  }
   zoom = Math.max(0.1, Math.min(3, z));
   const wrapper = document.getElementById('canvas-wrapper');
   wrapper.style.transform = `scale(${zoom})`;
@@ -4939,6 +5824,7 @@ function loadJSON() {
   input.click();
 }
 
+
 function loadJSONFiles(files, idx) {
   if (idx >= files.length) return;
   const file = files[idx];
@@ -5012,32 +5898,90 @@ function insertPattern(path) {
 }
 
 // Shared pattern-insert logic used by both forms above.
+// Uses canvas.loadFromJSON (same path as Load JSON) so all types, groups,
+// banner groups, frames, and nested objects are handled correctly.
 function applyPatternData(data, fallbackName) {
+  const EXTRA = ['_customName','lockUniScaling','lockMovementX','lockMovementY','lockScalingX','lockScalingY','lockRotation','_bannerLeftEnd','_bannerRightEnd','_bannerNotchL','_bannerNotchR','_bannerFlareL','_bannerFlareR','_isBannerGroup','_isHitboxGroup','_isFrame','_frameOffset','_framePadT','_framePadR','_framePadB','_framePadL','_padL','_padR','_padT','_padB','paintFirst','_shadowSpread','_spreadStrokeBackup','_frameThickness','_frameRadius','_frameInnerRadius','_frameTop','_frameRight','_frameBottom','_frameLeft','_frameTL','_frameTR','_frameBR','_frameBL','_frameCompleteness','_padLinked','_cornerRadius','_innerShadow','_corners','_cornersLinked'];
   return new Promise((resolve) => {
-    const objsJson = data.objects
+    const patternObjs = data.objects
       || (data.canvas && data.canvas.objects)
       || (data.fabricObject ? [data.fabricObject] : null);
-    if (!objsJson || !objsJson.length) {
+    if (!patternObjs || !patternObjs.length) {
       alert('Pattern has no objects to insert: ' + (data.name || fallbackName));
       resolve([]);
       return;
     }
-    fabric.util.enlivenObjects(objsJson, function(enlivened) {
-      const added = [];
-      enlivened.forEach(obj => {
-        canvas.add(obj);
-        added.push(obj);
-      });
+    // Snapshot current canvas state so we can merge and reload
+    const currentJSON = canvas.toJSON(EXTRA);
+    const existingCount = (currentJSON.objects || []).length;
+    const merged = Object.assign({}, currentJSON, {
+      objects: [...(currentJSON.objects || []), ...patternObjs],
+    });
+    canvas.loadFromJSON(merged, function() {
+      const allObjs = canvas.getObjects();
+      const added = allObjs.slice(existingCount);
+
+      // Scale inserted objects from source canvas dims to current canvas dims.
+      // Frames snap via applyFramePadding; everything else scales proportionally.
+      const ref = data.canvasRef;
+      if (ref && (ref.w !== canvasW || ref.h !== canvasH)) {
+        const sx = canvasW / ref.w;
+        const sy = canvasH / ref.h;
+        added.forEach(obj => {
+          if (obj._isFrame) {
+            applyFramePadding(obj);
+            return;
+          }
+          obj.left = (obj.left || 0) * sx;
+          obj.top  = (obj.top  || 0) * sy;
+          if (obj.type === 'image') {
+            const rw = (obj.width || 0) * (obj.scaleX || 1);
+            const rh = (obj.height || 0) * (obj.scaleY || 1);
+            const isFill = rw >= ref.w * 0.8 && rh >= ref.h * 0.8;
+            if (isFill) {
+              const s = Math.max(canvasW / obj.width, canvasH / obj.height);
+              obj.scaleX = s; obj.scaleY = s;
+              obj.left = (canvasW - obj.width * s) / 2;
+              obj.top  = (canvasH - obj.height * s) / 2;
+            } else {
+              const s = Math.min(sx, sy);
+              obj.scaleX = (obj.scaleX || 1) * s;
+              obj.scaleY = (obj.scaleY || 1) * s;
+            }
+          } else if (obj.type === 'textbox') {
+            obj.width  = (obj.width  || 0) * sx;
+            obj.scaleX = (obj.scaleX || 1) * sx;
+            obj.scaleY = (obj.scaleY || 1) * sy;
+            if (obj.fontSize) obj.fontSize = Math.round(obj.fontSize * sx);
+          } else if (obj.type === 'group') {
+            // Banner groups and other groups: uniform scale via geometric mean
+            const sg = Math.sqrt(sx * sy);
+            obj.scaleX = (obj.scaleX || 1) * sg;
+            obj.scaleY = (obj.scaleY || 1) * sg;
+          } else if (obj.type === 'rect') {
+            obj.width  = (obj.width  || 0) * sx;
+            obj.height = (obj.height || 0) * sy;
+          } else if (obj.type === 'polygon' || obj.type === 'ellipse' || obj.type === 'circle' || obj.type === 'triangle') {
+            const sg = Math.sqrt(sx * sy);
+            obj.scaleX = (obj.scaleX || 1) * sg;
+            obj.scaleY = (obj.scaleY || 1) * sg;
+          }
+          obj.setCoords();
+        });
+      }
+
       reattachBehaviors();
-      canvas.requestRenderAll();
-      refreshLayers();
+      // Clear any dangling transform/selection state before changing selection.
+      // Auto-selecting a huge ActiveSelection (especially one containing a
+      // full-canvas BG rect) has caused drags to feel stuck — safer to only
+      // auto-select a single inserted object, and leave multi-object inserts
+      // unselected so the user clicks individual pieces fresh.
+      canvas.discardActiveObject();
       if (added.length === 1) {
         canvas.setActiveObject(added[0]);
-      } else if (added.length > 1) {
-        const sel = new fabric.ActiveSelection(added, { canvas });
-        canvas.setActiveObject(sel);
       }
       canvas.requestRenderAll();
+      refreshLayers();
       saveUndo();
       document.getElementById('status-selection').textContent =
         `Inserted pattern: ${data.name || fallbackName} (${added.length} objects)`;
@@ -5047,75 +5991,344 @@ function applyPatternData(data, fallbackName) {
 }
 
 // Save the current selection as a reusable pattern.
-// Prompts for name + description, downloads a pattern JSON the user drops
-// into templates/patterns/. The downloaded file follows the pattern schema:
-//   { name, description, canvasRef, tweakable, objects: [ ... ] }
-function saveAsPattern() {
+async function saveAsPattern() {
   const active = canvas.getActiveObject();
   if (!active) {
     alert('Select one or more objects first, then click Save as Pattern.');
     return;
   }
-  const selected = active.type === 'activeSelection' ? active.getObjects() : [active];
+  showPatternSaveDialog(active.type === 'activeSelection' ? active.getObjects() : [active]);
+}
 
-  const name = prompt(
-    'Pattern name (slug — lowercase with dashes, e.g. "bottom-strip-date-banner"):',
-    ''
-  );
-  if (!name) return;
-  const description = prompt(
-    'Short description (what is this pattern for? when to use it?):',
-    ''
-  ) || '';
+// ===== Pattern Save Dialog =====
 
-  // Same extra-prop list saveJSON uses, so banner/frame/etc. metadata is preserved
-  const EXTRA = ['_customName', 'lockUniScaling', 'lockMovementX', 'lockMovementY', 'lockScalingX', 'lockScalingY', 'lockRotation', '_bannerLeftEnd', '_bannerRightEnd', '_bannerNotchL', '_bannerNotchR', '_bannerFlareL', '_bannerFlareR', '_isBannerGroup','_isHitboxGroup','_isFrame','_frameOffset','_framePadT','_framePadR','_framePadB','_framePadL', '_padL', '_padR', '_padT', '_padB', 'paintFirst','_shadowSpread','_spreadStrokeBackup','_frameThickness','_frameRadius','_frameInnerRadius','_frameTop','_frameRight','_frameBottom','_frameLeft','_frameTL','_frameTR','_frameBR','_frameBL','_frameCompleteness','_padLinked','_cornerRadius','_innerShadow','_corners','_cornersLinked'];
+let _psSelectedJSON = null; // pre-serialized with absolute canvas coords
 
-  const objsJson = selected.map(o => o.toObject(EXTRA));
+async function showPatternSaveDialog(selected) {
+  // Capture object JSON NOW with absolute canvas coordinates.
+  // Objects in a multi-object activeSelection have left/top relative to the
+  // selection center, not the canvas — so discard+re-select to normalize first.
+  const EXTRA = ['_customName','lockUniScaling','lockMovementX','lockMovementY','lockScalingX','lockScalingY','lockRotation','_bannerLeftEnd','_bannerRightEnd','_bannerNotchL','_bannerNotchR','_bannerFlareL','_bannerFlareR','_isBannerGroup','_isHitboxGroup','_isFrame','_frameOffset','_framePadT','_framePadR','_framePadB','_framePadL','_padL','_padR','_padT','_padB','paintFirst','_shadowSpread','_spreadStrokeBackup','_frameThickness','_frameRadius','_frameInnerRadius','_frameTop','_frameRight','_frameBottom','_frameLeft','_frameTL','_frameTR','_frameBR','_frameBL','_frameCompleteness','_padLinked','_cornerRadius','_innerShadow','_corners','_cornersLinked'];
+  const active = canvas.getActiveObject();
+  const wasActiveSelection = active && active.type === 'activeSelection';
+  if (wasActiveSelection) canvas.discardActiveObject();
+  _psSelectedJSON = selected.map(o => o.toObject(EXTRA));
+  if (wasActiveSelection) {
+    const sel = selected.length === 1 ? selected[0] : new fabric.ActiveSelection(selected, { canvas });
+    canvas.setActiveObject(sel);
+    canvas.requestRenderAll();
+  }
 
-  // Relativize image URLs so the pattern is portable across hosts/ports
+  // Populate folder dropdown — fetch all folders including empty ones
+  const folderSel = document.getElementById('ps-folder');
+  folderSel.innerHTML = '<option value="">— uncategorized —</option>';
+  try {
+    const folders = await fetch('/api/patterns-folders').then(r => r.json());
+    folders.forEach(f => {
+      const opt = document.createElement('option');
+      opt.value = f; opt.textContent = f;
+      folderSel.appendChild(opt);
+    });
+  } catch {}
+  const newOpt = document.createElement('option');
+  newOpt.value = '__new__'; newOpt.textContent = '+ New folder…';
+  folderSel.appendChild(newOpt);
+  document.getElementById('ps-name').value = '';
+  document.getElementById('ps-new-folder').value = '';
+  document.getElementById('ps-desc').value = '';
+  document.getElementById('ps-new-folder-row').style.display = 'none';
+  document.getElementById('pattern-save-modal').classList.add('show');
+  setTimeout(() => document.getElementById('ps-name').focus(), 50);
+}
+
+function hidePatternSaveDialog() {
+  document.getElementById('pattern-save-modal').classList.remove('show');
+  _psSelectedJSON = null;
+}
+
+function _psFolderChange() {
+  const val = document.getElementById('ps-folder').value;
+  document.getElementById('ps-new-folder-row').style.display = val === '__new__' ? 'flex' : 'none';
+}
+
+async function _psSave() {
+  if (!_psSelectedJSON) return;
+  const name = document.getElementById('ps-name').value.trim();
+  if (!name) { document.getElementById('ps-name').focus(); return; }
+  const folderVal = document.getElementById('ps-folder').value;
+  const folder = folderVal === '__new__'
+    ? document.getElementById('ps-new-folder').value.trim()
+    : folderVal;
+  const description = document.getElementById('ps-desc').value.trim();
+
+  // Deep-copy the pre-serialized JSON so we can relativize image srcs without
+  // mutating the stored copy (user might hit Save multiple times).
+  const objsJson = JSON.parse(JSON.stringify(_psSelectedJSON));
+
   const origin = window.location.origin;
   const relativize = (obj) => {
     if (!obj) return;
-    if (obj.type === 'image' && typeof obj.src === 'string' && obj.src.startsWith(origin)) {
+    if (obj.type === 'image' && typeof obj.src === 'string' && obj.src.startsWith(origin))
       obj.src = obj.src.slice(origin.length);
-    }
     if (Array.isArray(obj.objects)) obj.objects.forEach(relativize);
   };
   objsJson.forEach(relativize);
 
-  // Auto-generate a tweakable stub so the agent/user sees what's customizable.
-  // Filled in by hand post-save — this is just scaffolding.
   const tweakable = {};
   objsJson.forEach((obj, i) => {
-    const kind = obj._isBannerGroup ? 'banner'
-      : obj._isFrame ? 'frame'
-      : obj.type;
+    const kind = obj._isBannerGroup ? 'banner' : obj._isFrame ? 'frame' : obj.type;
     const label = obj._customName || `unnamed-${kind}`;
     tweakable[`objects[${i}]`] = `${kind} "${label}" — edit this file to describe which fields are intended tweakable`;
   });
 
-  const pattern = {
-    name,
-    description,
-    canvasRef: { w: canvasW, h: canvasH },
-    tweakable,
-    objects: objsJson
-  };
-
+  const thumbScale = 320 / canvasW;
+  const thumbnail = canvas.toDataURL({ format: 'jpeg', quality: 0.72, multiplier: thumbScale });
   const ratioTag = (canvasW === canvasH) ? '1x1'
     : (Math.abs(canvasW / canvasH - 16/9) < 0.01) ? '16x9'
     : `${canvasW}x${canvasH}`;
   const filename = `${name}_${ratioTag}.json`;
 
-  const blob = new Blob([JSON.stringify(pattern, null, 2)], { type: 'application/json' });
-  const link = document.createElement('a');
-  link.download = filename;
-  link.href = URL.createObjectURL(blob);
-  link.click();
+  try {
+    const r = await fetch('/api/patterns', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ filename, folder: folder || null, pattern: {
+        name, description, canvasRef: { w: canvasW, h: canvasH },
+        thumbnail, tweakable, objects: objsJson,
+      }}),
+    });
+    const result = await r.json();
+    if (!result.ok) throw new Error(result.error || 'unknown error');
+    const count = objsJson.length;
+    hidePatternSaveDialog();
+    document.getElementById('status-selection').textContent =
+      `Saved pattern: ${folder ? folder + '/' : ''}${filename} (${count} object${count === 1 ? '' : 's'})`;
+  } catch (e) {
+    alert('Failed to save pattern: ' + e.message);
+  }
+}
 
-  document.getElementById('status-selection').textContent =
-    `Saved pattern: ${filename} (${selected.length} object${selected.length === 1 ? '' : 's'}) — move to templates/patterns/`;
+// ===== Pattern Picker =====
+
+let _ppSelected = null;
+let _ppActiveFolder = 'all';
+let _ppAllPatterns = [];
+let _ppAllFolders = [];
+
+function showPatternPicker() {
+  _ppSelected = null;
+  _ppActiveFolder = 'all';
+  document.getElementById('pp-search').value = '';
+  document.getElementById('pattern-picker-modal').classList.add('show');
+  _loadPatternGrid();
+}
+
+function hidePatternPicker() {
+  document.getElementById('pattern-picker-modal').classList.remove('show');
+  _ppSelected = null;
+}
+
+async function _loadPatternGrid() {
+  const grid = document.getElementById('pp-grid');
+  const tabsEl = document.getElementById('pp-tabs');
+  grid.innerHTML = '<div class="pp-empty">Loading…</div>';
+  tabsEl.innerHTML = '';
+  try {
+    const [pR, fR] = await Promise.all([fetch('/api/patterns'), fetch('/api/patterns-folders')]);
+    _ppAllPatterns = await pR.json();
+    _ppAllFolders = await fR.json();
+  } catch {
+    grid.innerHTML = '<div class="pp-empty">Could not load patterns.</div>';
+    return;
+  }
+  _renderFolderTabs();
+  _renderPatternGrid();
+}
+
+function _renderFolderTabs() {
+  const tabsEl = document.getElementById('pp-tabs');
+  tabsEl.innerHTML = `<button class="pp-tab${_ppActiveFolder === 'all' ? ' active' : ''}" onclick="_ppSetFolder('all')">All</button>`
+    + _ppAllFolders.map(f =>
+      `<button class="pp-tab${f === _ppActiveFolder ? ' active' : ''}" onclick="_ppSetFolder('${f}')">
+        ${f}<span class="pp-tab-del" onclick="event.stopPropagation();_ppDeleteFolder('${f}')" title="Delete folder">×</span>
+      </button>`
+    ).join('')
+    + `<button class="pp-tab pp-tab-add" onclick="_ppCreateFolder()" title="New folder">+</button>`;
+}
+
+function _ppSetFolder(folder) {
+  _ppActiveFolder = folder;
+  _ppSelected = null;
+  document.getElementById('pp-search').value = '';
+  _renderFolderTabs();
+  _renderPatternGrid();
+}
+
+async function _ppCreateFolder() {
+  const name = prompt('New folder name (lowercase, letters/numbers/dashes):');
+  if (!name) return;
+  const safe = name.trim().toLowerCase().replace(/[^a-z0-9\-_]/g, '-');
+  if (!safe) return;
+  try {
+    const r = await fetch('/api/patterns-folder', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ folder: safe }),
+    });
+    const result = await r.json();
+    if (!result.ok) throw new Error(result.error || 'unknown');
+    if (!_ppAllFolders.includes(result.folder)) {
+      _ppAllFolders = [..._ppAllFolders, result.folder].sort();
+    }
+    _ppActiveFolder = result.folder;
+    _renderFolderTabs();
+    _renderPatternGrid();
+  } catch (e) {
+    alert('Could not create folder: ' + e.message);
+  }
+}
+
+async function _ppDeleteFolder(folder) {
+  const count = _ppAllPatterns.filter(p => p.folder === folder).length;
+  const warn = count > 0 ? ` This will also delete ${count} pattern${count > 1 ? 's' : ''} inside it.` : '';
+  if (!confirm(`Delete folder "${folder}"?${warn}`)) return;
+  try {
+    const r = await fetch('/api/patterns-folder/' + encodeURIComponent(folder), { method: 'DELETE' });
+    const result = await r.json();
+    if (!result.ok) throw new Error(result.error || 'unknown');
+    _ppAllFolders = _ppAllFolders.filter(f => f !== folder);
+    _ppAllPatterns = _ppAllPatterns.filter(p => p.folder !== folder);
+    if (_ppActiveFolder === folder) _ppActiveFolder = 'all';
+    _renderFolderTabs();
+    _renderPatternGrid();
+  } catch (e) {
+    alert('Could not delete folder: ' + e.message);
+  }
+}
+
+function _ppFilter() {
+  _ppSelected = null;
+  _renderPatternGrid();
+}
+
+function _renderPatternGrid() {
+  const grid = document.getElementById('pp-grid');
+  const query = (document.getElementById('pp-search').value || '').toLowerCase().trim();
+  let patterns = _ppActiveFolder === 'all'
+    ? _ppAllPatterns
+    : _ppAllPatterns.filter(p => p.folder === _ppActiveFolder);
+  if (query) {
+    patterns = patterns.filter(p =>
+      p.name.toLowerCase().includes(query) ||
+      (p.description || '').toLowerCase().includes(query) ||
+      (p.folder || '').toLowerCase().includes(query)
+    );
+  }
+  if (!patterns.length) {
+    const msg = query ? `No patterns match "${query}".` : (_ppAllPatterns.length ? 'No patterns in this folder.' : 'No patterns found in templates/patterns/.');
+    grid.innerHTML = `<div class="pp-empty">${msg}</div>`;
+    grid._patterns = [];
+    return;
+  }
+  const isSquare = p => p.canvasRef && p.canvasRef.w === p.canvasRef.h;
+  grid.innerHTML = patterns.map((p, i) => {
+    const sq = isSquare(p);
+    const ratio = p.canvasRef ? `${p.canvasRef.w}×${p.canvasRef.h}` : '';
+    const folderBadge = p.folder ? `<span style="font-size:9px;color:#5a7a9a;margin-top:2px;display:block">${p.folder}</span>` : '';
+    const thumb = p.thumbnail
+      ? `<img class="pp-thumb${sq?' sq':''}" src="${p.thumbnail}" alt="${p.name}">`
+      : `<div class="pp-thumb-placeholder${sq?' sq':''}">&#128444;</div>`;
+    return `<div class="pp-card" data-idx="${i}" onclick="_ppSelect(this,${i})" ondblclick="_ppInsert()">
+      ${thumb}
+      <div class="pp-info">
+        <div class="pp-name" style="display:flex;align-items:center;gap:4px">
+          <span style="flex:1;overflow:hidden;text-overflow:ellipsis">${p.name}</span>
+          <button data-path="${p.path}" onclick="event.stopPropagation();_ppMovePattern(this.dataset.path,this)" title="Move to folder" class="pp-move-btn" style="background:none;border:none;cursor:pointer;padding:0;flex-shrink:0">⤵</button>
+          <button data-path="${p.path}" onclick="event.stopPropagation();_ppDelete(this.dataset.path,this)" title="Delete pattern" style="background:none;border:none;color:#555;cursor:pointer;font-size:13px;padding:0;flex-shrink:0">✕</button>
+        </div>
+        ${folderBadge}
+        <div class="pp-desc">${p.description || ''}</div>
+        ${ratio ? `<div class="pp-ratio">${ratio}</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+  grid._patterns = patterns;
+}
+
+function _ppSelect(el, idx) {
+  document.querySelectorAll('.pp-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  _ppSelected = document.getElementById('pp-grid')._patterns[idx];
+}
+
+async function _ppInsert() {
+  if (!_ppSelected) return;
+  const url = _ppSelected.url;
+  hidePatternPicker();
+  await insertPattern(url);
+}
+
+function _ppFromFile() {
+  hidePatternPicker();
+  insertPattern();
+}
+
+function _ppMovePattern(patternPath, btn) {
+  document.querySelectorAll('.pp-move-picker').forEach(e => e.remove());
+  const picker = document.createElement('div');
+  picker.className = 'pp-move-picker';
+  const current = (_ppAllPatterns.find(p => p.path === patternPath) || {}).folder || '';
+  const opts = ['<option value="">— uncategorized —</option>',
+    ..._ppAllFolders.map(f => `<option value="${f}"${f === current ? ' selected' : ''}>${f}</option>`)
+  ].join('');
+  picker.innerHTML = `<select class="pp-move-sel">${opts}</select><button class="pp-move-ok">Move</button>`;
+  picker.querySelector('.pp-move-ok').onclick = () => _ppMoveConfirm(patternPath, picker.querySelector('select').value, picker);
+  const r = btn.getBoundingClientRect();
+  picker.style.left = r.left + 'px';
+  picker.style.top = (r.bottom + 4) + 'px';
+  document.body.appendChild(picker);
+  setTimeout(() => {
+    function closePicker(e) {
+      if (!picker.contains(e.target) && e.target !== btn) { picker.remove(); document.removeEventListener('mousedown', closePicker); }
+    }
+    document.addEventListener('mousedown', closePicker);
+  }, 0);
+}
+
+async function _ppMoveConfirm(patternPath, newFolder, picker) {
+  picker.remove();
+  try {
+    const r = await fetch('/api/patterns-move', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ from: patternPath, folder: newFolder || null }),
+    });
+    const result = await r.json();
+    if (!result.ok) throw new Error(result.error || 'unknown');
+    // Sync local state without full reload
+    const p = _ppAllPatterns.find(p => p.path === patternPath);
+    if (p) {
+      p.folder = newFolder || null;
+      p.path = newFolder ? `${newFolder}/${p.file}` : p.file;
+      p.url = `/templates/patterns/${p.path}`;
+    }
+    _renderFolderTabs();
+    _renderPatternGrid();
+  } catch (e) {
+    alert('Move failed: ' + e.message);
+  }
+}
+
+async function _ppDelete(patternPath, btn) {
+  if (!confirm(`Delete pattern "${patternPath}"?`)) return;
+  const r = await fetch('/api/patterns/' + encodeURIComponent(patternPath), { method: 'DELETE' });
+  const result = await r.json();
+  if (result.ok) {
+    _ppAllPatterns = _ppAllPatterns.filter(p => p.path !== patternPath);
+    btn.closest('.pp-card').remove();
+  } else {
+    alert('Delete failed: ' + (result.error || 'unknown'));
+  }
 }
 
 function loadObjectsSequentially(objects, idx, done) {
@@ -5243,6 +6456,12 @@ function saveUndo() {
   undoStack.push(json);
   if (undoStack.length > MAX_UNDO) undoStack.shift();
   redoStack = [];
+  // Autosave to localStorage so a refresh doesn't lose work
+  try {
+    localStorage.setItem('thumb_autosave', JSON.stringify({
+      canvasW, canvasH, json, ts: Date.now()
+    }));
+  } catch {}
 }
 
 function undo() {
@@ -5364,6 +6583,18 @@ function toggleVisActive() {
 
 // Attach right-click to canvas area
 document.getElementById('canvas-area').addEventListener('contextmenu', showContextMenu);
+// Attach right-click to layers panel
+document.getElementById('layers-panel').addEventListener('contextmenu', showLayerContextMenu);
+// Click on canvas-area background (outside the actual canvas) deselects all
+document.getElementById('canvas-area').addEventListener('mousedown', function(e) {
+  const wrapper = document.getElementById('canvas-wrapper');
+  if (!wrapper.contains(e.target)) {
+    canvas.discardActiveObject();
+    canvas.requestRenderAll();
+    refreshLayers();
+    updateProps();
+  }
+});
 // Close context menu on any click
 document.addEventListener('click', hideContextMenu);
 document.addEventListener('mousedown', function(e) {
@@ -5392,6 +6623,12 @@ document.addEventListener('keydown', function(e) {
       redo();
       return;
     }
+  }
+  // Ctrl+A select all
+  if (e.ctrlKey && e.key === 'a' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+    e.preventDefault();
+    selectAllLayers();
+    return;
   }
   // Ctrl+G group / Ctrl+Shift+G ungroup
   if (e.ctrlKey && e.key === 'g' && !e.shiftKey) {
@@ -5592,11 +6829,14 @@ function showTextureFillModal(prop) {
   const meta = obj?._texFillMetas?.[prop];
   const baseFill = isPatternFill(rawFill) ? (meta?.baseFill || '#333333') : (rawFill || '#333333');
 
+  const curScale = (gs?.texParams?.texScale != null) ? gs.texParams.texScale
+                  : (obj?._texFillMetas?.[prop]?.texScale != null ? obj._texFillMetas[prop].texScale : 1);
   window._texModal = {
     prop, typeId, baseFill,
     params:  { ...ttype.defaults, ...(gs?.texParams || {}) },
     blend:   curBlend,
     opacity: curOpa,
+    texScale: curScale,
   };
   _texModalRebuildUI();
   document.getElementById('tex-modal').classList.add('show');
@@ -5651,7 +6891,34 @@ function _texModalRebuildUI() {
   if (opaRange) opaRange.oninput = function() {
     m.opacity = +this.value / 100;
     if (opaVal) opaVal.textContent = this.value + '%';
+    _texModalUpdatePreview();
   };
+  const scaleRange = document.getElementById('tex-scale-range');
+  const scaleVal   = document.getElementById('tex-scale-val');
+  if (scaleRange) scaleRange.value = Math.round((m.texScale || 1) * 100);
+  if (scaleVal)   scaleVal.textContent = Math.round((m.texScale || 1) * 100) + '%';
+  // Base color: only meaningful when base is a solid hex — if a gradient,
+  // disable the picker and show a note
+  const baseIsGrad = isGradFill(m.baseFill);
+  const baseColor = baseIsGrad ? '#333333' : (typeof m.baseFill === 'string' ? m.baseFill : '#333333');
+  const baseInp = document.getElementById('tex-base-color');
+  const baseHex = document.getElementById('tex-base-hex');
+  if (baseInp) { baseInp.value = baseColor; baseInp.disabled = baseIsGrad; }
+  if (baseHex) { baseHex.value = baseIsGrad ? 'gradient (unchanged)' : baseColor; baseHex.disabled = baseIsGrad; }
+}
+
+function _texSetBaseColor(val) {
+  const m = window._texModal; if (!m) return;
+  if (isGradFill(m.baseFill)) return; // don't stomp a gradient
+  const v = (val || '').trim();
+  const hex = /^#?[0-9a-fA-F]{6}$/.test(v) ? (v.startsWith('#') ? v : '#' + v) : null;
+  if (!hex) return;
+  m.baseFill = hex;
+  const inp = document.getElementById('tex-base-color');
+  const hexInp = document.getElementById('tex-base-hex');
+  if (inp) inp.value = hex;
+  if (hexInp && document.activeElement !== hexInp) hexInp.value = hex;
+  _texModalUpdatePreview();
 }
 
 function _texModalUpdatePreview() {
@@ -5661,16 +6928,22 @@ function _texModalUpdatePreview() {
     const previewCanvas = document.getElementById('tex-preview-canvas');
     if (!previewCanvas) return;
     const pw = previewCanvas.width, ph = previewCanvas.height;
-    const dataURL = await _generateTextureDataURL(m.typeId, pw, ph, m.params);
+    const ts = Math.max(0.05, m.texScale || 1);
+    const dataURL = await _generateTextureDataURL(m.typeId, Math.max(8, Math.round(pw / ts)), Math.max(8, Math.round(ph / ts)), m.params);
     if (!dataURL) return;
     const img = new Image();
     img.onload = () => {
       const ctx = previewCanvas.getContext('2d');
       ctx.clearRect(0, 0, pw, ph);
-      // Draw a sample gradient background so blend modes are visible
-      const bg = ctx.createLinearGradient(0, 0, pw, ph);
-      bg.addColorStop(0, '#5C6B4F'); bg.addColorStop(1, '#C9A155');
-      ctx.fillStyle = bg; ctx.fillRect(0, 0, pw, ph);
+      // Draw the actual base fill so the preview matches the applied result
+      const base = m.baseFill;
+      if (isGradFill(base)) {
+        const cg = _fabricGradToCanvas(base, pw, ph, ctx);
+        ctx.fillStyle = cg || '#333333';
+      } else {
+        ctx.fillStyle = (typeof base === 'string' ? base : '#333333');
+      }
+      ctx.fillRect(0, 0, pw, ph);
       ctx.globalAlpha = m.opacity || 1;
       ctx.globalCompositeOperation = m.blend || 'overlay';
       ctx.drawImage(img, 0, 0, pw, ph);
@@ -5684,6 +6957,7 @@ function _getTargetSubObj(group, prop) {
   if (!group || !group._objects) return null;
   if (prop === '_bgBannerFill') return group._objects.find(o => o.type === 'polygon') || null;
   if (prop === '_hbShapeFill')  return group._objects.find(o => o.type !== 'textbox' && o.type !== 'text' && o.type !== 'i-text') || null;
+  if (prop === '_bgTextFill')   return group._objects.find(o => o.type === 'textbox' || o.type === 'text' || o.type === 'i-text') || null;
   return null;
 }
 
@@ -5698,59 +6972,86 @@ async function applyTextureFill() {
   const sub = _getTargetSubObj(obj, m.prop);
   const target = sub || obj;
   const gScale = sub ? { x: (obj.scaleX || 1), y: (obj.scaleY || 1) } : { x: 1, y: 1 };
-  const w = Math.max(64, Math.round((target.width  || 1) * (target.scaleX || 1) * gScale.x));
-  const h = Math.max(64, Math.round((target.height || 1) * (target.scaleY || 1) * gScale.y));
+  // Container = pattern stamp region (textbox layout box for text, full bbox for shapes).
+  const W = Math.max(64, Math.round((target.width  || 1) * (target.scaleX || 1) * gScale.x));
+  const H = Math.max(64, Math.round((target.height || 1) * (target.scaleY || 1) * gScale.y));
 
-  const dataURL = await _generateTextureDataURL(m.typeId, w, h, m.params);
-  if (!dataURL) return;
+  // For text we tile a fixed-size source so fabric's text rendering reliably
+  // samples pattern data everywhere; for shapes we generate at object size
+  // (no-repeat) which has always worked well.
+  const isTextTarget = (target && (target.type === 'textbox' || target.type === 'text' || target.type === 'i-text'));
+  const texScale = Math.max(0.05, m.texScale || 1);
+  let sw, sh, cw, ch;
+  if (isTextTarget) {
+    cw = ch = Math.max(32, Math.round(256 / texScale));
+    sw = sh = cw;
+  } else {
+    cw = W; ch = H;
+    sw = Math.max(8, Math.round(W / texScale));
+    sh = Math.max(8, Math.round(H / texScale));
+  }
+  const dataURL = await _generateTextureDataURL(m.typeId, sw, sh, m.params);
+  if (!dataURL) {
+    alert('Texture failed to render. Try again or pick a different texture.');
+    return;
+  }
 
   const texImg = new Image();
+  texImg.onerror = () => alert('Texture image failed to load.');
   texImg.onload = () => {
-    // Off-screen canvas: bake base fill + texture composite
+    // Off-screen canvas sized to the pattern tile (full bbox for shapes,
+    // fixed tile for text)
     const oc = document.createElement('canvas');
-    oc.width = w; oc.height = h;
+    oc.width = cw; oc.height = ch;
     const ctx = oc.getContext('2d');
 
     // 1. Draw base fill (solid colour or gradient)
     const base = m.baseFill;
     if (isGradFill(base)) {
-      const cg = _fabricGradToCanvas(base, w, h, ctx);
+      const cg = _fabricGradToCanvas(base, cw, ch, ctx);
       ctx.fillStyle = cg || '#333333';
     } else {
       ctx.fillStyle = base || '#333333';
     }
-    ctx.fillRect(0, 0, w, h);
+    ctx.fillRect(0, 0, cw, ch);
 
     // 2. Composite texture on top
     ctx.globalAlpha = m.opacity ?? 1;
     ctx.globalCompositeOperation = m.blend || 'overlay';
-    ctx.drawImage(texImg, 0, 0, w, h);
+    ctx.drawImage(texImg, 0, 0, cw, ch);
     ctx.globalAlpha = 1;
     ctx.globalCompositeOperation = 'source-over';
 
-    // 3. Bake to a pattern. Fabric 5 handles pattern offset internally.
-    const compositeImg = new Image();
-    compositeImg.onload = () => {
-      const pattern = new fabric.Pattern({ source: compositeImg, repeat: 'no-repeat' });
-      obj._texFillMetas = obj._texFillMetas || {};
-      obj._texFillMetas[m.prop] = {
-        type: m.typeId,
-        params: { ...m.params },
-        blend: m.blend,
-        opacity: m.opacity,
-        baseFill: m.baseFill,
-      };
-      setObjProp(m.prop, pattern);
-      if (_gS[m.prop]) {
-        _gS[m.prop].mode = 'texture';
-        _gS[m.prop].texType = m.typeId;
-        _gS[m.prop].texParams = { ...m.params, blend: m.blend, opacity: m.opacity };
-      }
-      hideTextureModal();
-      updateProps();
-      saveUndo();
+    // 3. Bake to a pattern. Use the offscreen canvas DIRECTLY as the source —
+    // avoids any image-decoding race and keeps the source as a guaranteed-loaded
+    // pixel buffer. For text, also disable object caching so the pattern is
+    // re-sampled every render at the actual displayed size.
+    const isTextTarget = (target && (target.type === 'textbox' || target.type === 'text' || target.type === 'i-text'));
+    const pattern = new fabric.Pattern({ source: oc, repeat: isTextTarget ? 'repeat' : 'no-repeat' });
+    obj._texFillMetas = obj._texFillMetas || {};
+    obj._texFillMetas[m.prop] = {
+      type: m.typeId,
+      params: { ...m.params },
+      blend: m.blend,
+      opacity: m.opacity,
+      baseFill: m.baseFill,
+      texScale: m.texScale,
     };
-    compositeImg.src = oc.toDataURL();
+    setObjProp(m.prop, pattern);
+    if (isTextTarget) {
+      const tgt = sub || obj;
+      tgt.objectCaching = false;
+      tgt.dirty = true;
+    }
+    if (_gS[m.prop]) {
+      _gS[m.prop].mode = 'texture';
+      _gS[m.prop].texType = m.typeId;
+      _gS[m.prop].texParams = { ...m.params, blend: m.blend, opacity: m.opacity, texScale: m.texScale };
+    }
+    canvas.requestRenderAll();
+    hideTextureModal();
+    updateProps();
+    saveUndo();
   };
   texImg.src = dataURL;
 }
@@ -5778,19 +7079,44 @@ function _genGrainDataURL(w, h, params) {
   return Promise.resolve(fc.toDataURL());
 }
 
-function _svgToDataURL(svgStr, w, h) {
+function _svgToDataURL(svgStr, w, h, attempt = 0) {
   return new Promise(resolve => {
-    const blob = new Blob([svgStr], { type:'image/svg+xml' });
-    const url  = URL.createObjectURL(blob);
-    const img  = new Image();
+    // Encode as data URI rather than blob URL — more reliable across browsers
+    const encoded = 'data:image/svg+xml;utf8,' + encodeURIComponent(svgStr);
+    const img = new Image();
+    let settled = false;
+    const timer = setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      console.warn('[texture] SVG load timed out', { w, h, attempt });
+      resolve(null);
+    }, 4000);
     img.onload = () => {
-      const oc = document.createElement('canvas'); oc.width = w; oc.height = h;
-      oc.getContext('2d').drawImage(img, 0, 0, w, h);
-      URL.revokeObjectURL(url);
-      resolve(oc.toDataURL());
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      try {
+        const oc = document.createElement('canvas'); oc.width = w; oc.height = h;
+        oc.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(oc.toDataURL());
+      } catch (e) {
+        console.warn('[texture] drawImage failed', e);
+        resolve(null);
+      }
     };
-    img.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
-    img.src = url;
+    img.onerror = async (e) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      console.warn('[texture] SVG failed to load', { attempt, w, h });
+      if (attempt < 1) {
+        // One retry, slight delay
+        setTimeout(() => resolve(_svgToDataURL(svgStr, w, h, attempt + 1)), 80);
+      } else {
+        resolve(null);
+      }
+    };
+    img.src = encoded;
   });
 }
 
@@ -5852,7 +7178,10 @@ async function addTextureOverlay(typeId) {
   if (!ttype) return;
   const params = { ...ttype.defaults };
   const dataURL = await _generateTextureDataURL(typeId, canvasW, canvasH, params);
-  if (!dataURL) return;
+  if (!dataURL) {
+    document.getElementById('status-selection').textContent = `Texture "${ttype.name}" failed to render — try again`;
+    return;
+  }
   fabric.Image.fromURL(dataURL, img => {
     img.set({
       left:0, top:0, width:canvasW, height:canvasH, scaleX:1, scaleY:1,
@@ -5878,12 +7207,85 @@ function setTextureParam(key, val) {
   regenerateTexture();
 }
 
+// Re-bake any texture-pattern fills on an object at its CURRENT rendered size.
+// Called after scaling/modification so the texture fills the whole shape
+// instead of staying at the original baked size.
+async function _rebakeTextureFills(obj) {
+  if (!obj || !obj._texFillMetas) return;
+  for (const prop of Object.keys(obj._texFillMetas)) {
+    const meta = obj._texFillMetas[prop];
+    if (!meta) continue;
+    const sub = _getTargetSubObj(obj, prop);
+    const target = sub || obj;
+    const gScale = sub ? { x: (obj.scaleX || 1), y: (obj.scaleY || 1) } : { x: 1, y: 1 };
+    const W = Math.max(64, Math.round((target.width  || 1) * (target.scaleX || 1) * gScale.x));
+    const H = Math.max(64, Math.round((target.height || 1) * (target.scaleY || 1) * gScale.y));
+
+    const isText = (target && (target.type === 'textbox' || target.type === 'text' || target.type === 'i-text'));
+    const texScale = Math.max(0.05, meta.texScale || 1);
+    let sw, sh, cw, ch;
+    if (isText) {
+      cw = ch = Math.max(32, Math.round(256 / texScale));
+      sw = sh = cw;
+    } else {
+      cw = W; ch = H;
+      sw = Math.max(8, Math.round(W / texScale));
+      sh = Math.max(8, Math.round(H / texScale));
+    }
+
+    const dataURL = await _generateTextureDataURL(meta.type, sw, sh, meta.params || {});
+    if (!dataURL) continue;
+
+    await new Promise(resolve => {
+      const texImg = new Image();
+      texImg.onerror = () => resolve();
+      texImg.onload = () => {
+        const oc = document.createElement('canvas');
+        oc.width = cw; oc.height = ch;
+        const ctx = oc.getContext('2d');
+        const base = meta.baseFill;
+        if (isGradFill(base)) {
+          const cg = _fabricGradToCanvas(base, cw, ch, ctx);
+          ctx.fillStyle = cg || '#333333';
+        } else {
+          ctx.fillStyle = base || '#333333';
+        }
+        ctx.fillRect(0, 0, cw, ch);
+        ctx.globalAlpha = meta.opacity ?? 1;
+        ctx.globalCompositeOperation = meta.blend || 'overlay';
+        ctx.drawImage(texImg, 0, 0, cw, ch);
+        ctx.globalAlpha = 1;
+        ctx.globalCompositeOperation = 'source-over';
+
+        const compositeImg = new Image();
+        compositeImg.onerror = () => resolve();
+        compositeImg.onload = () => {
+          const isTextTarget = (target && (target.type === 'textbox' || target.type === 'text' || target.type === 'i-text'));
+          const pattern = new fabric.Pattern({ source: compositeImg, repeat: isTextTarget ? 'repeat' : 'no-repeat' });
+          const tgt = sub || obj;
+          tgt.set(prop.startsWith('_') ? 'fill' : prop, pattern);
+          canvas.requestRenderAll();
+          resolve();
+        };
+        compositeImg.src = oc.toDataURL();
+      };
+      texImg.src = dataURL;
+    });
+  }
+}
+
 async function regenerateTexture() {
   const obj = canvas.getActiveObject();
   if (!obj || !obj._isTextureOverlay) return;
   const dataURL = await _generateTextureDataURL(obj._textureType, canvasW, canvasH, obj._textureParams || {});
-  if (!dataURL) return;
+  if (!dataURL) {
+    document.getElementById('status-selection').textContent = 'Texture failed to regenerate — try again';
+    return;
+  }
   const el = document.createElement('img');
+  el.onerror = () => {
+    document.getElementById('status-selection').textContent = 'Texture image failed to load';
+  };
   el.onload = () => { obj.setElement(el); obj.dirty = true; canvas.requestRenderAll(); saveUndo(); };
   el.src = dataURL;
 }
@@ -5913,11 +7315,40 @@ function setTextureBlend(mode) {
   canvas.requestRenderAll(); saveUndo();
 }
 
-// --- Boot ---
 initCanvas(1280, 720);
 renderTabs();
-autoLoadFromURL();
+
+// Try to restore autosaved work; fall back to URL-driven load
+(function _restoreAutosave() {
+  const qs = new URLSearchParams(window.location.search);
+  if (qs.get('data') || qs.get('src') || qs.get('load')) { autoLoadFromURL(); return; }
+  let saved = null;
+  try { saved = JSON.parse(localStorage.getItem('thumb_autosave') || 'null'); } catch {}
+  if (!saved || !saved.json) { autoLoadFromURL(); return; }
+  const ageMin = Math.round((Date.now() - (saved.ts || 0)) / 60000);
+  if (saved.canvasW && saved.canvasH && (saved.canvasW !== canvasW || saved.canvasH !== canvasH)) {
+    initCanvas(saved.canvasW, saved.canvasH);
+  }
+  undoLocked = true;
+  canvas.loadFromJSON(saved.json, function() {
+    reattachBehaviors();
+    refreshLayers();
+    updateProps();
+    undoLocked = false;
+    document.getElementById('status-selection').textContent =
+      `Restored autosave (${ageMin} min old) — use Clear Autosave to start fresh`;
+  });
+})();
+
 _buildBrandPanel();
+// Auto-fit canvas to available area on load
+requestAnimationFrame(() => setZoom(1));
+
+function clearAutosave() {
+  if (!confirm('Clear autosave and start fresh?')) return;
+  try { localStorage.removeItem('thumb_autosave'); } catch {}
+  location.reload();
+}
 // Populate texture options in add modal
 (function() {
   const grid = document.getElementById('texture-options');
@@ -5931,5 +7362,125 @@ _buildBrandPanel();
   });
 })();
 </script>
+
+<!-- Pattern picker modal -->
+<div id="pattern-picker-modal" onkeydown="if(event.key==='Escape')hidePatternPicker()">
+  <div class="pp-modal">
+    <h3>Insert Pattern</h3>
+    <div class="pp-tabs" id="pp-tabs"></div>
+    <div class="pp-search-row">
+      <input class="pp-search" id="pp-search" type="text" placeholder="Search patterns…" oninput="_ppFilter()" autocomplete="off">
+    </div>
+    <div class="pp-grid" id="pp-grid"></div>
+    <div class="pp-footer">
+      <div class="pp-footer-left">Double-click a pattern to insert it</div>
+      <button class="pp-btn" onclick="_ppFromFile()">From File…</button>
+      <button class="pp-btn" onclick="hidePatternPicker()">Cancel</button>
+      <button class="pp-btn pp-btn-primary" onclick="_ppInsert()">Insert</button>
+    </div>
+  </div>
+</div>
+
+<!-- Asset picker modal -->
+<div id="asset-picker-modal" onkeydown="if(event.key==='Escape')hideAssetPicker()">
+  <div class="pp-modal">
+    <h3>Insert Asset</h3>
+    <div id="ap-tag-filter" style="display:flex;flex-wrap:wrap;gap:4px;margin:6px 0;align-items:center;"></div>
+    <div class="pp-search-row">
+      <input class="pp-search" id="ap-search" type="text" placeholder="Search by name, tag, description…" oninput="_apFilter()" autocomplete="off">
+    </div>
+    <div class="pp-grid" id="ap-grid"></div>
+    <div class="pp-footer">
+      <div class="pp-footer-left">Double-click an asset to insert it</div>
+      <button class="pp-btn" onclick="_tmOpen()">Manage terms</button>
+      <button class="pp-btn" onclick="hideAssetPicker()">Cancel</button>
+      <button class="pp-btn pp-btn-primary" onclick="_apInsert()">Insert</button>
+    </div>
+  </div>
+</div>
+
+<!-- Term manager modal -->
+<div id="term-manager-modal" onkeydown="if(event.key==='Escape')_tmClose()">
+  <div class="pp-modal" style="width:520px;max-height:80vh;display:flex;flex-direction:column;">
+    <h3>Manage Terms</h3>
+    <div style="font-size:11px;color:#888;margin-bottom:8px;">Rename or delete tags across all assets. Changes apply immediately.</div>
+    <div id="tm-list" style="flex:1;overflow-y:auto;border:1px solid #333;border-radius:4px;padding:4px;"></div>
+    <div style="display:flex;gap:4px;margin-top:8px;">
+      <input id="tm-new-term" class="ps-input" placeholder="new term…" style="flex:1;font-size:12px;" onkeydown="if(event.key==='Enter'){event.preventDefault();_tmAddTerm();}">
+      <button type="button" class="pp-btn" onclick="_tmAddTerm()">+ Add term</button>
+    </div>
+    <div style="font-size:10px;color:#666;margin-top:4px;">Added terms become available in Edit Asset. They only persist once applied to an asset.</div>
+    <div class="pp-footer">
+      <button class="pp-btn pp-btn-primary" onclick="_tmClose()">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- Asset edit modal -->
+<div id="asset-edit-modal" style="position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:101;align-items:center;justify-content:center;" onkeydown="if(event.key==='Escape')_aeCancel()">
+  <div class="pp-modal" style="width:480px;">
+    <h3>Edit Asset</h3>
+    <div style="font-size:11px;color:#666;margin-bottom:10px;">
+      <div>id: <span id="ae-id" style="color:#999;font-family:monospace;"></span></div>
+      <div>path: <span id="ae-path" style="color:#999;font-family:monospace;"></span></div>
+    </div>
+    <div style="display:grid;grid-template-columns:100px 1fr;gap:8px;font-size:12px;align-items:center;">
+      <label>Filename</label>
+      <input id="ae-rename" class="ps-input" placeholder="new-filename (no extension)">
+      <label>Display name</label>
+      <input id="ae-displayname" class="ps-input" placeholder="Human-friendly name (optional)">
+      <label>Tags</label>
+      <div>
+        <input id="ae-tags" class="ps-input" placeholder="logo, brand, dark-bg-only" oninput="_aeRenderTagChips()" style="width:100%;box-sizing:border-box;">
+        <div id="ae-tag-chips" style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;"></div>
+        <div style="display:flex;gap:4px;margin-top:4px;">
+          <input id="ae-new-tag" class="ps-input" placeholder="add new term…" style="flex:1;font-size:11px;" onkeydown="if(event.key==='Enter'){event.preventDefault();_aeAddNewTag();}">
+          <button type="button" class="pp-btn" style="font-size:11px;padding:3px 8px;" onclick="_aeAddNewTag()">+ Add</button>
+        </div>
+      </div>
+      <label>Description</label>
+      <input id="ae-desc" class="ps-input" placeholder="One sentence for AI/humans">
+      <label>Usage</label>
+      <input id="ae-usage" class="ps-input" placeholder="e.g. min 120px wide, don't recolor">
+    </div>
+    <div style="font-size:10px;color:#666;margin-top:10px;">Renaming the file changes the asset's id. References to the old URL will break.</div>
+    <div class="pp-footer">
+      <button class="pp-btn" onclick="_aeCancel()">Cancel</button>
+      <button class="pp-btn pp-btn-primary" onclick="_aeSave()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Pattern save dialog -->
+<div id="pattern-save-modal" onkeydown="if(event.key==='Escape')hidePatternSaveDialog()">
+  <div class="ps-modal">
+    <h3>Save as Pattern</h3>
+    <div class="ps-row">
+      <label class="ps-label" for="ps-name">Name (slug)</label>
+      <input class="ps-input" id="ps-name" type="text" placeholder="e.g. bottom-date-strip" autocomplete="off"
+        onkeydown="if(event.key==='Enter')_psSave()">
+    </div>
+    <div class="ps-row">
+      <label class="ps-label" for="ps-folder">Folder</label>
+      <select class="ps-input" id="ps-folder" onchange="_psFolderChange()">
+        <option value="">— uncategorized —</option>
+      </select>
+    </div>
+    <div class="ps-row" id="ps-new-folder-row" style="display:none">
+      <label class="ps-label" for="ps-new-folder">New folder name</label>
+      <input class="ps-input" id="ps-new-folder" type="text" placeholder="e.g. banners" autocomplete="off"
+        onkeydown="if(event.key==='Enter')_psSave()">
+    </div>
+    <div class="ps-row">
+      <label class="ps-label" for="ps-desc">Description (optional)</label>
+      <input class="ps-input" id="ps-desc" type="text" placeholder="What is this pattern for?" autocomplete="off"
+        onkeydown="if(event.key==='Enter')_psSave()">
+    </div>
+    <div class="ps-footer">
+      <button class="pp-btn" onclick="hidePatternSaveDialog()">Cancel</button>
+      <button class="pp-btn pp-btn-primary" onclick="_psSave()">Save</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>

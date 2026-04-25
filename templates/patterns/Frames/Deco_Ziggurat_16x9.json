@@ -1,0 +1,679 @@
+{
+  "name": "Deco Ziggurat 16x9",
+  "description": "Art-deco variant in brand palette: stepped ziggurat corners (dark→sage→gold), reed lines at top and bottom, sunburst fans at side midpoints, coral keystones, gold pilaster dots.",
+  "canvasRef": {
+    "w": 1280,
+    "h": 720
+  },
+  "objects": [
+    {
+      "type": "rect",
+      "left": 0,
+      "top": 0,
+      "width": 1280,
+      "height": 720,
+      "fill": "#FAF6EE",
+      "_customName": "BG"
+    },
+    {
+      "type": "rect",
+      "left": 22,
+      "top": 22,
+      "width": 1236,
+      "height": 676,
+      "fill": null,
+      "stroke": "#87986A",
+      "strokeWidth": 5,
+      "_customName": "Outer Frame"
+    },
+    {
+      "type": "rect",
+      "left": 34,
+      "top": 34,
+      "width": 1212,
+      "height": 652,
+      "fill": null,
+      "stroke": "#ECB351",
+      "strokeWidth": 1.5,
+      "_customName": "Inner Hairline"
+    },
+    {
+      "type": "rect",
+      "left": 22,
+      "top": 22,
+      "width": 120,
+      "height": 30,
+      "fill": "#2B2318",
+      "_customName": "TL H0"
+    },
+    {
+      "type": "rect",
+      "left": 22,
+      "top": 52,
+      "width": 80,
+      "height": 22,
+      "fill": "#87986A",
+      "_customName": "TL H1"
+    },
+    {
+      "type": "rect",
+      "left": 22,
+      "top": 74,
+      "width": 44,
+      "height": 14,
+      "fill": "#ECB351",
+      "_customName": "TL H2"
+    },
+    {
+      "type": "rect",
+      "left": 22,
+      "top": 22,
+      "width": 30,
+      "height": 120,
+      "fill": "#2B2318",
+      "_customName": "TL V0"
+    },
+    {
+      "type": "rect",
+      "left": 52,
+      "top": 22,
+      "width": 22,
+      "height": 80,
+      "fill": "#87986A",
+      "_customName": "TL V1"
+    },
+    {
+      "type": "rect",
+      "left": 74,
+      "top": 22,
+      "width": 14,
+      "height": 44,
+      "fill": "#ECB351",
+      "_customName": "TL V2"
+    },
+    {
+      "type": "rect",
+      "left": 1138,
+      "top": 22,
+      "width": 120,
+      "height": 30,
+      "fill": "#2B2318",
+      "_customName": "TR H0"
+    },
+    {
+      "type": "rect",
+      "left": 1178,
+      "top": 52,
+      "width": 80,
+      "height": 22,
+      "fill": "#87986A",
+      "_customName": "TR H1"
+    },
+    {
+      "type": "rect",
+      "left": 1214,
+      "top": 74,
+      "width": 44,
+      "height": 14,
+      "fill": "#ECB351",
+      "_customName": "TR H2"
+    },
+    {
+      "type": "rect",
+      "left": 1228,
+      "top": 22,
+      "width": 30,
+      "height": 120,
+      "fill": "#2B2318",
+      "_customName": "TR V0"
+    },
+    {
+      "type": "rect",
+      "left": 1206,
+      "top": 22,
+      "width": 22,
+      "height": 80,
+      "fill": "#87986A",
+      "_customName": "TR V1"
+    },
+    {
+      "type": "rect",
+      "left": 1192,
+      "top": 22,
+      "width": 14,
+      "height": 44,
+      "fill": "#ECB351",
+      "_customName": "TR V2"
+    },
+    {
+      "type": "rect",
+      "left": 22,
+      "top": 668,
+      "width": 120,
+      "height": 30,
+      "fill": "#2B2318",
+      "_customName": "BL H0"
+    },
+    {
+      "type": "rect",
+      "left": 22,
+      "top": 646,
+      "width": 80,
+      "height": 22,
+      "fill": "#87986A",
+      "_customName": "BL H1"
+    },
+    {
+      "type": "rect",
+      "left": 22,
+      "top": 632,
+      "width": 44,
+      "height": 14,
+      "fill": "#ECB351",
+      "_customName": "BL H2"
+    },
+    {
+      "type": "rect",
+      "left": 22,
+      "top": 578,
+      "width": 30,
+      "height": 120,
+      "fill": "#2B2318",
+      "_customName": "BL V0"
+    },
+    {
+      "type": "rect",
+      "left": 52,
+      "top": 618,
+      "width": 22,
+      "height": 80,
+      "fill": "#87986A",
+      "_customName": "BL V1"
+    },
+    {
+      "type": "rect",
+      "left": 74,
+      "top": 654,
+      "width": 14,
+      "height": 44,
+      "fill": "#ECB351",
+      "_customName": "BL V2"
+    },
+    {
+      "type": "rect",
+      "left": 1138,
+      "top": 668,
+      "width": 120,
+      "height": 30,
+      "fill": "#2B2318",
+      "_customName": "BR H0"
+    },
+    {
+      "type": "rect",
+      "left": 1178,
+      "top": 646,
+      "width": 80,
+      "height": 22,
+      "fill": "#87986A",
+      "_customName": "BR H1"
+    },
+    {
+      "type": "rect",
+      "left": 1214,
+      "top": 632,
+      "width": 44,
+      "height": 14,
+      "fill": "#ECB351",
+      "_customName": "BR H2"
+    },
+    {
+      "type": "rect",
+      "left": 1228,
+      "top": 578,
+      "width": 30,
+      "height": 120,
+      "fill": "#2B2318",
+      "_customName": "BR V0"
+    },
+    {
+      "type": "rect",
+      "left": 1206,
+      "top": 618,
+      "width": 22,
+      "height": 80,
+      "fill": "#87986A",
+      "_customName": "BR V1"
+    },
+    {
+      "type": "rect",
+      "left": 1192,
+      "top": 654,
+      "width": 14,
+      "height": 44,
+      "fill": "#ECB351",
+      "_customName": "BR V2"
+    },
+    {
+      "type": "rect",
+      "left": 470,
+      "top": 46,
+      "width": 340,
+      "height": 1.5,
+      "fill": "#87986A",
+      "_customName": "Top Reed 0"
+    },
+    {
+      "type": "rect",
+      "left": 470,
+      "top": 51,
+      "width": 340,
+      "height": 1.5,
+      "fill": "#87986A",
+      "_customName": "Top Reed 1"
+    },
+    {
+      "type": "rect",
+      "left": 470,
+      "top": 56,
+      "width": 340,
+      "height": 1.5,
+      "fill": "#87986A",
+      "_customName": "Top Reed 2"
+    },
+    {
+      "type": "rect",
+      "left": 470,
+      "top": 61,
+      "width": 340,
+      "height": 1.5,
+      "fill": "#87986A",
+      "_customName": "Top Reed 3"
+    },
+    {
+      "type": "rect",
+      "left": 470,
+      "top": 66,
+      "width": 340,
+      "height": 1.5,
+      "fill": "#87986A",
+      "_customName": "Top Reed 4"
+    },
+    {
+      "type": "rect",
+      "left": 470,
+      "top": 654,
+      "width": 340,
+      "height": 1.5,
+      "fill": "#87986A",
+      "_customName": "Bot Reed 0"
+    },
+    {
+      "type": "rect",
+      "left": 470,
+      "top": 659,
+      "width": 340,
+      "height": 1.5,
+      "fill": "#87986A",
+      "_customName": "Bot Reed 1"
+    },
+    {
+      "type": "rect",
+      "left": 470,
+      "top": 664,
+      "width": 340,
+      "height": 1.5,
+      "fill": "#87986A",
+      "_customName": "Bot Reed 2"
+    },
+    {
+      "type": "rect",
+      "left": 470,
+      "top": 669,
+      "width": 340,
+      "height": 1.5,
+      "fill": "#87986A",
+      "_customName": "Bot Reed 3"
+    },
+    {
+      "type": "rect",
+      "left": 470,
+      "top": 674,
+      "width": 340,
+      "height": 1.5,
+      "fill": "#87986A",
+      "_customName": "Bot Reed 4"
+    },
+    {
+      "type": "polygon",
+      "points": [
+        {
+          "x": 0,
+          "y": 31.137978003906767
+        },
+        {
+          "x": 51.443428402743706,
+          "y": 0
+        },
+        {
+          "x": 4.588611490808368,
+          "y": 37.69119435821875
+        }
+      ],
+      "left": 23.705694254595816,
+      "top": 325.58541381893724,
+      "width": 51.443428402743706,
+      "height": 37.69119435821875,
+      "fill": "#ECB351",
+      "_customName": "L Fan ray0"
+    },
+    {
+      "type": "polygon",
+      "points": [
+        {
+          "x": 0,
+          "y": 14.22748016726348
+        },
+        {
+          "x": 58.425840242910716,
+          "y": 0
+        },
+        {
+          "x": 2.405646396034186,
+          "y": 21.857215773249322
+        }
+      ],
+      "left": 24.797176801982907,
+      "top": 341.9576520297436,
+      "width": 58.425840242910716,
+      "height": 21.857215773249322,
+      "fill": "#A8BE8B",
+      "_customName": "L Fan ray1"
+    },
+    {
+      "type": "polygon",
+      "points": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 60,
+          "y": 4
+        },
+        {
+          "x": 0,
+          "y": 8
+        }
+      ],
+      "left": 26,
+      "top": 356,
+      "width": 60,
+      "height": 8,
+      "fill": "#ECB351",
+      "_customName": "L Fan ray2"
+    },
+    {
+      "type": "polygon",
+      "points": [
+        {
+          "x": 2.405646396034186,
+          "y": 0
+        },
+        {
+          "x": 58.425840242910716,
+          "y": 21.857215773249322
+        },
+        {
+          "x": 0,
+          "y": 7.629735605985843
+        }
+      ],
+      "left": 24.797176801982907,
+      "top": 356.1851321970071,
+      "width": 58.425840242910716,
+      "height": 21.857215773249322,
+      "fill": "#A8BE8B",
+      "_customName": "L Fan ray3"
+    },
+    {
+      "type": "polygon",
+      "points": [
+        {
+          "x": 4.588611490808368,
+          "y": 0
+        },
+        {
+          "x": 51.443428402743706,
+          "y": 37.69119435821875
+        },
+        {
+          "x": 0,
+          "y": 6.553216354311985
+        }
+      ],
+      "left": 23.705694254595816,
+      "top": 356.723391822844,
+      "width": 51.443428402743706,
+      "height": 37.69119435821875,
+      "fill": "#ECB351",
+      "_customName": "L Fan ray4"
+    },
+    {
+      "type": "polygon",
+      "points": [
+        {
+          "x": 46.85481691193536,
+          "y": 0
+        },
+        {
+          "x": 0,
+          "y": 37.69119435821875
+        },
+        {
+          "x": 51.44342840274385,
+          "y": 6.553216354311985
+        }
+      ],
+      "left": 1204.8508773426604,
+      "top": 356.723391822844,
+      "width": 51.44342840274385,
+      "height": 37.69119435821875,
+      "fill": "#ECB351",
+      "_customName": "R Fan ray0"
+    },
+    {
+      "type": "polygon",
+      "points": [
+        {
+          "x": 56.02019384687651,
+          "y": 0
+        },
+        {
+          "x": 0,
+          "y": 21.857215773249322
+        },
+        {
+          "x": 58.42584024291068,
+          "y": 7.629735605985843
+        }
+      ],
+      "left": 1196.7769829551064,
+      "top": 356.1851321970071,
+      "width": 58.42584024291068,
+      "height": 21.857215773249322,
+      "fill": "#A8BE8B",
+      "_customName": "R Fan ray1"
+    },
+    {
+      "type": "polygon",
+      "points": [
+        {
+          "x": 60,
+          "y": 0
+        },
+        {
+          "x": 0,
+          "y": 4
+        },
+        {
+          "x": 60,
+          "y": 8
+        }
+      ],
+      "left": 1194,
+      "top": 356,
+      "width": 60,
+      "height": 8,
+      "fill": "#ECB351",
+      "_customName": "R Fan ray2"
+    },
+    {
+      "type": "polygon",
+      "points": [
+        {
+          "x": 58.42584024291068,
+          "y": 14.22748016726348
+        },
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 56.02019384687651,
+          "y": 21.857215773249322
+        }
+      ],
+      "left": 1196.7769829551064,
+      "top": 341.9576520297436,
+      "width": 58.42584024291068,
+      "height": 21.857215773249322,
+      "fill": "#A8BE8B",
+      "_customName": "R Fan ray3"
+    },
+    {
+      "type": "polygon",
+      "points": [
+        {
+          "x": 51.44342840274385,
+          "y": 31.137978003906767
+        },
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 46.85481691193536,
+          "y": 37.69119435821875
+        }
+      ],
+      "left": 1204.8508773426604,
+      "top": 325.58541381893724,
+      "width": 51.44342840274385,
+      "height": 37.69119435821875,
+      "fill": "#ECB351",
+      "_customName": "R Fan ray4"
+    },
+    {
+      "type": "polygon",
+      "points": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 46,
+          "y": 0
+        },
+        {
+          "x": 34,
+          "y": 16
+        },
+        {
+          "x": 12,
+          "y": 16
+        }
+      ],
+      "left": 617,
+      "top": 66,
+      "width": 46,
+      "height": 16,
+      "fill": "#FE6B4F",
+      "_customName": "Top Keystone"
+    },
+    {
+      "type": "polygon",
+      "points": [
+        {
+          "x": 12,
+          "y": 0
+        },
+        {
+          "x": 34,
+          "y": 0
+        },
+        {
+          "x": 46,
+          "y": 16
+        },
+        {
+          "x": 0,
+          "y": 16
+        }
+      ],
+      "left": 617,
+      "top": 638,
+      "width": 46,
+      "height": 16,
+      "fill": "#FE6B4F",
+      "_customName": "Bot Keystone"
+    },
+    {
+      "type": "circle",
+      "left": 67,
+      "top": 301,
+      "radius": 3,
+      "fill": "#F1DE83",
+      "_customName": "L Pilaster dot 0"
+    },
+    {
+      "type": "circle",
+      "left": 67,
+      "top": 357,
+      "radius": 3,
+      "fill": "#F1DE83",
+      "_customName": "L Pilaster dot 1"
+    },
+    {
+      "type": "circle",
+      "left": 67,
+      "top": 413,
+      "radius": 3,
+      "fill": "#F1DE83",
+      "_customName": "L Pilaster dot 2"
+    },
+    {
+      "type": "circle",
+      "left": 1207,
+      "top": 301,
+      "radius": 3,
+      "fill": "#F1DE83",
+      "_customName": "R Pilaster dot 0"
+    },
+    {
+      "type": "circle",
+      "left": 1207,
+      "top": 357,
+      "radius": 3,
+      "fill": "#F1DE83",
+      "_customName": "R Pilaster dot 1"
+    },
+    {
+      "type": "circle",
+      "left": 1207,
+      "top": 413,
+      "radius": 3,
+      "fill": "#F1DE83",
+      "_customName": "R Pilaster dot 2"
+    }
+  ]
+}
