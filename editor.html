@@ -177,10 +177,11 @@
 
   /* Tabs bar */
   #tabs-bar { display: flex; align-items: center; background: #1e1e1e; border-bottom: 1px solid #333; padding: 0 8px; height: 36px; flex-shrink: 0; overflow-x: auto; gap: 2px; }
-  .tab { display: flex; align-items: center; gap: 6px; padding: 6px 12px; background: #2a2a2a; border: 1px solid #333; border-bottom: none; border-radius: 6px 6px 0 0; cursor: pointer; font-size: 12px; color: #888; white-space: nowrap; user-select: none; max-width: 200px; }
+  .tab { display: flex; align-items: center; gap: 6px; padding: 6px 10px; background: #2a2a2a; border: 1px solid #333; border-bottom: none; border-radius: 6px 6px 0 0; cursor: pointer; font-size: 12px; color: #888; white-space: nowrap; user-select: none; max-width: 180px; }
   .tab:hover { background: #333; color: #ccc; }
   .tab.active { background: #333; color: #e0e0e0; border-color: #555; }
-  .tab .tab-name { overflow: hidden; text-overflow: ellipsis; }
+  .tab .tab-name { overflow: hidden; text-overflow: ellipsis; max-width: 120px; display: inline-block; }
+  .tab .tab-name-input { background: #1a1a1a; border: 1px solid #7aa2f7; border-radius: 3px; color: #e0e0e0; font-size: 12px; padding: 1px 5px; width: 110px; outline: none; }
   .tab .tab-close { font-size: 14px; color: #666; cursor: pointer; padding: 0 2px; border-radius: 2px; line-height: 1; }
   .tab .tab-close:hover { color: #ff6b6b; background: #442222; }
   .tab.tab-add { padding: 6px 10px; font-size: 16px; color: #888; font-weight: 600; background: #242424; }
@@ -906,9 +907,9 @@ let tabs = []; // { id, name, canvasW, canvasH, canvasJSON }
 let activeTabId = null;
 let tabIdCounter = 0;
 
-function createTab(name, w, h) {
+function createTab(name, w, h, filename) {
   const id = ++tabIdCounter;
-  tabs.push({ id, name, canvasW: w, canvasH: h, canvasJSON: null });
+  tabs.push({ id, name, filename: filename || null, canvasW: w, canvasH: h, canvasJSON: null });
   return id;
 }
 
@@ -978,30 +979,53 @@ function renderTabs() {
   tabs.forEach(tab => {
     const div = document.createElement('div');
     div.className = 'tab' + (tab.id === activeTabId ? ' active' : '');
-    div.innerHTML = `<span class="tab-name">${tab.name}</span><span class="tab-close" onclick="closeTab(${tab.id}, event)">&times;</span>`;
+    div.title = tab.filename || tab.name;
+    const nameSpan = document.createElement('span');
+    nameSpan.className = 'tab-name';
+    nameSpan.textContent = tab.name;
+    nameSpan.ondblclick = (e) => { e.stopPropagation(); _tabStartRename(tab.id, nameSpan); };
+    const closeSpan = document.createElement('span');
+    closeSpan.className = 'tab-close';
+    closeSpan.textContent = '×';
+    closeSpan.onclick = (e) => closeTab(tab.id, e);
+    div.appendChild(nameSpan);
+    div.appendChild(closeSpan);
     div.addEventListener('click', () => switchToTab(tab.id));
     bar.appendChild(div);
   });
-  // "+" button to add a new tab
   const addBtn = document.createElement('div');
   addBtn.className = 'tab tab-add';
-  addBtn.title = 'New tab';
+  addBtn.title = 'New 16:9 tab';
   addBtn.textContent = '+';
   addBtn.addEventListener('click', addTab);
   bar.appendChild(addBtn);
 }
 
+function _tabStartRename(tabId, nameSpan) {
+  const tab = tabs.find(t => t.id === tabId);
+  if (!tab) return;
+  const input = document.createElement('input');
+  input.className = 'tab-name-input';
+  input.value = tab.name;
+  nameSpan.replaceWith(input);
+  input.focus();
+  input.select();
+  const commit = () => {
+    const val = input.value.trim() || tab.name;
+    tab.name = val;
+    renderTabs();
+  };
+  input.onblur = commit;
+  input.onkeydown = (e) => { if (e.key === 'Enter') input.blur(); if (e.key === 'Escape') { input.value = tab.name; input.blur(); } };
+}
+
 function addTab() {
   saveCurrentTabState();
-  const w = canvasW || 1280;
-  const h = canvasH || 720;
-  const bg = (canvas && canvas.backgroundColor) || '';
-  const id = Date.now() + Math.floor(Math.random() * 1000);
   const name = 'Untitled ' + (tabs.length + 1);
-  // Seed an empty canvas JSON so the new tab loads at the requested size + bg
-  const seed = { version: fabric.version, objects: [], background: bg, width: w, height: h };
-  tabs.push({ id, name, canvasW: w, canvasH: h, canvasJSON: seed });
-  activeTabId = null; // prevent switchToTab from saving into the previous tab again
+  const seed = { version: fabric.version, objects: [], background: '', width: 1280, height: 720 };
+  const id = ++tabIdCounter;
+  tabs.push({ id, name, filename: null, canvasW: 1280, canvasH: 720, canvasJSON: seed });
+  activeTabId = null;
   switchToTab(id);
 }
 
@@ -5501,6 +5525,8 @@ function updateTipsBtn() {
   // Migrate any existing title= to data-tip so native tooltips don't fight us
   function migrate(root) {
     (root.querySelectorAll ? root.querySelectorAll('[title]') : []).forEach(el => {
+      // Leave title= alone on modal cards and tab bar — those use native browser tooltips
+      if (el.closest('.pp-card, .th-card, #tabs-bar')) return;
       const t = el.getAttribute('title');
       if (t && !el.getAttribute('data-tip')) el.setAttribute('data-tip', t);
       el.removeAttribute('title');
@@ -6423,13 +6449,11 @@ async function _thFabricRender(card, file) {
 }
 
 async function _thSaveToServer() {
-  const btn = document.querySelector('#thumb-modal .pp-btn-primary');
   const hint = document.getElementById('th-footer-hint');
-  const prev = hint.textContent;
-  hint.textContent = 'Saving…';
+  const prev = hint ? hint.textContent : '';
+  if (hint) hint.textContent = 'Saving…';
   const result = await saveJSONToServer();
   if (result) {
-    // Invalidate preview cache for saved file so it re-renders fresh
     const sf = _canvasSubfolder();
     const tab = tabs.find(t => t.id === activeTabId);
     const base = (tab ? tab.name : `thumbnail_${canvasW}x${canvasH}`).replace(/[^a-zA-Z0-9_\-]/g, '_');
@@ -6437,8 +6461,8 @@ async function _thSaveToServer() {
     delete _thPreviewCache[relPath];
   }
   await _thLoadFiles();
-  hint.textContent = result ? '✓ Saved' : prev;
-  setTimeout(() => { document.getElementById('th-footer-hint').textContent = 'Click to select · Double-click to open'; }, 2000);
+  if (hint) hint.textContent = result ? '✓ Saved' : prev;
+  setTimeout(() => { const h = document.getElementById('th-footer-hint'); if (h) h.textContent = 'Click to select · Double-click to open'; }, 2000);
 }
 
 async function saveSettings() {
@@ -6507,11 +6531,23 @@ function _buildJSONPayload() {
   return JSON.stringify({ meta, canvas: json }, null, 2);
 }
 
-function saveJSON() {
-  const data = _buildJSONPayload();
+function _promptFilename(forServer) {
   const tab = tabs.find(t => t.id === activeTabId);
-  const baseName = tab ? tab.name : `thumbnail_${canvasW}x${canvasH}`;
-  const blob = new Blob([data], { type: 'application/json' });
+  const existing = tab && tab.filename ? tab.filename.replace(/\.json$/i, '') : (tab ? tab.name : `thumbnail_${canvasW}x${canvasH}`);
+  const input = prompt('Save as:', existing);
+  if (input === null) return null;
+  const trimmed = input.trim().replace(/\.json$/i, '');
+  if (!trimmed) return null;
+  // Server saves need filesystem-safe names; downloads can keep spaces
+  return forServer ? trimmed.replace(/[^a-zA-Z0-9_\-]/g, '_') : trimmed;
+}
+
+function saveJSON() {
+  const baseName = _promptFilename(false);
+  if (baseName === null) return;
+  const tab = tabs.find(t => t.id === activeTabId);
+  if (tab) { tab.filename = baseName + '.json'; tab.name = baseName; renderTabs(); }
+  const blob = new Blob([_buildJSONPayload()], { type: 'application/json' });
   const link = document.createElement('a');
   link.download = `${baseName}.json`;
   link.href = URL.createObjectURL(blob);
@@ -6519,10 +6555,10 @@ function saveJSON() {
 }
 
 async function saveJSONToServer() {
+  const baseName = _promptFilename(true);
+  if (baseName === null) return;
+  const filename = baseName + '.json';
   const data = _buildJSONPayload();
-  const tab = tabs.find(t => t.id === activeTabId);
-  const baseName = (tab ? tab.name : `thumbnail_${canvasW}x${canvasH}`).replace(/[^a-zA-Z0-9_\-]/g, '_');
-  const filename = baseName.endsWith('.json') ? baseName : baseName + '.json';
   const subfolder = _canvasSubfolder();
   let preview = null;
   try { preview = await _generatePreviewDataUrl(); } catch {}
@@ -6536,6 +6572,8 @@ async function saveJSONToServer() {
     });
     const j = await r.json();
     if (!r.ok) throw new Error(j.error || 'save failed');
+    const tab = tabs.find(t => t.id === activeTabId);
+    if (tab) { tab.filename = filename; tab.name = baseName; renderTabs(); }
     document.getElementById('status-selection').textContent = `✓ Saved to ${j.path}`;
     return j;
   } catch (e) {
@@ -6567,7 +6605,7 @@ function loadJSONFiles(files, idx) {
       const tabName = file.name.replace(/\.json$/i, '');
 
       saveCurrentTabState();
-      const id = createTab(tabName, w, h);
+      const id = createTab(tabName, w, h, file.name);
       activeTabId = id;
       initCanvas(w, h);
 
@@ -8095,31 +8133,32 @@ function setTextureBlend(mode) {
   canvas.requestRenderAll(); saveUndo();
 }
 
-initCanvas(1280, 720);
-renderTabs();
-loadAppConfig();
-
-// Try to restore autosaved work; fall back to URL-driven load
-(function _restoreAutosave() {
+// Always start with a clean 16:9 tab — no autosave restore
+(function _startup() {
   const qs = new URLSearchParams(window.location.search);
-  if (qs.get('data') || qs.get('src') || qs.get('load')) { autoLoadFromURL(); return; }
-  let saved = null;
-  try { saved = JSON.parse(localStorage.getItem('thumb_autosave') || 'null'); } catch {}
-  if (!saved || !saved.json) { autoLoadFromURL(); return; }
-  const ageMin = Math.round((Date.now() - (saved.ts || 0)) / 60000);
-  if (saved.canvasW && saved.canvasH && (saved.canvasW !== canvasW || saved.canvasH !== canvasH)) {
-    initCanvas(saved.canvasW, saved.canvasH);
+  if (qs.get('data') || qs.get('src') || qs.get('load')) {
+    // URL-driven load: create a tab then let autoLoadFromURL populate it
+    const id = createTab('Untitled 1', 1280, 720);
+    activeTabId = id;
+    initCanvas(1280, 720);
+    renderTabs();
+    loadAppConfig();
+    autoLoadFromURL();
+    return;
   }
-  undoLocked = true;
-  canvas.loadFromJSON(saved.json, function() {
-    reattachBehaviors();
-    refreshLayers();
-    updateProps();
-    undoLocked = false;
-    document.getElementById('status-selection').textContent =
-      `Restored autosave (${ageMin} min old) — use Clear Autosave to start fresh`;
-  });
+  try { localStorage.removeItem('thumb_autosave'); } catch {}
+  const id = createTab('Untitled 1', 1280, 720);
+  activeTabId = id;
+  initCanvas(1280, 720);
+  renderTabs();
+  loadAppConfig();
 })();
+
+// Warn before leaving if the canvas has content
+window.addEventListener('beforeunload', e => {
+  const hasWork = canvas && canvas.getObjects().length > 0;
+  if (hasWork) { e.preventDefault(); e.returnValue = ''; }
+});
 
 _buildBrandPanel();
 // Auto-fit canvas to available area on load
