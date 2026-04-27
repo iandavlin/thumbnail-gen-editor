@@ -1,0 +1,6 @@
+{
+  "assetsDir": "assets",
+  "permanentDir": "assets/_permanent",
+  "patternsDir": "templates/patterns",
+  "outputDir": "output"
+}

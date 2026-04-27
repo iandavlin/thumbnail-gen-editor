@@ -1,38 +1,51 @@
 node_modules/
 
-# Generated thumbnail JSON / exports — source of truth lives elsewhere
+# ── Output thumbnails ────────────────────────────────────────────────────────
+# All generated JSON and rendered images are local only.
+# The empty folder structure is preserved via .gitkeep.
 output/*
-!output/.gitkeep
 !output/16x9/
 !output/1x1/
 output/16x9/*
 !output/16x9/.gitkeep
 output/1x1/*
 !output/1x1/.gitkeep
+*.preview.jpg
+*.pptx
+*.png
+*.jpg
+*.jpeg
 
-# Episode assets — copy in per-deploy
-assets/*
-!assets/.gitkeep
+# ── Episode / per-shoot assets ───────────────────────────────────────────────
+# Dated episode folders and named shoot folders are local only.
+# _permanent/ is tracked for manifests; its images are not.
+assets/20*/
+assets/episode/
+assets/stewmac_sale/
+assets/Creston_*/
+assets/*.jpg
+assets/*.jpeg
+assets/*.png
 
-# OS / editor cruft
+assets/_permanent/logos/*
+!assets/_permanent/logos/.gitkeep
+assets/_permanent/misc/*
+!assets/_permanent/misc/.gitkeep
+
+# ── OS / editor cruft ────────────────────────────────────────────────────────
 .DS_Store
 Thumbs.db
 *.log
 .env
 .env.*
 
-# Build artifacts and tooling
+# ── Build artifacts ───────────────────────────────────────────────────────────
 dist/
 skills/
 
-# Claude Code session data + local launch config
+# ── Claude Code session data ─────────────────────────────────────────────────
 .claude/
 
-# Stray top-level images (don't commit ad-hoc reference photos)
-/*.jpg
-/*.jpeg
-/*.png
-
-# Tooling backups
+# ── Tooling backups ───────────────────────────────────────────────────────────
 *.bak
 *.bak.*

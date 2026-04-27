@@ -1,0 +1,60 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Permanent Assets Manifest",
+  "type": "object",
+  "required": ["schemaVersion", "assets"],
+  "properties": {
+    "schemaVersion": { "type": "integer", "const": 1 },
+    "tagVocabulary": {
+      "type": "array",
+      "description": "Closed vocabulary of allowed tags. Add new ones deliberately.",
+      "items": { "type": "string" },
+      "uniqueItems": true
+    },
+    "assets": {
+      "type": "object",
+      "description": "Map of asset id -> asset entry.",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["path", "width", "height", "format"],
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Path relative to assets/_permanent/"
+          },
+          "width":  { "type": "integer", "minimum": 1 },
+          "height": { "type": "integer", "minimum": 1 },
+          "aspectRatio": { "type": "number" },
+          "format": { "type": "string", "enum": ["png", "jpg", "jpeg", "webp", "svg", "gif"] },
+          "fileSize": { "type": "integer", "minimum": 0 },
+          "hasAlpha": { "type": "boolean" },
+          "dominantColors": {
+            "type": "array",
+            "items": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
+            "maxItems": 5
+          },
+          "hash": { "type": "string", "description": "sha256 of file contents" },
+          "tags": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+          "displayName": { "type": "string", "description": "Human-friendly name shown in the picker (overrides id for display only)." },
+          "description": { "type": "string" },
+          "usage": { "type": "string", "description": "Free-form constraints: min size, do-not-recolor, pairings." },
+          "safeArea": {
+            "type": "object",
+            "properties": {
+              "x": { "type": "number" }, "y": { "type": "number" },
+              "w": { "type": "number" }, "h": { "type": "number" }
+            }
+          },
+          "focalPoint": {
+            "type": "object",
+            "properties": { "x": { "type": "number" }, "y": { "type": "number" } }
+          },
+          "variants": { "type": "array", "items": { "type": "string" } },
+          "addedAt": { "type": "string", "format": "date" }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

@@ -6,7 +6,7 @@
 <title>Thumbnail Editor</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Jost:wght@400;700&family=Lato:wght@400;700&family=Montserrat:wght@400;700&family=Open+Sans:wght@400;700&family=Oswald:wght@400;700&family=Playfair+Display:wght@400;700&family=Poppins:wght@400;700&family=Raleway:wght@400;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Jost:wght@400;700&family=Lato:wght@400;700&family=Montserrat:wght@400;700&family=Open+Sans:wght@400;700&family=Oswald:wght@400;700&family=Playfair+Display:wght@400;700&family=Poppins:wght@400;700&family=Raleway:wght@400;700&family=Roboto:wght@400;700&family=Alfa+Slab+One&family=Barlow+Condensed:wght@400;700&family=Josefin+Sans:wght@100;400;700&family=Josefin+Slab:wght@100;400;700&family=Poiret+One&display=swap" rel="stylesheet">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #1a1a1a; color: #e0e0e0; display: flex; height: 100vh; overflow: hidden; }
@@ -226,6 +226,16 @@
   .pp-footer-left { flex:1; font-size:11px; color:#555; }
   .pp-btn { padding:7px 16px; border-radius:4px; border:1px solid #444; cursor:pointer; font-size:13px; background:#333; color:#ccc; }
   .pp-btn-primary { background:#7aa2f7; color:#111; border-color:#7aa2f7; font-weight:600; }
+  .th-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:12px; overflow-y:auto; flex:1; padding-right:4px; min-height:120px; }
+  .th-card { background:#252525; border:2px solid #333; border-radius:6px; cursor:pointer; overflow:hidden; transition:border-color .12s; user-select:none; }
+  .th-card:hover { border-color:#555; }
+  .th-card.selected { border-color:#7aa2f7; }
+  .th-card-preview { width:100%; aspect-ratio:16/9; background:#111; display:flex; align-items:center; justify-content:center; overflow:hidden; position:relative; }
+  .th-card-preview img { width:100%; height:100%; object-fit:cover; display:block; }
+  .th-placeholder { display:flex; align-items:center; justify-content:center; width:100%; height:100%; opacity:.4; }
+  .th-card-info { padding:7px 10px 8px; border-top:1px solid #2a2a2a; }
+  .th-card-name { font-size:11px; color:#ccc; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-family:monospace; }
+  .th-card-folder { font-size:10px; color:#555; margin-top:2px; }
   .pp-empty { color:#555; font-size:13px; padding:24px; text-align:center; }
   /* Pattern folder tabs */
   .pp-tabs { display:flex; gap:4px; margin-bottom:10px; flex-wrap:wrap; align-items:center; }
@@ -323,8 +333,8 @@
     <button class="btn-tips" id="btn-tips" onclick="toggleTips()" data-tip="Toggle hover tooltips on all controls">💡 Tips</button>
     <div class="sep"></div>
     <div class="group">
-      <button class="btn-json" onclick="loadJSON()">Load JSON(s)</button>
-      <button class="btn-json" onclick="saveJSON()">Save JSON</button>
+      <button class="btn-json" onclick="openThumbModal()">Thumbnails</button>
+      <button class="btn-json" onclick="_thSaveToServer()" data-tip="Save current canvas as a thumbnail JSON (and preview) to the output folder">Save Thumbnail</button>
     </div>
     <div class="sep"></div>
     <div class="group">
@@ -550,15 +560,77 @@
     <div id="asset-modal-episode-fields" style="margin-bottom:12px;border-top:1px solid #2a2a2a;padding-top:12px;">
       <div style="display:grid;grid-template-columns:90px 1fr;gap:8px;font-size:12px;align-items:center;">
         <label>Episode</label>
-        <select id="asset-modal-episode" style="background:#0e0e0e;border:1px solid #333;color:#eee;padding:5px 7px;border-radius:3px;"></select>
+        <select id="asset-modal-episode" onchange="onEpisodeSelectChange()" style="background:#0e0e0e;border:1px solid #333;color:#eee;padding:5px 7px;border-radius:3px;"></select>
+        <label id="asset-modal-new-episode-label" style="display:none">Folder name</label>
+        <input id="asset-modal-new-episode" placeholder="e.g. 2026-05-03_koll-creston" style="display:none;background:#0e0e0e;border:1px solid #A8BE8B;color:#eee;padding:5px 7px;border-radius:3px;">
         <label>Filename</label>
         <input id="asset-modal-episode-name" style="background:#0e0e0e;border:1px solid #333;color:#eee;padding:5px 7px;border-radius:3px;">
       </div>
     </div>
 
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:6px;">
+      <button onclick="openSettings('assets')" style="padding:7px 14px;background:#222;border:1px solid #444;color:#888;border-radius:4px;cursor:pointer;margin-right:auto;">Manage Folders…</button>
       <button onclick="cancelAssetModal()" style="padding:7px 18px;background:#333;border:1px solid #444;color:#ccc;border-radius:4px;cursor:pointer;">Cancel</button>
       <button onclick="confirmAssetModal()" style="padding:7px 18px;background:#7aa2f7;color:#111;border:none;border-radius:4px;cursor:pointer;font-weight:600;">Add to canvas</button>
+    </div>
+  </div>
+</div>
+
+<!-- Settings Modal -->
+<div id="settings-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:#1a1a1a;color:#eee;padding:24px;border-radius:8px;width:500px;max-width:94vw;border:1px solid #333;">
+    <div style="font-size:16px;font-weight:600;margin-bottom:4px;">⚙ Folder Settings</div>
+    <div style="font-size:12px;color:#888;margin-bottom:16px;">Paths can be absolute or relative to the project root. Leave blank to use the default.</div>
+    <div style="display:grid;grid-template-columns:120px 1fr;gap:10px;font-size:12px;align-items:center;margin-bottom:16px;">
+      <label style="color:#A8BE8B;font-weight:600">Assets</label>
+      <div>
+        <input id="cfg-assetsDir" placeholder="assets" style="width:100%;box-sizing:border-box;background:#0e0e0e;border:1px solid #333;color:#eee;padding:5px 8px;border-radius:3px;font-size:12px">
+        <div id="cfg-assetsDir-hint" style="font-size:10px;color:#666;margin-top:2px"></div>
+      </div>
+      <label style="color:#A8BE8B;font-weight:600">Permanent</label>
+      <div>
+        <input id="cfg-permanentDir" placeholder="assets/_permanent" style="width:100%;box-sizing:border-box;background:#0e0e0e;border:1px solid #333;color:#eee;padding:5px 8px;border-radius:3px;font-size:12px">
+        <div id="cfg-permanentDir-hint" style="font-size:10px;color:#666;margin-top:2px"></div>
+      </div>
+      <label style="color:#ECB351;font-weight:600">Patterns</label>
+      <div>
+        <input id="cfg-patternsDir" placeholder="templates/patterns" style="width:100%;box-sizing:border-box;background:#0e0e0e;border:1px solid #333;color:#eee;padding:5px 8px;border-radius:3px;font-size:12px">
+        <div id="cfg-patternsDir-hint" style="font-size:10px;color:#666;margin-top:2px"></div>
+      </div>
+      <label style="color:#7aa2f7;font-weight:600">JSON output</label>
+      <div>
+        <input id="cfg-outputDir" placeholder="output" style="width:100%;box-sizing:border-box;background:#0e0e0e;border:1px solid #333;color:#eee;padding:5px 8px;border-radius:3px;font-size:12px">
+        <div id="cfg-outputDir-hint" style="font-size:10px;color:#666;margin-top:2px"></div>
+      </div>
+    </div>
+    <div id="settings-status" style="font-size:11px;color:#888;min-height:16px;margin-bottom:10px"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button onclick="closeSettings()" style="padding:7px 18px;background:#333;border:1px solid #444;color:#ccc;border-radius:4px;cursor:pointer">Cancel</button>
+      <button onclick="saveSettings()" style="padding:7px 18px;background:#7aa2f7;color:#111;border:none;border-radius:4px;cursor:pointer;font-weight:600">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Thumbnails Modal -->
+<div id="thumb-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:9999;align-items:center;justify-content:center;" onkeydown="if(event.key==='Escape')closeThumbModal()">
+  <div class="pp-modal" style="width:920px;max-width:96vw;max-height:86vh;">
+    <h3>Thumbnails</h3>
+    <div class="pp-tabs" id="th-tabs"></div>
+    <div class="pp-search-row">
+      <input class="pp-search" id="th-search" type="text" placeholder="Search thumbnails…" oninput="_thFilter()" autocomplete="off">
+    </div>
+    <div class="th-grid" id="th-grid">
+      <div style="grid-column:1/-1;color:#555;padding:20px;text-align:center;font-size:12px;">Loading…</div>
+    </div>
+    <div id="th-pagination" style="display:flex;align-items:center;justify-content:center;gap:10px;padding:8px 0 2px;font-size:12px;color:#888;"></div>
+    <div class="pp-footer">
+      <div class="pp-footer-left" id="th-footer-hint">Click to select · Double-click to open</div>
+      <button class="pp-btn" onclick="loadJSON();closeThumbModal()">From File…</button>
+      <button class="pp-btn" onclick="openSettings('json')">Manage Folder…</button>
+      <button class="pp-btn" onclick="saveJSON();closeThumbModal()">Download</button>
+      <button class="pp-btn" onclick="_thSaveToServer()">Save to Server</button>
+      <button class="pp-btn" onclick="closeThumbModal()">Close</button>
+      <button class="pp-btn pp-btn-primary" id="th-open-btn" onclick="_thOpen()" disabled>Open</button>
     </div>
   </div>
 </div>
@@ -569,7 +641,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
 <script>
 // --- Font List ---
-const FONTS = ['Jost','Arial','Helvetica','Georgia','Times New Roman','Courier New','Verdana','Impact','Trebuchet MS','Palatino','Garamond','Oswald','Montserrat','Roboto','Poppins','Lato','Open Sans','Raleway','Playfair Display','Bebas Neue'];
+const FONTS = ['Jost','Arial','Helvetica','Georgia','Times New Roman','Courier New','Verdana','Impact','Trebuchet MS','Palatino','Garamond','Oswald','Montserrat','Roboto','Poppins','Lato','Open Sans','Raleway','Playfair Display','Bebas Neue','Josefin Sans','Josefin Slab','Alfa Slab One','Poiret One','Barlow Condensed'];
 
 // --- Brand Palette ---
 // The Looth Group — aged palette (2026). Grouped: Core → Neutrals → Extended.
@@ -970,6 +1042,8 @@ function initCanvas(w, h) {
     }
     // Texture fills: re-bake at the new size so they don't leave empty regions
     if (o && o._texFillMetas) _rebakeTextureFills(o);
+    // Clip border ring: keep in sync after any transform
+    if (o && o._clipBorderId) _syncBorderRing(o);
     saveUndo(); refreshLayers(); updateProps();
   });
   canvas.on('mouse:move', onMouseMove);
@@ -1082,6 +1156,7 @@ function onObjectMoving(e) {
     addGuideline([0, nb.top, canvasW, nb.top]);
     addGuideline([0, nb.top + nb.height, canvasW, nb.top + nb.height]);
   }
+  if (obj._clipBorderId) _syncBorderRing(obj);
   updateProps();
 }
 
@@ -1215,6 +1290,219 @@ function setImageCornerRadius(r) {
     updateProps();
     saveUndo();
   }, { crossOrigin: 'anonymous' });
+}
+
+// --- Clip Shape (crop images to circle or rounded rect) ----------------------
+// Stored on image: _clipShape ('none'|'circle'|'roundedRect'), _clipRadius,
+//   _clipBorderEnabled, _clipBorderColor, _clipBorderWidth, _clipBorderId.
+// Border ring: a separate non-selectable canvas object (_isBorderRing:true,
+//   _borderRingId) whose ID is mirrored in img._clipBorderId so we can find it.
+
+function _imgCenter(img) {
+  const ox = img.originX === 'center' ? 0 : (img.width  * (img.scaleX || 1)) / 2;
+  const oy = img.originY === 'center' ? 0 : (img.height * (img.scaleY || 1)) / 2;
+  return { x: img.left + ox, y: img.top + oy };
+}
+
+function _getBorderRing(img) {
+  if (!img || !img._clipBorderId) return null;
+  return canvas.getObjects().find(o => o._borderRingId === img._clipBorderId) || null;
+}
+
+function _removeBorderRing(img) {
+  const ring = _getBorderRing(img);
+  if (ring) canvas.remove(ring);
+  if (img) img._clipBorderId = null;
+}
+
+function _syncBorderRing(img) {
+  if (!img || !img._clipShape || img._clipShape === 'none' || !img._clipBorderEnabled) {
+    _removeBorderRing(img);
+    return;
+  }
+  const color   = img._clipBorderColor || '#ECB351';
+  const borderW = img._clipBorderWidth  || 4;
+  const r       = img._clipRadius != null ? img._clipRadius : Math.min(img.width, img.height) / 2;
+  const center  = _imgCenter(img);
+  const sx      = img.scaleX || 1;
+  const sy      = img.scaleY || 1;
+  let ring = _getBorderRing(img);
+
+  if (img._clipShape === 'circle') {
+    const scaledR = r * Math.min(sx, sy);
+    if (!ring || ring.type !== 'circle') {
+      if (ring) canvas.remove(ring);
+      const id = 'br_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+      ring = new fabric.Circle({
+        radius: scaledR, fill: 'transparent',
+        stroke: color, strokeWidth: borderW,
+        originX: 'center', originY: 'center',
+        left: center.x, top: center.y,
+        selectable: false, evented: false,
+        _isBorderRing: true, _borderRingId: id,
+      });
+      img._clipBorderId = id;
+      canvas.add(ring);
+    } else {
+      ring.set({ radius: scaledR, stroke: color, strokeWidth: borderW, left: center.x, top: center.y });
+      ring.setCoords();
+    }
+  } else if (img._clipShape === 'roundedRect') {
+    const w  = img.width  * sx;
+    const h  = img.height * sy;
+    const rr = Math.min(r * Math.min(sx, sy), w / 2, h / 2);
+    if (!ring || ring.type !== 'rect') {
+      if (ring) canvas.remove(ring);
+      const id = 'br_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+      ring = new fabric.Rect({
+        width: w, height: h, rx: rr, ry: rr,
+        fill: 'transparent', stroke: color, strokeWidth: borderW,
+        originX: 'center', originY: 'center',
+        left: center.x, top: center.y, angle: img.angle || 0,
+        selectable: false, evented: false,
+        _isBorderRing: true, _borderRingId: id,
+      });
+      img._clipBorderId = id;
+      canvas.add(ring);
+    } else {
+      ring.set({ width: w, height: h, rx: rr, ry: rr,
+                 stroke: color, strokeWidth: borderW,
+                 left: center.x, top: center.y, angle: img.angle || 0 });
+      ring.setCoords();
+    }
+  }
+
+  if (ring) canvas.bringToFront(ring);
+}
+
+function _buildClipPath(img) {
+  const type = img._clipShape;
+  if (!type || type === 'none') return null;
+  const w = img.width, h = img.height;
+  const r = img._clipRadius != null ? img._clipRadius : Math.min(w, h) / 2;
+  if (type === 'circle') {
+    return new fabric.Circle({ radius: r, originX: 'center', originY: 'center', absolutePositioned: false });
+  }
+  if (type === 'roundedRect') {
+    const rr = Math.min(r, w / 2, h / 2);
+    return new fabric.Rect({ width: w, height: h, rx: rr, ry: rr, originX: 'center', originY: 'center', absolutePositioned: false });
+  }
+  return null;
+}
+
+function _applyClipShapeInPlace(img) {
+  img.clipPath = _buildClipPath(img);
+  img.dirty = true;
+}
+
+function applyClipShapeToImage(img) {
+  const type = img._clipShape || 'none';
+  if (type === 'none') {
+    img.clipPath = null;
+    img._cornerRadius = 0;
+    img.dirty = true;
+    _removeBorderRing(img);
+    canvas.requestRenderAll();
+    saveUndo();
+    return;
+  }
+  const src  = img.getSrc ? img.getSrc() : img.src;
+  const idx  = canvas.getObjects().indexOf(img);
+  const copyKeys = ['left','top','scaleX','scaleY','width','height','cropX','cropY',
+    'angle','opacity','flipX','flipY','selectable','evented',
+    'lockMovementX','lockMovementY','lockScalingX','lockScalingY','lockRotation'];
+  const props  = {};
+  copyKeys.forEach(k => { if (img[k] !== undefined) props[k] = img[k]; });
+  const custom = {};
+  Object.keys(img).filter(k => k.startsWith('_')).forEach(k => { custom[k] = img[k]; });
+  const shadow  = img.shadow ? new fabric.Shadow(img.shadow.toObject ? img.shadow.toObject() : img.shadow) : null;
+  const filters = img.filters ? img.filters.slice() : [];
+  _removeBorderRing(img);
+  fabric.Image.fromURL(src, function(fresh) {
+    fresh.set(props);
+    Object.assign(fresh, custom);
+    if (shadow) fresh.shadow = shadow;
+    if (filters.length) { fresh.filters = filters; fresh.applyFilters(); }
+    setupImageControls(fresh);
+    fresh.clipPath = _buildClipPath(fresh);
+    canvas.remove(img);
+    canvas.insertAt(fresh, idx);
+    canvas.setActiveObject(fresh);
+    canvas.requestRenderAll();
+    _syncBorderRing(fresh);
+    updateProps();
+    saveUndo();
+  }, { crossOrigin: 'anonymous' });
+}
+
+function setClipShape(type) {
+  const img = canvas.getActiveObject();
+  if (!img || img.type !== 'image') return;
+  img._clipShape = type;
+  if (type === 'circle' && img._clipRadius == null)
+    img._clipRadius = Math.min(img.width, img.height) / 2;
+  else if (type === 'roundedRect' && img._clipRadius == null)
+    img._clipRadius = Math.round(Math.min(img.width, img.height) * 0.15);
+  applyClipShapeToImage(img);
+}
+
+function setClipRadius(r) {
+  const img = canvas.getActiveObject();
+  if (!img || img.type !== 'image') return;
+  img._clipRadius = +r;
+  if (img.clipPath) {
+    if (img._clipShape === 'circle') {
+      img.clipPath.set({ radius: +r });
+    } else if (img._clipShape === 'roundedRect') {
+      const rr = Math.min(+r, img.width / 2, img.height / 2);
+      img.clipPath.set({ rx: rr, ry: rr });
+    }
+    img.clipPath.setCoords();
+    img.dirty = true;
+  } else {
+    img.clipPath = _buildClipPath(img);
+    img.dirty = true;
+  }
+  canvas.requestRenderAll();
+  _syncBorderRing(img);
+  clearTimeout(img._clipRadiusTimer);
+  img._clipRadiusTimer = setTimeout(() => saveUndo(), 600);
+}
+
+function setClipBorderEnabled(enabled) {
+  const img = canvas.getActiveObject();
+  if (!img || img.type !== 'image') return;
+  img._clipBorderEnabled = enabled;
+  if (!enabled) _removeBorderRing(img);
+  else _syncBorderRing(img);
+  canvas.requestRenderAll();
+  updateProps();
+  saveUndo();
+}
+
+function setClipBorderColor(color) {
+  const img = canvas.getActiveObject();
+  if (!img) return;
+  img._clipBorderColor = color;
+  const ring = _getBorderRing(img);
+  if (ring) { ring.set({ stroke: color }); canvas.requestRenderAll(); }
+  else _syncBorderRing(img);
+}
+
+function setClipBorderWidth(w) {
+  const img = canvas.getActiveObject();
+  if (!img) return;
+  img._clipBorderWidth = +w;
+  const ring = _getBorderRing(img);
+  if (ring) { ring.set({ strokeWidth: +w }); canvas.requestRenderAll(); }
+  else _syncBorderRing(img);
+}
+
+function centerClipShape() {
+  const img = canvas.getActiveObject();
+  if (!img || img.type !== 'image' || !img._clipShape || img._clipShape === 'none') return;
+  if (img._clipShape === 'circle') img._clipRadius = Math.min(img.width, img.height) / 2;
+  applyClipShapeToImage(img);
 }
 
 // --- Image filters (Fabric.Image.filters.*) ---
@@ -1415,6 +1703,7 @@ function onObjectScaling(e) {
   if (corner.includes('r')) addGuideline([newR, 0, newR, canvasH]);
   if (corner.includes('t')) addGuideline([0, newT, canvasW, newT]);
   if (corner.includes('b')) addGuideline([0, newB, canvasW, newB]);
+  if (obj._clipBorderId) _syncBorderRing(obj);
   updateProps();
 }
 
@@ -1757,6 +2046,7 @@ function duplicateLayer() {
 function deleteLayer() {
   const obj = canvas.getActiveObject();
   if (!obj) return;
+  if (obj._clipBorderId) _removeBorderRing(obj);
   canvas.remove(obj);
   canvas.discardActiveObject();
   canvas.requestRenderAll();
@@ -2332,7 +2622,31 @@ function updateProps() {
   }
   else if (obj.type === 'image') {
     html += '<hr style="border-color:#333;margin:8px 0">';
-    html += `<div class="prop-row"><label>Rad</label><input type="number" min="0" max="2000" value="${obj._cornerRadius || 0}" onchange="setImageCornerRadius(+this.value)"></div>`;
+    // Clip Shape
+    const clipShape = obj._clipShape || (obj._cornerRadius > 0 ? 'roundedRect' : 'none');
+    const clipRadius = obj._clipRadius != null ? obj._clipRadius : (obj._cornerRadius || 0);
+    const clipBorderEnabled = !!obj._clipBorderEnabled;
+    const clipBorderColor = obj._clipBorderColor || '#ECB351';
+    const clipBorderWidth = obj._clipBorderWidth || 4;
+    const _bs = (active) => `flex:1;padding:3px 0;background:${active?'#3a2a1a':'#222'};color:${active?'#ECB351':'#888'};border:1px solid ${active?'#ECB351':'#444'};border-radius:3px;cursor:pointer;font-size:10px`;
+    html += `<div style="font-size:11px;color:#888;margin:4px 0 2px">Clip Shape</div>`;
+    html += `<div class="prop-row" style="gap:4px">
+      <button onclick="setClipShape('none')" style="${_bs(clipShape==='none')}">None</button>
+      <button onclick="setClipShape('circle')" style="${_bs(clipShape==='circle')}">○ Circle</button>
+      <button onclick="setClipShape('roundedRect')" style="${_bs(clipShape==='roundedRect')}">▢ Rect</button>
+    </div>`;
+    if (clipShape !== 'none') {
+      const maxR = Math.round(Math.min(obj.width, obj.height) / 2);
+      const curR = Math.min(Math.round(clipRadius), maxR);
+      html += `<div class="prop-row"><label>Rad</label><input type="range" min="0" max="${maxR}" step="1" value="${curR}" oninput="setClipRadius(+this.value)"><input type="number" min="0" max="${maxR}" step="1" value="${curR}" onchange="setClipRadius(+this.value)" style="width:50px"></div>`;
+      html += `<div class="prop-row"><button onclick="centerClipShape()" style="flex:1;padding:3px 0;background:#1a2a1a;color:#A8BE8B;border:1px solid #2a4a2a;border-radius:3px;cursor:pointer;font-size:10px">⊕ Center clip</button></div>`;
+      html += `<div class="prop-row" style="align-items:center"><label style="flex:1"><input type="checkbox" ${clipBorderEnabled?'checked':''} onchange="setClipBorderEnabled(this.checked)"> Border</label></div>`;
+      if (clipBorderEnabled) {
+        html += `<div class="prop-row" style="align-items:center"><label>BCol</label><input type="color" value="${clipBorderColor}" oninput="setClipBorderColor(this.value)" style="width:36px;height:22px;padding:0;border:1px solid #444"><input type="text" value="${clipBorderColor}" onchange="setClipBorderColor(this.value)" style="flex:1;font-size:11px;margin-left:4px"></div>`;
+        html += `<div class="prop-row"><label>BWid</label><input type="range" min="1" max="30" step="1" value="${clipBorderWidth}" oninput="setClipBorderWidth(+this.value)"><input type="number" min="1" max="30" step="1" value="${clipBorderWidth}" onchange="setClipBorderWidth(+this.value)" style="width:50px"></div>`;
+      }
+    }
+    html += '<hr style="border-color:#333;margin:8px 0">';
     // Filters
     const getF = (t) => (obj.filters || []).find(f => f.type === t);
     const blur   = (getF('Blur')         || {}).blur         ?? 0;
@@ -3823,7 +4137,11 @@ function reattachBehaviors() {
     }
     if (o.type === 'image') {
       setupImageControls(o);
-      if (o._cornerRadius && o._cornerRadius > 0) setImageCornerRadiusOn(o, o._cornerRadius);
+      if (o._clipShape && o._clipShape !== 'none') {
+        _applyClipShapeInPlace(o);
+      } else if (o._cornerRadius && o._cornerRadius > 0) {
+        setImageCornerRadiusOn(o, o._cornerRadius);
+      }
     }
     if (o._isBannerGroup) {
       attachBannerGroupControls(o);
@@ -5281,7 +5599,9 @@ function openAssetModal(file) {
       document.getElementById('asset-modal-episode-name').value = file.name;
       fetch('/api/episodes').then(r => r.json()).then(eps => {
         const sel = document.getElementById('asset-modal-episode');
-        sel.innerHTML = eps.map(e => `<option value="${e}">${e}</option>`).join('');
+        sel.innerHTML = eps.map(e => `<option value="${e}">${e}</option>`).join('') +
+          `<option value="__new__">＋ New episode folder…</option>`;
+        onEpisodeSelectChange();
       }).catch(() => {});
       document.getElementById('asset-modal').style.display = 'flex';
       updateAssetModalFields();
@@ -5304,6 +5624,13 @@ function updateAssetModalFields() {
   const dest = document.querySelector('input[name="asset-dest"]:checked').value;
   document.getElementById('asset-modal-permanent-fields').style.display = dest === 'permanent' ? 'block' : 'none';
   document.getElementById('asset-modal-episode-fields').style.display = dest === 'episode' ? 'block' : 'none';
+}
+
+function onEpisodeSelectChange() {
+  const isNew = document.getElementById('asset-modal-episode').value === '__new__';
+  document.getElementById('asset-modal-new-episode-label').style.display = isNew ? '' : 'none';
+  document.getElementById('asset-modal-new-episode').style.display = isNew ? '' : 'none';
+  if (isNew) document.getElementById('asset-modal-new-episode').focus();
 }
 
 function cancelAssetModal() {
@@ -5333,7 +5660,11 @@ async function confirmAssetModal() {
       if (!r.ok) throw new Error(j.error || 'upload failed');
       placeImageOnCanvas(j.url, filename);
     } else if (dest === 'episode') {
-      const episode = document.getElementById('asset-modal-episode').value;
+      let episode = document.getElementById('asset-modal-episode').value;
+      if (episode === '__new__') {
+        episode = document.getElementById('asset-modal-new-episode').value.trim();
+        if (!episode) { alert('Enter a folder name for the new episode.'); return; }
+      }
       const filename = document.getElementById('asset-modal-episode-name').value.trim() || asset.filename;
       if (!episode) { alert('No episode selected'); return; }
       const r = await fetch('/api/assets', {
@@ -5383,12 +5714,28 @@ let _apAssets = [];          // [{ id, path, url, tags, description, ... }]
 let _apActiveFolder = null;  // null = All
 let _apActiveTags = new Set(); // multi-select tag filter
 let _apSelectedId = null;
+let _apPage = 0;
+const _AP_PAGE_SIZE = 16;
 
 async function showAssetPicker() {
   try {
-    const r = await fetch('/api/assets');
-    const data = await r.json();
+    const [assetsResp, episodesResp] = await Promise.all([fetch('/api/assets'), fetch('/api/episodes')]);
+    const data = await assetsResp.json();
+    const episodes = await episodesResp.json().catch(() => []);
     _apAssets = Object.entries(data.assets || {}).map(([id, a]) => ({ id, ...a, folder: (a.path.includes('/') ? a.path.split('/')[0] : '') }));
+    // Load files from each episode folder and inject as synthetic assets tagged with the folder name
+    const epResults = await Promise.all((Array.isArray(episodes) ? episodes : []).map(ep =>
+      fetch(`/api/episode-files/${encodeURIComponent(ep)}`).then(r => r.json()).catch(() => ({ episode: ep, files: [] }))
+    ));
+    for (const { episode, files } of epResults) {
+      for (const f of (files || [])) {
+        const existsAlready = _apAssets.some(a => a.url === f.url);
+        if (!existsAlready) {
+          const displayName = f.name;
+          _apAssets.push({ id: `ep:${f.url}`, path: f.url, url: f.url, tags: ['episode'], description: episode, folder: episode, displayName, _episode: true });
+        }
+      }
+    }
   } catch (e) {
     _apAssets = [];
   }
@@ -5427,16 +5774,34 @@ function _apRenderTagFilter() {
 }
 function _apToggleTagFilter(tag) {
   if (_apActiveTags.has(tag)) _apActiveTags.delete(tag); else _apActiveTags.add(tag);
+  _apPage = 0;
   _apRenderTagFilter();
   _apRender();
 }
 function _apClearTags() {
   _apActiveTags = new Set();
+  _apPage = 0;
   _apRenderTagFilter();
   _apRender();
 }
 
-function _apFilter() { _apRender(); }
+function _apFilter() { _apPage = 0; _apRender(); }
+
+function _apRenderPagination(total) {
+  const el = document.getElementById('ap-pagination');
+  if (!el) return;
+  const pages = Math.ceil(total / _AP_PAGE_SIZE);
+  if (pages <= 1) { el.innerHTML = ''; return; }
+  const btns = [];
+  if (_apPage > 0) btns.push(`<button onclick="_apSetPage(${_apPage - 1})" style="background:#2a2a2a;border:1px solid #444;color:#ccc;border-radius:4px;padding:3px 10px;cursor:pointer;">‹</button>`);
+  for (let i = 0; i < pages; i++) {
+    const active = i === _apPage ? 'background:#444;color:#fff;' : 'background:#2a2a2a;color:#aaa;';
+    btns.push(`<button onclick="_apSetPage(${i})" style="${active}border:1px solid #444;border-radius:4px;padding:3px 9px;cursor:pointer;">${i + 1}</button>`);
+  }
+  if (_apPage < pages - 1) btns.push(`<button onclick="_apSetPage(${_apPage + 1})" style="background:#2a2a2a;border:1px solid #444;color:#ccc;border-radius:4px;padding:3px 10px;cursor:pointer;">›</button>`);
+  el.innerHTML = btns.join('');
+}
+function _apSetPage(p) { _apPage = p; _apRender(); }
 
 function _apRender() {
   const grid = document.getElementById('ap-grid');
@@ -5451,29 +5816,36 @@ function _apRender() {
       return hay.includes(query);
     });
   }
-  if (!list.length) {
+  const total = list.length;
+  list = list.slice(_apPage * _AP_PAGE_SIZE, (_apPage + 1) * _AP_PAGE_SIZE);
+  if (!total) {
     grid.innerHTML = `<div class="pp-empty">${query ? `No assets match "${query}".` : 'No permanent assets yet. Drag an image into the editor to add one.'}</div>`;
+    _apRenderPagination(0);
     return;
   }
   grid.innerHTML = list.map(a => {
     const selected = a.id === _apSelectedId ? ' selected' : '';
     const ratio = a.width && a.height ? `${a.width}×${a.height}` : '';
-    const tags = (a.tags || []).slice(0, 3).join(', ');
-    const label = a.displayName || a.id;
+    const tags = (a.tags || []).filter(t => t !== 'episode').slice(0, 3).join(', ');
+    const label = a.displayName || a.id.replace(/^ep:\/assets\/[^/]+\//, '');
+    const desc = a._episode ? (a.description || '') : (a.description || tags || '');
+    const actions = a._episode ? '' :
+      `<div style="position:absolute;top:4px;right:4px;display:flex;gap:4px;opacity:0;transition:opacity .15s;" class="ap-actions">
+        <button onclick="event.stopPropagation();_apEdit('${a.id}')" style="background:#222;border:1px solid #444;color:#ccc;border-radius:4px;padding:4px 9px;font-size:11px;line-height:1;cursor:pointer;">Edit</button>
+        <button onclick="event.stopPropagation();_apDelete('${a.id}')" style="background:#3a1a1a;border:1px solid #552;color:#e88;border-radius:4px;padding:4px 8px;font-size:13px;line-height:1;cursor:pointer;">×</button>
+      </div>`;
     return `
-      <div class="pp-card${selected}" onclick="_apSelect('${a.id}')" ondblclick="_apSelect('${a.id}');_apInsert()" style="position:relative">
-        <div style="position:absolute;top:4px;right:4px;display:flex;gap:4px;opacity:0.85;transition:opacity .12s;" class="ap-actions">
-          <button title="Edit" onclick="event.stopPropagation();_apEdit('${a.id}')" style="background:#222;border:1px solid #444;color:#ccc;border-radius:4px;padding:5px 10px;font-size:12px;line-height:1;cursor:pointer;">Edit</button>
-          <button title="Delete" onclick="event.stopPropagation();_apDelete('${a.id}')" style="background:#3a1a1a;border:1px solid #552;color:#e88;border-radius:4px;padding:5px 9px;font-size:14px;line-height:1;cursor:pointer;">×</button>
-        </div>
-        <img class="pp-thumb asset" src="${a.url}" alt="${a.id}" loading="lazy">
+      <div class="pp-card${selected}" onclick="_apSelect('${a.id}')" ondblclick="_apSelect('${a.id}');_apInsert()" style="position:relative" title="${label}${desc ? ' — ' + desc : ''}">
+        ${actions}
+        <img class="pp-thumb asset" src="${a.url}" loading="lazy">
         <div class="pp-info">
           <div class="pp-name">${label}</div>
-          <div class="pp-desc">${a.description || tags || '&nbsp;'}</div>
+          <div class="pp-desc">${desc || '&nbsp;'}</div>
           <div class="pp-ratio">${ratio}${tags ? ' · ' + tags : ''}</div>
         </div>
       </div>`;
   }).join('');
+  _apRenderPagination(total);
 }
 
 function _apSelect(id) {
@@ -5779,38 +6151,396 @@ function doExport() {
   document.getElementById('status-selection').textContent = `Exported ${ext.toUpperCase()} @ ${scale}x \u2014 ~${kb}KB`;
 }
 
+// --- Settings ---------------------------------------------------------------
+let _appConfig = {};
+
+async function loadAppConfig() {
+  try {
+    const r = await fetch('/api/config');
+    _appConfig = await r.json();
+  } catch { _appConfig = {}; }
+}
+
+function openSettings(section) {
+  const keys = ['assetsDir', 'permanentDir', 'patternsDir', 'outputDir'];
+  keys.forEach(k => {
+    const el = document.getElementById('cfg-' + k);
+    const hint = document.getElementById('cfg-' + k + '-hint');
+    if (el) { el.value = _appConfig[k] || ''; el.style.borderColor = ''; }
+    if (hint) hint.textContent = 'default: ' + (_appConfig._defaults && _appConfig._defaults[k] || '');
+  });
+  document.getElementById('settings-status').textContent = '';
+  document.getElementById('settings-modal').style.display = 'flex';
+  if (section) {
+    const focusMap = {
+      assets:   ['assetsDir', 'permanentDir'],
+      patterns: ['patternsDir'],
+      json:     ['outputDir'],
+    };
+    const toHighlight = focusMap[section] || [];
+    toHighlight.forEach(k => {
+      const el = document.getElementById('cfg-' + k);
+      if (!el) return;
+      el.style.borderColor = '#7aa2f7';
+      el.style.transition = 'border-color .3s';
+      setTimeout(() => { el.style.borderColor = ''; }, 2500);
+      if (toHighlight[0] === k) setTimeout(() => el.focus(), 50);
+    });
+  }
+}
+
+function closeSettings() {
+  document.getElementById('settings-modal').style.display = 'none';
+}
+
+// --- Thumbnails Modal ---
+let _thFiles    = [];   // [{name,folder,relPath,url,previewUrl}]
+let _thFiltered = [];
+let _thSelected = null;
+let _thActiveFolder = 'all';
+let _thPage = 0;
+const _TH_PAGE_SIZE = 12;
+const _thPreviewCache = {};
+let _thObserver = null;
+
+function _initThObserver() {
+  if (_thObserver) return;
+  _thObserver = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (!e.isIntersecting) return;
+      _thObserver.unobserve(e.target);
+      const idx = +e.target.dataset.thIdx;
+      if (!isNaN(idx) && _thFiltered[idx]) _thLoadPreview(e.target, _thFiltered[idx]);
+    });
+  }, { rootMargin: '120px', threshold: 0.01 });
+}
+
+async function openThumbModal() {
+  _initThObserver();
+  document.getElementById('thumb-modal').style.display = 'flex';
+  await _thLoadFiles();
+}
+
+function closeThumbModal() {
+  document.getElementById('thumb-modal').style.display = 'none';
+  _thSelected = null;
+  const btn = document.getElementById('th-open-btn');
+  if (btn) btn.disabled = true;
+  document.getElementById('th-footer-hint').textContent = 'Click to select · Double-click to open';
+}
+
+async function _thLoadFiles() {
+  const grid = document.getElementById('th-grid');
+  grid.innerHTML = '<div style="grid-column:1/-1;color:#555;padding:24px;text-align:center;font-size:12px;">Loading…</div>';
+  try {
+    const r = await fetch('/api/outputs');
+    const paths = await r.json();
+    _thFiles = paths.map(p => {
+      const norm = p.replace(/\\/g, '/');
+      const slash = norm.lastIndexOf('/');
+      const name = slash >= 0 ? norm.slice(slash + 1).replace(/\.json$/i, '') : norm.replace(/\.json$/i, '');
+      const folder = slash >= 0 ? norm.slice(0, slash) : '(root)';
+      const url = '/output/' + norm;
+      const previewUrl = url.replace(/\.json$/i, '.preview.jpg');
+      return { name, folder, relPath: norm, url, previewUrl };
+    });
+    _thActiveFolder = 'all';
+    _thRenderTabs();
+    _thFilter();
+  } catch {
+    grid.innerHTML = '<div style="grid-column:1/-1;color:#555;padding:24px;text-align:center;">Could not reach server</div>';
+  }
+}
+
+function _thRenderTabs() {
+  const folders = ['all', ...new Set(_thFiles.map(f => f.folder))];
+  document.getElementById('th-tabs').innerHTML = folders.map(f =>
+    `<div class="pp-tab${f === _thActiveFolder ? ' active' : ''}" onclick="_thSetFolder('${f.replace(/'/g,"\\'")}')">` +
+    (f === 'all' ? `All <span style="opacity:.5;font-weight:400">${_thFiles.length}</span>` : f) +
+    `</div>`
+  ).join('');
+}
+
+function _thSetFolder(folder) {
+  _thActiveFolder = folder;
+  _thPage = 0;
+  _thRenderTabs();
+  _thFilter();
+}
+
+function _thFilter() {
+  const q = (document.getElementById('th-search').value || '').toLowerCase().trim();
+  _thFiltered = _thFiles.filter(f => {
+    if (_thActiveFolder !== 'all' && f.folder !== _thActiveFolder) return false;
+    if (q && !f.name.toLowerCase().includes(q) && !f.folder.toLowerCase().includes(q)) return false;
+    return true;
+  });
+  _thPage = 0;
+  _thRenderGrid();
+}
+
+function _thSetPage(p) {
+  const maxPage = Math.max(0, Math.ceil(_thFiltered.length / _TH_PAGE_SIZE) - 1);
+  _thPage = Math.max(0, Math.min(p, maxPage));
+  _thRenderGrid();
+}
+
+function _thRenderPagination() {
+  const el = document.getElementById('th-pagination');
+  if (!el) return;
+  const total = _thFiltered.length;
+  const pages = Math.ceil(total / _TH_PAGE_SIZE);
+  if (pages <= 1) { el.innerHTML = ''; return; }
+  const start = _thPage * _TH_PAGE_SIZE + 1;
+  const end = Math.min((_thPage + 1) * _TH_PAGE_SIZE, total);
+  const btnStyle = 'background:#2a2a2a;border:1px solid #444;color:#ccc;border-radius:4px;padding:4px 12px;font-size:12px;cursor:pointer;';
+  const disabledStyle = 'background:#1a1a1a;border:1px solid #333;color:#555;border-radius:4px;padding:4px 12px;font-size:12px;cursor:default;';
+  el.innerHTML =
+    `<button style="${_thPage === 0 ? disabledStyle : btnStyle}" ${_thPage === 0 ? 'disabled' : `onclick="_thSetPage(${_thPage - 1})"`}>← Prev</button>` +
+    `<span style="color:#777;">${start}–${end} of ${total}</span>` +
+    `<button style="${_thPage >= pages - 1 ? disabledStyle : btnStyle}" ${_thPage >= pages - 1 ? 'disabled' : `onclick="_thSetPage(${_thPage + 1})"`}>Next →</button>`;
+}
+
+function _thRenderGrid() {
+  const grid = document.getElementById('th-grid');
+  if (!_thFiltered.length) {
+    grid.innerHTML = '<div style="grid-column:1/-1;color:#555;padding:24px;text-align:center;font-size:12px;">No thumbnails found</div>';
+    _thRenderPagination();
+    return;
+  }
+  const pageItems = _thFiltered.slice(_thPage * _TH_PAGE_SIZE, (_thPage + 1) * _TH_PAGE_SIZE);
+  grid.innerHTML = '';
+  pageItems.forEach((f) => {
+    const isSelected = _thSelected === f.relPath;
+    const ar = f.folder.includes('1x1') ? '1/1' : '16/9';
+    const card = document.createElement('div');
+    card.className = 'th-card' + (isSelected ? ' selected' : '');
+    card.title = f.name;
+    card.innerHTML =
+      `<div class="th-card-preview" style="aspect-ratio:${ar}">` +
+        `<div class="th-placeholder"><svg width="36" height="22" viewBox="0 0 36 22"><rect width="36" height="22" rx="3" fill="#222"/><rect x="2" y="2" width="32" height="18" rx="2" fill="#181818"/></svg></div>` +
+      `</div>` +
+      `<div class="th-card-info">` +
+        `<div class="th-card-name" title="${f.name}">${f.name}</div>` +
+        `<div class="th-card-folder">${f.folder}</div>` +
+      `</div>`;
+    card.onclick = () => _thSelect(card, f);
+    card.ondblclick = () => { _thSelect(card, f); _thOpen(); };
+    grid.appendChild(card);
+    _thLoadPreview(card, f);
+  });
+  _thRenderPagination();
+}
+
+function _thSelect(card, file) {
+  document.querySelectorAll('#th-grid .th-card.selected').forEach(c => c.classList.remove('selected'));
+  card.classList.add('selected');
+  _thSelected = file.relPath;
+  const btn = document.getElementById('th-open-btn');
+  if (btn) btn.disabled = false;
+  document.getElementById('th-footer-hint').textContent = file.name;
+}
+
+function _thOpen() {
+  if (!_thSelected) return;
+  const file = _thFiles.find(f => f.relPath === _thSelected);
+  if (!file) return;
+  _thLoadFromServer(file.url);
+  closeThumbModal();
+}
+
+async function _thLoadFromServer(url) {
+  try {
+    const r = await fetch(url);
+    if (!r.ok) throw new Error(r.statusText);
+    const text = await r.text();
+    loadJSONFiles([new File([text], url.split('/').pop(), { type: 'application/json' })], 0);
+  } catch (e) { alert('Could not load: ' + e.message); }
+}
+
+// Lazy preview loading
+async function _thLoadPreview(card, file) {
+  if (_thPreviewCache[file.relPath]) {
+    _thSetImg(card, _thPreviewCache[file.relPath]); return;
+  }
+  // Check server-cached preview PNG
+  try {
+    const h = await fetch(file.previewUrl, { method: 'HEAD' });
+    if (h.ok) {
+      _thPreviewCache[file.relPath] = file.previewUrl;
+      _thSetImg(card, file.previewUrl); return;
+    }
+  } catch {}
+  _thQueueFabric(card, file);
+}
+
+function _thSetImg(card, src) {
+  const p = card.querySelector('.th-card-preview');
+  if (p) p.innerHTML = `<img src="${src}">`;
+}
+
+// Batched Fabric render queue (max 3 concurrent)
+const _thRenderQ = [];
+let _thRenderRunning = 0;
+const _TH_RENDER_CONCURRENCY = 3;
+
+function _thQueueFabric(card, file) {
+  _thRenderQ.push({ card, file });
+  _thDrainQueue();
+}
+
+function _thDrainQueue() {
+  while (_thRenderRunning < _TH_RENDER_CONCURRENCY && _thRenderQ.length) {
+    const item = _thRenderQ.shift();
+    _thRenderRunning++;
+    _thFabricRender(item.card, item.file).finally(() => {
+      _thRenderRunning--;
+      _thDrainQueue();
+    });
+  }
+}
+
+async function _thFabricRender(card, file) {
+  const preview = card.querySelector('.th-card-preview');
+  if (!preview) return;
+  try {
+    const r = await fetch(file.url);
+    if (!r.ok) throw new Error('fetch failed');
+    const data = await r.json();
+    const jsonObj = data.canvas || data;
+    const srcW = (data.meta && data.meta.canvasW) || jsonObj.width || 1280;
+    const srcH = (data.meta && data.meta.canvasH) || jsonObj.height || 720;
+    const multiplier = 320 / srcW;
+    const fc = new fabric.StaticCanvas(null, { enableRetinaScaling: false, renderOnAddRemove: false, width: srcW, height: srcH });
+    await new Promise(resolve => { fc.loadFromJSON(jsonObj, resolve); });
+    const dataUrl = fc.toDataURL({ format: 'jpeg', quality: 0.82, multiplier });
+    fc.dispose();
+    _thPreviewCache[file.relPath] = dataUrl;
+    _thSetImg(card, dataUrl);
+  } catch {
+    if (preview) preview.innerHTML = '<div style="color:#3a3a3a;font-size:10px;padding:8px;text-align:center;">unavailable</div>';
+  }
+}
+
+async function _thSaveToServer() {
+  const btn = document.querySelector('#thumb-modal .pp-btn-primary');
+  const hint = document.getElementById('th-footer-hint');
+  const prev = hint.textContent;
+  hint.textContent = 'Saving…';
+  const result = await saveJSONToServer();
+  if (result) {
+    // Invalidate preview cache for saved file so it re-renders fresh
+    const sf = _canvasSubfolder();
+    const tab = tabs.find(t => t.id === activeTabId);
+    const base = (tab ? tab.name : `thumbnail_${canvasW}x${canvasH}`).replace(/[^a-zA-Z0-9_\-]/g, '_');
+    const relPath = (sf ? sf + '/' : '') + (base.endsWith('.json') ? base : base + '.json');
+    delete _thPreviewCache[relPath];
+  }
+  await _thLoadFiles();
+  hint.textContent = result ? '✓ Saved' : prev;
+  setTimeout(() => { document.getElementById('th-footer-hint').textContent = 'Click to select · Double-click to open'; }, 2000);
+}
+
+async function saveSettings() {
+  const body = {};
+  ['assetsDir', 'permanentDir', 'patternsDir', 'outputDir'].forEach(k => {
+    body[k] = (document.getElementById('cfg-' + k).value || '').trim();
+  });
+  const status = document.getElementById('settings-status');
+  status.textContent = 'Saving…';
+  status.style.color = '#888';
+  try {
+    const r = await fetch('/api/config', {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.error || 'save failed');
+    _appConfig = { ..._appConfig, ...j.config };
+    status.textContent = '✓ Saved — takes effect immediately';
+    status.style.color = '#A8BE8B';
+    setTimeout(closeSettings, 1200);
+  } catch (e) {
+    status.textContent = '✗ ' + e.message;
+    status.style.color = '#f88';
+  }
+}
+
 // --- JSON Save/Load ---
-function saveJSON() {
+const _THUMB_JSON_KEYS = ['_customName','lockUniScaling','lockMovementX','lockMovementY','lockScalingX','lockScalingY','lockRotation','_bannerLeftEnd','_bannerRightEnd','_bannerNotchL','_bannerNotchR','_bannerFlareL','_bannerFlareR','_isBannerGroup','_isHitboxGroup','_isPanelGroup','_panelGap','_selectedLineIdx','_panelLineAlign','_panelLineOffsetX','_panelLineOffsetY','_panelAlignBlock','_visualCenter','_isFrame','_frameOffset','_framePadT','_framePadR','_framePadB','_framePadL','_padL','_padR','_padT','_padB','paintFirst','_shadowSpread','_spreadStrokeBackup','_frameThickness','_frameRadius','_frameInnerRadius','_frameTop','_frameRight','_frameBottom','_frameLeft','_frameTL','_frameTR','_frameBR','_frameBL','_frameCompleteness','_padLinked','_cornerRadius','_innerShadow','_corners','_cornersLinked','_isBorderRing','_borderRingId','_clipShape','_clipRadius','_clipBorderEnabled','_clipBorderColor','_clipBorderWidth','_clipBorderId'];
+
+function _canvasSubfolder() {
+  const r = canvasW / canvasH;
+  if (Math.abs(r - 16/9) < 0.02) return '16x9';
+  if (Math.abs(r - 1)    < 0.02) return '1x1';
+  return null;
+}
+
+async function _generatePreviewDataUrl() {
+  const multiplier = Math.min(1, 320 / canvasW);
+  const json = canvas.toJSON(_THUMB_JSON_KEYS);
+  const fc = new fabric.StaticCanvas(null, { enableRetinaScaling: false, renderOnAddRemove: false, width: canvasW, height: canvasH });
+  await new Promise(resolve => { fc.loadFromJSON(json, resolve); });
+  const dataUrl = fc.toDataURL({ format: 'jpeg', quality: 0.82, multiplier });
+  fc.dispose();
+  return dataUrl;
+}
+
+function _buildJSONPayload() {
   canvas.discardActiveObject();
   clearGuidelines();
   canvas.requestRenderAll();
 
-  const json = canvas.toJSON(['_customName', 'lockUniScaling', 'lockMovementX', 'lockMovementY', 'lockScalingX', 'lockScalingY', 'lockRotation', '_bannerLeftEnd', '_bannerRightEnd', '_bannerNotchL', '_bannerNotchR', '_bannerFlareL', '_bannerFlareR', '_isBannerGroup','_isHitboxGroup','_isPanelGroup','_panelGap','_selectedLineIdx','_panelLineAlign','_panelLineOffsetX','_panelLineOffsetY','_panelAlignBlock','_visualCenter','_isFrame','_frameOffset','_framePadT','_framePadR','_framePadB','_framePadL', '_padL', '_padR', '_padT', '_padB', 'paintFirst','_shadowSpread','_spreadStrokeBackup','_frameThickness','_frameRadius','_frameInnerRadius','_frameTop','_frameRight','_frameBottom','_frameLeft','_frameTL','_frameTR','_frameBR','_frameBL','_frameCompleteness','_padLinked','_cornerRadius','_innerShadow','_corners','_cornersLinked']);
+  const json = canvas.toJSON(_THUMB_JSON_KEYS);
 
-  // Relativize image URLs — Fabric's toJSON bakes the resolved absolute URL,
-  // which breaks portability across hosts/ports. Strip origin so src stays
-  // e.g. "/assets/2026-06-25_thorell/foo.png".
+  // Relativize image URLs
   const origin = window.location.origin;
   const relativize = (obj) => {
     if (!obj) return;
-    if (obj.type === 'image' && typeof obj.src === 'string' && obj.src.startsWith(origin)) {
+    if (obj.type === 'image' && typeof obj.src === 'string' && obj.src.startsWith(origin))
       obj.src = obj.src.slice(origin.length);
-    }
     if (Array.isArray(obj.objects)) obj.objects.forEach(relativize);
   };
   if (Array.isArray(json.objects)) json.objects.forEach(relativize);
 
   const meta = { canvasW, canvasH, exportVersion: 1 };
-  const data = JSON.stringify({ meta, canvas: json }, null, 2);
+  return JSON.stringify({ meta, canvas: json }, null, 2);
+}
 
+function saveJSON() {
+  const data = _buildJSONPayload();
   const tab = tabs.find(t => t.id === activeTabId);
   const baseName = tab ? tab.name : `thumbnail_${canvasW}x${canvasH}`;
-
   const blob = new Blob([data], { type: 'application/json' });
   const link = document.createElement('a');
   link.download = `${baseName}.json`;
   link.href = URL.createObjectURL(blob);
   link.click();
+}
+
+async function saveJSONToServer() {
+  const data = _buildJSONPayload();
+  const tab = tabs.find(t => t.id === activeTabId);
+  const baseName = (tab ? tab.name : `thumbnail_${canvasW}x${canvasH}`).replace(/[^a-zA-Z0-9_\-]/g, '_');
+  const filename = baseName.endsWith('.json') ? baseName : baseName + '.json';
+  const subfolder = _canvasSubfolder();
+  let preview = null;
+  try { preview = await _generatePreviewDataUrl(); } catch {}
+  try {
+    const body = { filename, data };
+    if (subfolder) body.subfolder = subfolder;
+    if (preview)   body.preview   = preview;
+    const r = await fetch('/api/save-json', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.error || 'save failed');
+    document.getElementById('status-selection').textContent = `✓ Saved to ${j.path}`;
+    return j;
+  } catch (e) {
+    alert('Save to server failed: ' + e.message);
+  }
 }
 
 function loadJSON() {
@@ -6113,6 +6843,8 @@ async function _psSave() {
 let _ppSelected = null;
 let _ppActiveFolder = 'all';
 let _ppAllPatterns = [];
+let _ppPage = 0;
+const _PP_PAGE_SIZE = 12;
 let _ppAllFolders = [];
 
 function showPatternPicker() {
@@ -6159,6 +6891,7 @@ function _renderFolderTabs() {
 function _ppSetFolder(folder) {
   _ppActiveFolder = folder;
   _ppSelected = null;
+  _ppPage = 0;
   document.getElementById('pp-search').value = '';
   _renderFolderTabs();
   _renderPatternGrid();
@@ -6208,6 +6941,27 @@ async function _ppDeleteFolder(folder) {
 
 function _ppFilter() {
   _ppSelected = null;
+  _ppPage = 0;
+  _renderPatternGrid();
+}
+
+function _ppRenderPagination(total) {
+  const el = document.getElementById('pp-pagination');
+  if (!el) return;
+  const pages = Math.ceil(total / _PP_PAGE_SIZE);
+  if (pages <= 1) { el.innerHTML = ''; return; }
+  const start = _ppPage * _PP_PAGE_SIZE + 1;
+  const end = Math.min((_ppPage + 1) * _PP_PAGE_SIZE, total);
+  const btn = (label, page, disabled) =>
+    `<button style="background:${disabled?'#1a1a1a':'#2a2a2a'};border:1px solid ${disabled?'#333':'#444'};color:${disabled?'#555':'#ccc'};border-radius:4px;padding:4px 12px;font-size:12px;cursor:${disabled?'default':'pointer'};" ${disabled?'disabled':`onclick="_ppSetPage(${page})"`}>${label}</button>`;
+  el.innerHTML = btn('← Prev', _ppPage - 1, _ppPage === 0) +
+    `<span style="color:#777;">${start}–${end} of ${total}</span>` +
+    btn('Next →', _ppPage + 1, _ppPage >= pages - 1);
+}
+
+function _ppSetPage(p) {
+  const pages = Math.ceil((_ppAllPatterns.length) / _PP_PAGE_SIZE);
+  _ppPage = Math.max(0, Math.min(p, pages - 1));
   _renderPatternGrid();
 }
 
@@ -6228,17 +6982,19 @@ function _renderPatternGrid() {
     const msg = query ? `No patterns match "${query}".` : (_ppAllPatterns.length ? 'No patterns in this folder.' : 'No patterns found in templates/patterns/.');
     grid.innerHTML = `<div class="pp-empty">${msg}</div>`;
     grid._patterns = [];
+    _ppRenderPagination(0);
     return;
   }
+  const pageItems = patterns.slice(_ppPage * _PP_PAGE_SIZE, (_ppPage + 1) * _PP_PAGE_SIZE);
   const isSquare = p => p.canvasRef && p.canvasRef.w === p.canvasRef.h;
-  grid.innerHTML = patterns.map((p, i) => {
+  grid.innerHTML = pageItems.map((p, i) => {
     const sq = isSquare(p);
     const ratio = p.canvasRef ? `${p.canvasRef.w}×${p.canvasRef.h}` : '';
     const folderBadge = p.folder ? `<span style="font-size:9px;color:#5a7a9a;margin-top:2px;display:block">${p.folder}</span>` : '';
     const thumb = p.thumbnail
       ? `<img class="pp-thumb${sq?' sq':''}" src="${p.thumbnail}" alt="${p.name}">`
       : `<div class="pp-thumb-placeholder${sq?' sq':''}">&#128444;</div>`;
-    return `<div class="pp-card" data-idx="${i}" onclick="_ppSelect(this,${i})" ondblclick="_ppInsert()">
+    return `<div class="pp-card" data-idx="${i}" onclick="_ppSelect(this,${i})" ondblclick="_ppInsert()" title="${p.name}${p.folder ? ' — ' + p.folder : ''}">
       ${thumb}
       <div class="pp-info">
         <div class="pp-name" style="display:flex;align-items:center;gap:4px">
@@ -6252,7 +7008,8 @@ function _renderPatternGrid() {
       </div>
     </div>`;
   }).join('');
-  grid._patterns = patterns;
+  grid._patterns = pageItems;
+  _ppRenderPagination(patterns.length);
 }
 
 function _ppSelect(el, idx) {
@@ -6353,11 +7110,20 @@ function loadObjectsSequentially(objects, idx, done) {
         width: o.width || img.width,
         height: o.height || img.height,
         _cornerRadius: o._cornerRadius || 0,
+        _clipShape: o._clipShape || 'none',
+        _clipRadius: o._clipRadius != null ? o._clipRadius : null,
+        _clipBorderEnabled: !!o._clipBorderEnabled,
+        _clipBorderColor: o._clipBorderColor || '#ECB351',
+        _clipBorderWidth: o._clipBorderWidth || 4,
+        _clipBorderId: o._clipBorderId || null,
       });
       setupImageControls(img);
-      if (o._cornerRadius && o._cornerRadius > 0) setImageCornerRadiusOn(img, o._cornerRadius);
-      // Apply clipPath for cover-style cropping
-      if (o.clipPath && o.clipPath.type === 'rect') {
+      if (o._clipShape && o._clipShape !== 'none') {
+        _applyClipShapeInPlace(img);
+      } else if (o._cornerRadius && o._cornerRadius > 0) {
+        setImageCornerRadiusOn(img, o._cornerRadius);
+      } else if (o.clipPath && o.clipPath.type === 'rect') {
+        // Apply clipPath for cover-style cropping
         const cp = new fabric.Rect({
           left: o.clipPath.left || 0,
           top: o.clipPath.top || 0,
@@ -6374,13 +7140,19 @@ function loadObjectsSequentially(objects, idx, done) {
     const r = new fabric.Rect({
       left: o.left || 0, top: o.top || 0,
       width: o.width || 100, height: o.height || 100,
-      fill: o.fill || '#333',
+      fill: o.fill !== undefined ? o.fill : '#333',
+      stroke: o.stroke || null,
+      strokeWidth: o.strokeWidth || 0,
       rx: o.rx || 0, ry: o.ry || 0,
+      originX: o.originX || 'left',
+      originY: o.originY || 'top',
       angle: o.angle || 0,
       opacity: o.opacity != null ? o.opacity : 1,
       selectable: o.selectable !== false,
       evented: o.evented !== false,
       _customName: o._customName || 'Rectangle',
+      _isBorderRing: o._isBorderRing || false,
+      _borderRingId: o._borderRingId || null,
     });
     canvas.add(r);
     next();
@@ -6403,10 +7175,18 @@ function loadObjectsSequentially(objects, idx, done) {
     const c2 = new fabric.Circle({
       left: o.left || 0, top: o.top || 0,
       radius: o.radius || 50,
-      fill: o.fill || '#333',
+      fill: o.fill !== undefined ? o.fill : '#333',
+      stroke: o.stroke || null,
+      strokeWidth: o.strokeWidth || 0,
+      originX: o.originX || 'left',
+      originY: o.originY || 'top',
       angle: o.angle || 0,
       opacity: o.opacity != null ? o.opacity : 1,
+      selectable: o.selectable !== false,
+      evented: o.evented !== false,
       _customName: o._customName || 'Circle',
+      _isBorderRing: o._isBorderRing || false,
+      _borderRingId: o._borderRingId || null,
     });
     canvas.add(c2);
     next();
@@ -7317,6 +8097,7 @@ function setTextureBlend(mode) {
 
 initCanvas(1280, 720);
 renderTabs();
+loadAppConfig();
 
 // Try to restore autosaved work; fall back to URL-driven load
 (function _restoreAutosave() {
@@ -7372,9 +8153,11 @@ function clearAutosave() {
       <input class="pp-search" id="pp-search" type="text" placeholder="Search patterns…" oninput="_ppFilter()" autocomplete="off">
     </div>
     <div class="pp-grid" id="pp-grid"></div>
+    <div id="pp-pagination" style="display:flex;align-items:center;justify-content:center;gap:10px;padding:8px 0 2px;font-size:12px;color:#888;"></div>
     <div class="pp-footer">
       <div class="pp-footer-left">Double-click a pattern to insert it</div>
       <button class="pp-btn" onclick="_ppFromFile()">From File…</button>
+      <button class="pp-btn" onclick="openSettings('patterns')">Manage Folder…</button>
       <button class="pp-btn" onclick="hidePatternPicker()">Cancel</button>
       <button class="pp-btn pp-btn-primary" onclick="_ppInsert()">Insert</button>
     </div>
@@ -7390,9 +8173,11 @@ function clearAutosave() {
       <input class="pp-search" id="ap-search" type="text" placeholder="Search by name, tag, description…" oninput="_apFilter()" autocomplete="off">
     </div>
     <div class="pp-grid" id="ap-grid"></div>
+    <div id="ap-pagination" style="display:flex;align-items:center;justify-content:center;gap:10px;padding:8px 0 2px;font-size:12px;color:#888;"></div>
     <div class="pp-footer">
       <div class="pp-footer-left">Double-click an asset to insert it</div>
       <button class="pp-btn" onclick="_tmOpen()">Manage terms</button>
+      <button class="pp-btn" onclick="openSettings('assets')">Manage Folder…</button>
       <button class="pp-btn" onclick="hideAssetPicker()">Cancel</button>
       <button class="pp-btn pp-btn-primary" onclick="_apInsert()">Insert</button>
     </div>
@@ -7477,6 +8262,7 @@ function clearAutosave() {
         onkeydown="if(event.key==='Enter')_psSave()">
     </div>
     <div class="ps-footer">
+      <button class="pp-btn" onclick="openSettings('patterns')">Manage Folder…</button>
       <button class="pp-btn" onclick="hidePatternSaveDialog()">Cancel</button>
       <button class="pp-btn pp-btn-primary" onclick="_psSave()">Save</button>
     </div>

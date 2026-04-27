@@ -1,0 +1,76 @@
+{
+  "schemaVersion": 1,
+  "tagVocabulary": [
+    "logo",
+    "brand",
+    "texture",
+    "photo",
+    "icon",
+    "background"
+  ],
+  "assets": {
+    "logos-fv-studio": {
+      "path": "logos/fv-studio.webp",
+      "width": 1024,
+      "height": 633,
+      "aspectRatio": 1.6177,
+      "format": "webp",
+      "fileSize": 77772,
+      "hasAlpha": false,
+      "hash": "9451a7bca9ec85c2",
+      "tags": [],
+      "addedAt": "2026-04-21"
+    },
+    "logos-looth-group": {
+      "path": "logos/looth-group.png",
+      "width": 3200,
+      "height": 3200,
+      "aspectRatio": 1,
+      "format": "png",
+      "fileSize": 10032716,
+      "hasAlpha": true,
+      "hash": "b87ef0d42e7c4f06",
+      "displayName": "Looth Group Logo",
+      "tags": [
+        "TLG"
+      ],
+      "description": "The Looth Group primary logo",
+      "addedAt": "2026-04-21",
+      "usage": ""
+    },
+    "misc-guitar-specialist-logo-greyscale-with-b-w-overlay": {
+      "path": "misc/guitar-specialist-logo-greyscale-with-b-w-overlay.png",
+      "width": 5280,
+      "height": 5334,
+      "aspectRatio": 0.9899,
+      "format": "png",
+      "fileSize": 3290985,
+      "hasAlpha": true,
+      "hash": "5f14725c11d64c9d",
+      "tags": [
+        "logos"
+      ],
+      "addedAt": "2026-04-21",
+      "displayName": "",
+      "description": "",
+      "usage": ""
+    },
+    "misc-hoa-2025-logo-sito-350x100-px-white": {
+      "path": "misc/hoa-2025-logo-sito-350x100-px-white.svg",
+      "width": 0,
+      "height": 0,
+      "aspectRatio": 0,
+      "format": "svg",
+      "fileSize": 13652,
+      "hasAlpha": true,
+      "hash": "1f709a0783a96d3f",
+      "addedAt": "2026-04-21",
+      "tags": [
+        "logos"
+      ],
+      "description": "hub of acoustics",
+      "displayName": "",
+      "usage": ""
+    }
+  }
+}
