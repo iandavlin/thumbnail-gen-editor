@@ -9,68 +9,32 @@
     "background"
   ],
   "assets": {
-    "logos-fv-studio": {
-      "path": "logos/fv-studio.webp",
-      "width": 1024,
-      "height": 633,
-      "aspectRatio": 1.6177,
-      "format": "webp",
-      "fileSize": 77772,
-      "hasAlpha": false,
-      "hash": "9451a7bca9ec85c2",
-      "tags": [],
-      "addedAt": "2026-04-21"
-    },
-    "logos-looth-group": {
-      "path": "logos/looth-group.png",
-      "width": 3200,
-      "height": 3200,
+    "misc-1080spng": {
+      "path": "misc/1080spng.jpg",
+      "width": 1080,
+      "height": 1080,
       "aspectRatio": 1,
-      "format": "png",
-      "fileSize": 10032716,
-      "hasAlpha": true,
-      "hash": "b87ef0d42e7c4f06",
-      "displayName": "Looth Group Logo",
+      "format": "jpg",
+      "fileSize": 155128,
+      "hasAlpha": false,
+      "hash": "124f3fc4023131bb",
+      "addedAt": "2026-04-28",
       "tags": [
-        "TLG"
-      ],
-      "description": "The Looth Group primary logo",
-      "addedAt": "2026-04-21",
-      "usage": ""
+        "logo"
+      ]
     },
-    "misc-guitar-specialist-logo-greyscale-with-b-w-overlay": {
-      "path": "misc/guitar-specialist-logo-greyscale-with-b-w-overlay.png",
-      "width": 5280,
-      "height": 5334,
-      "aspectRatio": 0.9899,
+    "misc-facebook-post-mock": {
+      "path": "misc/facebook-post-mock.png",
+      "width": 240,
+      "height": 427,
+      "aspectRatio": 0.5621,
       "format": "png",
-      "fileSize": 3290985,
+      "fileSize": 176102,
       "hasAlpha": true,
-      "hash": "5f14725c11d64c9d",
+      "addedAt": "2026-04-28",
       "tags": [
-        "logos"
-      ],
-      "addedAt": "2026-04-21",
-      "displayName": "",
-      "description": "",
-      "usage": ""
-    },
-    "misc-hoa-2025-logo-sito-350x100-px-white": {
-      "path": "misc/hoa-2025-logo-sito-350x100-px-white.svg",
-      "width": 0,
-      "height": 0,
-      "aspectRatio": 0,
-      "format": "svg",
-      "fileSize": 13652,
-      "hasAlpha": true,
-      "hash": "1f709a0783a96d3f",
-      "addedAt": "2026-04-21",
-      "tags": [
-        "logos"
-      ],
-      "description": "hub of acoustics",
-      "displayName": "",
-      "usage": ""
+        "photo"
+      ]
     }
   }
 }

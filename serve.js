@@ -4,7 +4,7 @@ const path = require("path");
 const { execFileSync } = require("child_process");
 
 const ROOT = __dirname;
-const PORT = 3333;
+const PORT = 3334;
 
 const MIME = {
   ".html": "text/html",
