@@ -109,9 +109,11 @@
   /* Add element modal */
   #add-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; align-items: center; justify-content: center; }
   #add-modal.show { display: flex; }
-  #add-modal .modal { background: #2a2a2a; border: 1px solid #444; border-radius: 8px; padding: 24px; width: 360px; }
+  #add-modal .modal { background: #2a2a2a; border: 1px solid #444; border-radius: 8px; padding: 24px; width: 480px; max-height: 88vh; overflow-y: auto; }
   #add-modal h3 { margin-bottom: 16px; }
   #add-modal .add-options { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  #svg-shape-options { grid-template-columns: repeat(4, 1fr) !important; }
+  #torn-paper-options { grid-template-columns: repeat(4, 1fr) !important; }
   #add-modal .add-option { padding: 12px 8px; background: #333; border: 1px solid #444; border-radius: 6px; text-align: center; cursor: pointer; font-size: 12px; color:#ccc; }
   #add-modal .add-option:hover { background: #444; border-color: #7aa2f7; }
   /* Color-coded element categories */
@@ -126,6 +128,11 @@
   #add-modal .opt-media   { background:#1f2e26; border-color:#355a46; color:#b8e3c8; }
   #add-modal .opt-media:hover   { background:#2a4036; color:#fff; }
   #add-modal .add-option .icon { font-size: 22px; display: block; margin-bottom: 4px; }
+  #add-modal .opt-svg    { background:#1c2635; border-color:#2e4a6e; color:#a8c4e8; }
+  #add-modal .opt-svg:hover    { background:#243448; color:#fff; }
+  #add-modal .opt-torn   { background:#2e2318; border-color:#5c421a; color:#e8c89a; }
+  #add-modal .opt-torn:hover   { background:#3f3020; color:#fff; }
+  #add-modal .add-section-label { font-size:11px; color:#888; margin:14px 0 6px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; }
 
   /* Brand color picker */
   .color-field { display: flex; align-items: center; gap: 4px; flex: 1; }
@@ -442,7 +449,11 @@
         <span class="icon" style="font-size:18px">&#9634;</span>Frame
       </div>
     </div>
-    <div style="font-size:11px;color:#888;margin:14px 0 6px;font-weight:600;text-transform:uppercase;letter-spacing:.05em">Textures</div>
+    <div class="add-section-label">SVG Shapes</div>
+    <div class="add-options" id="svg-shape-options"></div>
+    <div class="add-section-label">Torn Paper</div>
+    <div class="add-options" id="torn-paper-options"></div>
+    <div class="add-section-label">Textures</div>
     <div class="add-options" id="texture-options"></div>
     <div class="actions" style="margin-top:16px">
       <button class="btn-cancel" onclick="hideAddModal()">Cancel</button>
@@ -741,6 +752,54 @@ const TEXTURE_TYPES = [
       { key:'octaves', label:'Octaves',   min:1,   max:8,  step:1 },
     ]
   },
+  {
+    id: 'crosshatch', name: 'Crosshatch', icon: '▦',
+    defaults: { blend:'multiply', opacity:0.25, spacing:12, weight:1, angle:45 },
+    paramDefs: [
+      { key:'spacing', label:'Spacing', min:4,   max:40,  step:1   },
+      { key:'weight',  label:'Weight',  min:0.5, max:4,   step:0.5 },
+      { key:'angle',   label:'Angle',   min:0,   max:90,  step:5   },
+    ]
+  },
+  {
+    id: 'halftone', name: 'Halftone', icon: '⋯',
+    defaults: { blend:'multiply', opacity:0.30, spacing:10, radius:3 },
+    paramDefs: [
+      { key:'spacing', label:'Spacing',  min:4,   max:30, step:1   },
+      { key:'radius',  label:'Dot Size', min:0.5, max:8,  step:0.5 },
+    ]
+  },
+  {
+    id: 'linen', name: 'Linen', icon: '≡',
+    defaults: { blend:'multiply', opacity:0.35, scale:6, contrast:1.2 },
+    paramDefs: [
+      { key:'scale',    label:'Weave',    min:2,   max:20, step:1   },
+      { key:'contrast', label:'Contrast', min:0.5, max:3,  step:0.1 },
+    ]
+  },
+  {
+    id: 'vignette', name: 'Vignette', icon: '◉',
+    defaults: { blend:'multiply', opacity:0.75, spread:55 },
+    paramDefs: [
+      { key:'spread', label:'Spread', min:20, max:90, step:5 },
+    ]
+  },
+  {
+    id: 'aged', name: 'Aged Photo', icon: '🎞',
+    defaults: { blend:'multiply', opacity:0.55, scratches:6, fade:35 },
+    paramDefs: [
+      { key:'scratches', label:'Scratches', min:0, max:20, step:1 },
+      { key:'fade',      label:'Sepia',     min:0, max:80, step:5 },
+    ]
+  },
+  {
+    id: 'warp', name: 'Warp Edge', icon: '〜',
+    defaults: { blend:'normal', opacity:0.85, distort:20, freq:2 },
+    paramDefs: [
+      { key:'distort', label:'Distortion', min:5,  max:60, step:5 },
+      { key:'freq',    label:'Frequency',  min:1,  max:15, step:1 },
+    ]
+  },
 ];
 
 // Build a color picker widget: native picker + hex input + brand swatches
@@ -951,7 +1010,7 @@ function saveCurrentTabState() {
   clearGuidelines();
   canvas.discardActiveObject();
   canvas.requestRenderAll();
-  tab.canvasJSON = canvas.toJSON(['_customName', 'lockUniScaling', 'lockMovementX', 'lockMovementY', 'lockScalingX', 'lockScalingY', 'lockRotation', '_bannerLeftEnd', '_bannerRightEnd', '_bannerNotchL', '_bannerNotchR', '_bannerFlareL', '_bannerFlareR', '_isBannerGroup','_isHitboxGroup','_isFrame','_frameOffset','_framePadT','_framePadR','_framePadB','_framePadL', '_padL', '_padR', '_padT', '_padB', 'paintFirst','_shadowSpread','_spreadStrokeBackup','_frameThickness','_frameRadius','_frameInnerRadius','_padLinked','_cornerRadius','_innerShadow','_corners','_cornersLinked','_isTextureOverlay','_textureType','_textureParams','globalCompositeOperation','_texFillMetas']);
+  tab.canvasJSON = canvas.toJSON(['_customName', 'lockUniScaling', 'lockMovementX', 'lockMovementY', 'lockScalingX', 'lockScalingY', 'lockRotation', '_bannerLeftEnd', '_bannerRightEnd', '_bannerNotchL', '_bannerNotchR', '_bannerFlareL', '_bannerFlareR', '_isBannerGroup','_isHitboxGroup','_isFrame','_frameOffset','_framePadT','_framePadR','_framePadB','_framePadL', '_padL', '_padR', '_padT', '_padB', 'paintFirst','_shadowSpread','_spreadStrokeBackup','_frameThickness','_frameRadius','_frameInnerRadius','_padLinked','_cornerRadius','_innerShadow','_corners','_cornersLinked','_isTextureOverlay','_textureType','_textureParams','globalCompositeOperation','_texFillMetas','_isWarpShape','_warpVariant','_warpParams','_warpW','_warpH','_isTornShape','_tornType','_tornParams','_tornSeed','_tornW','_tornH','_isSVGShape']);
   tab.canvasW = canvasW;
   tab.canvasH = canvasH;
 }
@@ -2224,6 +2283,12 @@ function updateProps() {
   // Opacity
   const opaVal = Math.round((obj.opacity === undefined ? 1 : obj.opacity) * 100);
   html += `<div class="prop-row"><label>Opa</label><input id="opa-range" type="range" min="0" max="100" value="${opaVal}" oninput="setOpacity(+this.value)"><input id="opa-num" type="number" min="0" max="100" value="${opaVal}" style="width:42px;flex:none" onchange="setOpacity(+this.value)"><span style="font-size:11px;color:#666">%</span></div>`;
+  html += `<div class="prop-row" style="gap:4px">
+    <button onclick="resetObjTransform('scale')" title="Reset scale to 100%" style="flex:1;padding:2px 0;font-size:10px;background:#222;border:1px solid #444;color:#888;border-radius:3px;cursor:pointer">↔ Scale</button>
+    <button onclick="resetObjTransform('angle')" title="Reset rotation to 0°" style="flex:1;padding:2px 0;font-size:10px;background:#222;border:1px solid #444;color:#888;border-radius:3px;cursor:pointer">↺ Rot</button>
+    <button onclick="resetObjTransform('opacity')" title="Reset opacity to 100%" style="flex:1;padding:2px 0;font-size:10px;background:#222;border:1px solid #444;color:#888;border-radius:3px;cursor:pointer">◎ Opa</button>
+    <button onclick="resetObjTransform('center')" title="Center on canvas" style="flex:1;padding:2px 0;font-size:10px;background:#222;border:1px solid #444;color:#888;border-radius:3px;cursor:pointer">⊕ Ctr</button>
+  </div>`;
 
   // Banner Group — specialized controls, grouped into TEXT and ELEMENT sections.
   if (obj.type === 'group' && obj._isBannerGroup) {
@@ -2643,6 +2708,47 @@ function updateProps() {
     if (!isGradFill(obj.fill) && !isPatternFill(obj.fill)) html += alphaRow('FOpa', '_fillAlpha', getColorAlpha(obj.fill));
     html += `<div style="font-size:11px;color:#666;margin:4px 0;">Frame follows canvas edges — use padding fields, not X/Y/W/H above.</div>`;
   }
+  else if (obj._isWarpShape) {
+    const wp = obj._warpParams || {};
+    const color   = wp.color   || '#f5e8c8';
+    const distort = wp.distort || 20;
+    const freq    = wp.freq    || 2;
+    html += '<hr style="border-color:#333;margin:8px 0">';
+    html += `<div style="font-size:11px;color:#e8c89a;font-weight:600;margin-bottom:6px">〜 WARP SHAPE</div>`;
+    html += `<div class="prop-row"><label>Color</label><input type="color" value="${toHex6(color)}" oninput="setWarpShapeParam('color',this.value)" style="width:28px;height:24px;padding:0;border:none;cursor:pointer;flex-shrink:0"><input type="text" value="${toHex6(color)}" onchange="setWarpShapeParam('color',this.value)" style="width:68px;background:#333;border:1px solid #444;color:#e0e0e0;padding:3px 5px;border-radius:3px;font-size:11px;font-family:monospace"></div>`;
+    html += `<div class="prop-row"><label title="Edge displacement amount">Distort</label><input type="range" min="2" max="80" step="1" value="${distort}" oninput="setWarpShapeParam('distort',+this.value)"><input type="number" min="2" max="80" step="1" value="${distort}" onchange="setWarpShapeParam('distort',+this.value)" style="width:44px"></div>`;
+    html += `<div class="prop-row"><label title="Turbulence frequency — lower = big slow waves, higher = tight ripples">Freq</label><input type="range" min="1" max="20" step="0.5" value="${freq}" oninput="setWarpShapeParam('freq',+this.value)"><input type="number" min="1" max="20" step="0.5" value="${freq}" onchange="setWarpShapeParam('freq',+this.value)" style="width:44px"></div>`;
+    const hasBorder = !!(wp.borderColor);
+    const borderColor = wp.borderColor || '#ffffff';
+    const borderW = wp.borderW || 6;
+    html += `<div class="prop-row"><label>Border</label><input type="checkbox" ${hasBorder?'checked':''} onchange="setWarpShapeParam('borderColor', this.checked ? '${borderColor}' : '')"> <span style="font-size:11px;color:#888">${hasBorder?'On':'Off'}</span></div>`;
+    if (hasBorder) {
+      html += `<div class="prop-row"><label>BCol</label><input type="color" value="${toHex6(borderColor)}" oninput="setWarpShapeParam('borderColor',this.value)" style="width:28px;height:24px;padding:0;border:none;cursor:pointer;flex-shrink:0"><input type="text" value="${toHex6(borderColor)}" onchange="setWarpShapeParam('borderColor',this.value)" style="width:68px;background:#333;border:1px solid #444;color:#e0e0e0;padding:3px 5px;border-radius:3px;font-size:11px;font-family:monospace"></div>`;
+      html += `<div class="prop-row"><label>BWidth</label><input type="range" min="1" max="30" step="1" value="${borderW}" oninput="setWarpShapeParam('borderW',+this.value)"><input type="number" min="1" max="30" step="1" value="${borderW}" onchange="setWarpShapeParam('borderW',+this.value)" style="width:44px"></div>`;
+      const collapseAmt  = wp.collapseAmt  != null ? wp.collapseAmt  : 0;
+      const collapseFreq = wp.collapseFreq != null ? wp.collapseFreq : 0.05;
+      html += `<div class="prop-row"><label title="How much the border fades back into the element">Collapse</label><input type="range" min="0" max="1" step="0.02" value="${collapseAmt}" oninput="setWarpShapeParam('collapseAmt',+this.value)"><input type="number" min="0" max="1" step="0.02" value="${collapseAmt.toFixed(2)}" onchange="setWarpShapeParam('collapseAmt',+this.value)" style="width:44px"></div>`;
+      if (collapseAmt > 0) {
+        html += `<div class="prop-row"><label title="How frequently the border collapses along the edge">ColFreq</label><input type="range" min="0.01" max="0.2" step="0.005" value="${collapseFreq}" oninput="setWarpShapeParam('collapseFreq',+this.value)"><input type="number" min="0.01" max="0.2" step="0.005" value="${collapseFreq.toFixed(3)}" onchange="setWarpShapeParam('collapseFreq',+this.value)" style="width:50px"></div>`;
+      }
+    }
+    html += `<div class="prop-row"><button onclick="reRollWarpShape()" style="flex:1;padding:4px 0;background:#3f3020;color:#e8c89a;border:1px solid #5c421a;border-radius:4px;cursor:pointer;font-size:11px;font-weight:600;">⟳ New Seed</button></div>`;
+    const usePaper = !!(wp.paperTexture);
+    const paperInt = wp.paperIntensity != null ? wp.paperIntensity : 0.9;
+    const grain    = wp.grain != null ? wp.grain : 0;
+    html += `<div class="prop-row"><label>Paper</label><input type="checkbox" ${usePaper?'checked':''} onchange="setWarpShapeParam('paperTexture', this.checked)"> <span style="font-size:11px;color:#888">${usePaper?'On':'Off'}</span></div>`;
+    if (usePaper) {
+      html += `<div class="prop-row"><label>Intensity</label><input type="range" min="0.1" max="2.0" step="0.1" value="${paperInt}" oninput="setWarpShapeParam('paperIntensity',+this.value)"><input type="number" min="0.1" max="2.0" step="0.1" value="${paperInt.toFixed(1)}" onchange="setWarpShapeParam('paperIntensity',+this.value)" style="width:44px"></div>`;
+    }
+    html += `<div class="prop-row"><label title="Film grain overlay intensity">Grain</label><input type="range" min="0" max="100" step="1" value="${grain}" oninput="setWarpShapeParam('grain',+this.value)"><input type="number" min="0" max="100" step="1" value="${grain}" onchange="setWarpShapeParam('grain',+this.value)" style="width:44px"></div>`;
+    const blendModes = ['source-over','multiply','screen','overlay','soft-light','hard-light','color-dodge','color-burn','difference','exclusion'];
+    const curBlend = obj.globalCompositeOperation || 'source-over';
+    html += `<div class="prop-row"><label>Blend</label><select onchange="setWarpBlend(this.value)" style="flex:1;background:#333;border:1px solid #444;color:#e0e0e0;padding:3px 5px;border-radius:3px;font-size:12px">`;
+    blendModes.forEach(m => { html += `<option value="${m}" ${m===curBlend?'selected':''}>${m}</option>`; });
+    html += `</select></div>`;
+    const opaW = Math.round((obj.opacity ?? 1) * 100);
+    html += `<div class="prop-row"><label>Opa</label><input type="range" min="0" max="100" value="${opaW}" oninput="setObjProp('opacity',+this.value/100)"><input type="number" min="0" max="100" value="${opaW}" style="width:42px;flex:none" onchange="setObjProp('opacity',+this.value/100)"><span style="font-size:11px;color:#666">%</span></div>`;
+  }
   else if (obj._isTextureOverlay) {
     const ttype = TEXTURE_TYPES.find(t => t.id === obj._textureType) || { name:'Texture', paramDefs:[] };
     const tp = obj._textureParams || {};
@@ -2731,8 +2837,22 @@ function updateProps() {
     html += `<div class="prop-row" style="gap:8px;align-items:center"><label><input type="checkbox" ${duo?'checked':''} onchange="toggleImageDuotone(this.checked)"> Duotone</label><label style="font-size:10px;color:#888">Dk</label><input type="color" value="${dark}" oninput="setImageDuotoneColor('dark', this.value)" style="width:28px;height:22px;padding:0;border:1px solid #444;background:transparent"><label style="font-size:10px;color:#888">Lt</label><input type="color" value="${light}" oninput="setImageDuotoneColor('light', this.value)" style="width:28px;height:22px;padding:0;border:1px solid #444;background:transparent"></div>`;
     html += `<div class="prop-row"><button onclick="clearImageFilters()" style="flex:1">Clear filters</button></div>`;
   }
-  else if (obj.type === 'rect' || obj.type === 'circle' || obj.type === 'triangle' || obj.type === 'polygon') {
+  else if (obj.type === 'rect' || obj.type === 'circle' || obj.type === 'triangle' || obj.type === 'polygon' || obj.type === 'path') {
     html += '<hr style="border-color:#333;margin:8px 0">';
+    html += `<div class="prop-row"><button onclick="convertToWarpShape()" style="flex:1;padding:4px 0;background:#1e2e1e;color:#88c870;border:1px solid #3a5e2a;border-radius:4px;cursor:pointer;font-size:11px;font-weight:600">〜 Apply Warp Edge</button></div>`;
+    if (obj._isTornShape) {
+      const tp = obj._tornParams || {};
+      const amp    = tp.amp    ?? 22;
+      const freq   = tp.freq   ?? 0.5;
+      const chaos  = tp.chaos  ?? 0.5;
+      const smooth = tp.smooth ?? 0;
+      html += `<div style="font-size:11px;color:#e8c89a;margin-bottom:6px;font-weight:600;">TORN PAPER</div>`;
+      html += `<div class="prop-row"><label title="Height of the tear peaks">Amp</label><input type="range" min="2" max="60" step="1" value="${amp}" oninput="setTornParam('amp',+this.value)"><input type="number" min="2" max="60" step="1" value="${amp}" onchange="setTornParam('amp',+this.value)" style="width:44px"></div>`;
+      html += `<div class="prop-row"><label title="How many tears per unit — higher = more teeth">Freq</label><input type="range" min="0" max="1" step="0.05" value="${freq}" oninput="setTornParam('freq',+this.value)"><input type="number" min="0" max="1" step="0.05" value="${freq}" onchange="setTornParam('freq',+this.value)" style="width:44px"></div>`;
+      html += `<div class="prop-row"><label title="Irregularity of spacing — 0 = even, 1 = wild">Chaos</label><input type="range" min="0" max="1" step="0.05" value="${chaos}" oninput="setTornParam('chaos',+this.value)"><input type="number" min="0" max="1" step="0.05" value="${chaos}" onchange="setTornParam('chaos',+this.value)" style="width:44px"></div>`;
+      html += `<div class="prop-row"><label title="0 = sharp jagged, 1 = smooth organic curves">Smooth</label><input type="range" min="0" max="1" step="0.05" value="${smooth}" oninput="setTornParam('smooth',+this.value)"><input type="number" min="0" max="1" step="0.05" value="${smooth}" onchange="setTornParam('smooth',+this.value)" style="width:44px"></div>`;
+      html += `<div class="prop-row"><button onclick="reRollTornShape()" style="flex:1;padding:4px 0;background:#3f3020;color:#e8c89a;border:1px solid #5c421a;border-radius:4px;cursor:pointer;font-size:11px;font-weight:600;">⟳ New Random Tear</button></div>`;
+    }
     html += `<div class="prop-row" style="align-items:flex-start"><label>Fill</label>${colorControl('fill', obj.fill || '#333333')}</div>`;
     if (!isGradFill(obj.fill) && !isPatternFill(obj.fill)) html += alphaRow('FOpa', '_fillAlpha', getColorAlpha(obj.fill));
     if (obj.type === 'rect') {
@@ -4490,6 +4610,7 @@ function applyShadowSpread(obj, spread) {
         opacity: 1,
         fill: sh.color || 'rgba(0,0,0,0.4)',
         stroke: null, strokeWidth: 0,
+        globalCompositeOperation: 'source-over',
         objectCaching: false,
         selectable: false, evented: false,
         excludeFromExport: true,
@@ -4507,6 +4628,7 @@ function applyShadowSpread(obj, spread) {
         fill: sh.color || 'rgba(0,0,0,0.4)',
         stroke: null,
         strokeWidth: 0,
+        globalCompositeOperation: 'source-over',
         objectCaching: false,
         selectable: false,
         evented: false,
@@ -5495,6 +5617,537 @@ function addDiamond() {
     _customName: 'Diamond',
   });
   canvas.add(d); canvas.setActiveObject(d); canvas.requestRenderAll(); refreshLayers(); updateProps();
+}
+
+// ── SVG Shape Library ─────────────────────────────────────────────────────────
+function _starPath(cx, cy, oR, iR, n) {
+  let d = '';
+  for (let i = 0; i < n * 2; i++) {
+    const r = i % 2 === 0 ? oR : iR;
+    const a = (i * Math.PI / n) - Math.PI / 2;
+    d += (i ? 'L' : 'M') + (cx + r * Math.cos(a)).toFixed(1) + ',' + (cy + r * Math.sin(a)).toFixed(1) + ' ';
+  }
+  return d + 'Z';
+}
+function _polyPath(cx, cy, r, n, a0 = -Math.PI / 2) {
+  let d = '';
+  for (let i = 0; i < n; i++) {
+    const a = a0 + i * 2 * Math.PI / n;
+    d += (i ? 'L' : 'M') + (cx + r * Math.cos(a)).toFixed(1) + ',' + (cy + r * Math.sin(a)).toFixed(1) + ' ';
+  }
+  return d + 'Z';
+}
+
+const SVG_SHAPES = [
+  // Geometric
+  { id:'pentagon',  name:'Pentagon',   cat:'geo',   vb:'0 0 200 200',
+    path: _polyPath(100,100,95,5) },
+  { id:'hexagon',   name:'Hexagon',    cat:'geo',   vb:'0 0 200 200',
+    path: _polyPath(100,100,95,6,0) },
+  { id:'octagon',   name:'Octagon',    cat:'geo',   vb:'0 0 200 200',
+    path: _polyPath(100,100,95,8,-Math.PI/8) },
+  { id:'cross',     name:'Cross',      cat:'geo',   vb:'0 0 200 200',
+    path: 'M60,0 L140,0 L140,60 L200,60 L200,140 L140,140 L140,200 L60,200 L60,140 L0,140 L0,60 L60,60 Z' },
+  { id:'ring',      name:'Ring',       cat:'geo',   vb:'0 0 200 200',
+    path: 'M100,5 A95,95 0 1 0 100.01,5 Z M100,45 A55,55 0 1 1 100.01,45 Z',
+    fillRule: 'evenodd' },
+  // Stars & Bursts
+  { id:'star5',     name:'Star',       cat:'star',  vb:'0 0 200 200',
+    path: _starPath(100,100,95,40,5) },
+  { id:'star6',     name:'Star 6pt',   cat:'star',  vb:'0 0 200 200',
+    path: _starPath(100,100,95,50,6) },
+  { id:'star8',     name:'Star 8pt',   cat:'star',  vb:'0 0 200 200',
+    path: _starPath(100,100,95,68,8) },
+  { id:'burst12',   name:'Burst',      cat:'star',  vb:'0 0 200 200',
+    path: _starPath(100,100,95,78,12) },
+  { id:'starburst', name:'Starburst',  cat:'star',  vb:'0 0 200 200',
+    path: _starPath(100,100,95,60,16) },
+  // Badges
+  { id:'shield',    name:'Shield',     cat:'badge', vb:'0 0 200 200',
+    path: 'M100,192 C58,178 10,142 10,82 L10,15 L190,15 L190,82 C190,142 142,178 100,192 Z' },
+  { id:'seal',      name:'Seal',       cat:'badge', vb:'0 0 200 200',
+    path: _starPath(100,100,95,82,20) },
+  { id:'label',     name:'Label',      cat:'badge', vb:'0 0 260 160',
+    path: 'M30,0 L230,0 Q260,0 260,30 L260,85 Q260,115 230,115 L150,115 L130,160 L110,115 L30,115 Q0,115 0,85 L0,30 Q0,0 30,0 Z' },
+  { id:'ticket',    name:'Ticket',     cat:'badge', vb:'0 0 280 110',
+    path: 'M0,0 L220,0 Q230,0 230,10 L230,45 Q255,55 255,55 Q230,65 230,100 L230,110 L0,110 Z' },
+  // Decorative
+  { id:'speech',    name:'Speech',     cat:'deco',  vb:'0 0 240 180',
+    path: 'M20,0 L220,0 Q240,0 240,20 L240,120 Q240,140 220,140 L100,140 L60,178 L75,140 L20,140 Q0,140 0,120 L0,20 Q0,0 20,0 Z' },
+  { id:'wave',      name:'Wave',       cat:'deco',  vb:'0 0 400 120',
+    path: 'M0,60 C50,0 100,120 150,60 C200,0 250,120 300,60 C350,0 400,120 400,60 L400,120 L0,120 Z' },
+  { id:'arrow-r',   name:'Arrow →',    cat:'deco',  vb:'0 0 240 120',
+    path: 'M0,35 L160,35 L160,0 L240,60 L160,120 L160,85 L0,85 Z' },
+  { id:'arrow-l',   name:'Arrow ←',    cat:'deco',  vb:'0 0 240 120',
+    path: 'M240,35 L80,35 L80,0 L0,60 L80,120 L80,85 L240,85 Z' },
+  { id:'swoosh',    name:'Swoosh',     cat:'deco',  vb:'0 0 320 120',
+    path: 'M0,100 C80,-10 200,130 320,20 L320,120 L0,120 Z' },
+  { id:'dbl-chev',  name:'Dbl Chevron',cat:'deco',  vb:'0 0 200 160',
+    path: 'M0,0 L80,80 L0,160 L40,160 L120,80 L40,0 Z M60,0 L140,80 L60,160 L100,160 L180,80 L100,0 Z', fillRule:'evenodd' },
+];
+
+function addSVGShape(id) {
+  const shape = SVG_SHAPES.find(s => s.id === id);
+  if (!shape) return;
+  const [,, vbW, vbH] = shape.vb.split(' ').map(Number);
+  const scale = Math.min(200 / vbW, 200 / vbH);
+  const opts = {
+    fill: '#ECB351',
+    scaleX: scale, scaleY: scale,
+    _customName: shape.name,
+    _isSVGShape: true,
+  };
+  if (shape.fillRule) opts.fillRule = shape.fillRule;
+  const path = new fabric.Path(shape.path, opts);
+  canvas.add(path);
+  canvas.centerObject(path);
+  canvas.setActiveObject(path);
+  canvas.requestRenderAll(); refreshLayers(); updateProps(); saveUndo();
+}
+
+// ── Torn Paper Shapes ─────────────────────────────────────────────────────────
+const TORN_DEFAULTS = { amp: 22, freq: 0.5, chaos: 0.5, smooth: 0 };
+
+function _seededRNG(seed) {
+  let s = (seed >>> 0) || 1;
+  return () => { s = (Math.imul(s, 1664525) + 1013904223) >>> 0; return s / 0x100000000; };
+}
+
+// Each point is [x, y, useSmooth] — smooth flag is per-segment, driven by seeded RNG
+function _tornEdgePts(rng, w, baseY, params) {
+  const { amp = 22, freq = 0.5, chaos = 0.5, smooth = 0 } = params;
+  const baseLen = Math.max(4, 65 - freq * 60);
+  const minSeg  = Math.max(4, baseLen * (1 - chaos * 0.6));
+  const maxSeg  = baseLen + chaos * 55;
+  const pts = [];
+  let x = 0;
+  while (x <= w) {
+    const localAmp = amp * (0.2 + rng() * 1.6);   // amplitude varies 20%–180% per tooth
+    const jag = (rng() - 0.42) * localAmp * 2.4;
+    const useSmooth = smooth > 0.02 && rng() < smooth; // per-segment smooth/sharp decision
+    pts.push([Math.round(x), Math.round(baseY + jag), useSmooth]);
+    if (x >= w) break;
+    x = Math.min(x + minSeg + rng() * (maxSeg - minSeg), w);
+  }
+  return pts;
+}
+
+// Build path string from points. Smooth/sharp is decided per-point via pts[i][2].
+function _tornSeg(pts, _unused, isStart) {
+  if (!pts.length) return '';
+  let d = isStart ? `M${pts[0][0]},${pts[0][1]}` : '';
+  const arr = isStart ? pts.slice(1) : pts;
+  for (let i = 0; i < arr.length; i++) {
+    const [x, y, useSmooth] = arr[i];
+    if (useSmooth && i < arr.length - 1) {
+      // Quadratic bezier: current point is control, midpoint is endpoint
+      const [nx, ny] = arr[i + 1];
+      const mx = ((x + nx) / 2).toFixed(1);
+      const my = ((y + ny) / 2).toFixed(1);
+      d += ` Q${x},${y} ${mx},${my}`;
+    } else {
+      d += ` L${x},${y}`;
+    }
+  }
+  return d;
+}
+
+function _buildTornPath(type, params, seed, w, h) {
+  const rng = _seededRNG(seed);
+  const sm = params.smooth || 0;
+
+  if (type === 'strip') {
+    const top = _tornEdgePts(rng, w, h * 0.28, params);
+    const bot = _tornEdgePts(rng, w, h * 0.72, params);
+    let d = _tornSeg(top, sm, true);
+    d += ` L${w},${bot[bot.length-1][1]}`;
+    d += _tornSeg([...bot].reverse().slice(1), sm, false);
+    return d + ' Z';
+  }
+  if (type === 'edge-bottom') {
+    const bot = _tornEdgePts(rng, w, h - (params.amp || 22), params);
+    let d = `M0,0 L${w},0 L${w},${bot[bot.length-1][1]}`;
+    d += _tornSeg([...bot].reverse().slice(1), sm, false);
+    return d + ' Z';
+  }
+  if (type === 'edge-top') {
+    const top = _tornEdgePts(rng, w, params.amp || 22, params);
+    let d = _tornSeg(top, sm, true);
+    d += ` L${w},${h} L0,${h}`;
+    return d + ' Z';
+  }
+  if (type === 'corner') {
+    const amp = params.amp || 22;
+    const smooth = params.smooth || 0;
+    const n = 14;
+    const dx = -w, dy = h;
+    const len = Math.sqrt(dx * dx + dy * dy);
+    const px = -dy / len, py = dx / len;
+    const pts = [[w, 0, false]];
+    for (let i = 1; i < n; i++) {
+      const t = i / n;
+      const localAmp = amp * (0.2 + rng() * 1.6);
+      const jag = (rng() - 0.5) * localAmp * 2;
+      const useSmooth = smooth > 0.02 && rng() < smooth;
+      pts.push([Math.round(w + dx * t + px * jag), Math.round(dy * t + py * jag), useSmooth]);
+    }
+    pts.push([0, h, false]);
+    let d = `M0,0 L${w},0`;
+    d += _tornSeg(pts.slice(1), sm, false);
+    return d + ' Z';
+  }
+  if (type === 'circle') {
+    const r = w / 2, cx = r, cy = r;
+    const amp = params.amp || 22;
+    const smooth = params.smooth || 0;
+    const n = Math.round(24 + (params.freq || 0.5) * 20);
+    const pts = [];
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * Math.PI * 2 - Math.PI / 2;
+      const localAmp = amp * (0.2 + rng() * 1.6);
+      const jag = r + (rng() - 0.4) * localAmp * 2;
+      const useSmooth = smooth > 0.02 && rng() < smooth;
+      pts.push([+(cx + jag * Math.cos(a)).toFixed(1), +(cy + jag * Math.sin(a)).toFixed(1), useSmooth]);
+    }
+    return _tornSeg(pts, sm, true) + ' Z';
+  }
+  return '';
+}
+
+function _makeTornPath(type, params, seed, w, h, extras) {
+  const d = _buildTornPath(type, params, seed, w, h);
+  if (!d) return null;
+  const obj = new fabric.Path(d, {
+    fill: '#f5e8c8',
+    _isTornShape: true,
+    _tornType: type,
+    _tornW: w,
+    _tornH: h,
+    _tornSeed: seed,
+    _tornParams: { ...TORN_DEFAULTS, ...params },
+    ...extras,
+  });
+  return obj;
+}
+
+function _addTorn(type, params, seed, w, h, extras, center) {
+  const path = _makeTornPath(type, params, seed, w, h, extras);
+  if (!path) return;
+  canvas.add(path);
+  if (center) canvas.centerObject(path);
+  canvas.setActiveObject(path);
+  canvas.requestRenderAll(); refreshLayers(); updateProps(); saveUndo();
+}
+
+function addTornStrip() {
+  const w = Math.round(canvasW * 0.78), h = 130;
+  _addTorn('strip', { ...TORN_DEFAULTS }, Date.now(), w, h, { _customName: 'Torn Strip' }, true);
+}
+function addPaperEdge(side) {
+  const w = canvasW, h = Math.round(canvasH * 0.36);
+  const type = side === 'bottom' ? 'edge-bottom' : 'edge-top';
+  const posTop = side === 'bottom' ? 0 : canvasH - h;
+  const name = side === 'bottom' ? 'Paper Edge Top' : 'Paper Edge Bottom';
+  _addTorn(type, { ...TORN_DEFAULTS, amp: 28 }, Date.now(), w, h, { _customName: name, left: 0, top: posTop }, false);
+}
+function addTornCorner() {
+  const size = Math.round(Math.min(canvasW, canvasH) * 0.42);
+  _addTorn('corner', { ...TORN_DEFAULTS }, Date.now(), size, size, { _customName: 'Torn Corner', left: 0, top: 0 }, false);
+}
+function addTornCircle() {
+  const r = Math.round(Math.min(canvasW, canvasH) * 0.28);
+  _addTorn('circle', { ...TORN_DEFAULTS }, Date.now(), r * 2, r * 2, { _customName: 'Torn Circle' }, true);
+}
+
+function setTornParam(key, val) {
+  const obj = canvas.getActiveObject();
+  if (!obj || !obj._isTornShape) return;
+  obj._tornParams = { ...TORN_DEFAULTS, ...obj._tornParams, [key]: val };
+  _rebuildTornPath(obj);
+}
+
+function _rebuildTornPath(obj) {
+  const d = _buildTornPath(obj._tornType, obj._tornParams, obj._tornSeed, obj._tornW, obj._tornH);
+  if (!d) return;
+  const zIdx = canvas.getObjects().indexOf(obj);
+  const props = {
+    left: obj.left, top: obj.top,
+    fill: obj.fill, stroke: obj.stroke, strokeWidth: obj.strokeWidth,
+    opacity: obj.opacity, angle: obj.angle,
+    scaleX: obj.scaleX, scaleY: obj.scaleY,
+    shadow: obj.shadow,
+    globalCompositeOperation: obj.globalCompositeOperation,
+    _customName: obj._customName,
+    _isTornShape: true,
+    _tornType: obj._tornType,
+    _tornW: obj._tornW, _tornH: obj._tornH,
+    _tornSeed: obj._tornSeed,
+    _tornParams: obj._tornParams,
+  };
+  canvas.remove(obj);
+  const fresh = new fabric.Path(d, props);
+  canvas.insertAt(fresh, zIdx);
+  canvas.setActiveObject(fresh);
+  canvas.requestRenderAll();
+}
+
+function reRollTornShape() {
+  const obj = canvas.getActiveObject();
+  if (!obj || !obj._isTornShape) return;
+  obj._tornSeed = Date.now() + Math.random() * 1e6 | 0;
+  _rebuildTornPath(obj);
+  updateProps();
+}
+
+// ── Warp Shapes (displacement-filter based positionable elements) ────────────
+function _buildWarpShapeSVG(variant, params, w, h) {
+  const color    = params.color          || '#f5e8c8';
+  const border   = params.borderColor   || '';
+  const borderW  = params.borderW       || 6;
+  const sc       = params.distort       || 20;
+  const fq       = ((params.freq || 2) / 100).toFixed(4);
+  const seed     = params.seed          || 1;
+  const usePaper = params.paperTexture  || false;
+  const paperInt = params.paperIntensity != null ? params.paperIntensity : 0.9;
+  const grain       = params.grain       != null ? params.grain       : 0;
+  // Border collapse: alpha mask fades border in/out along the edge
+  const collapseAmt = params.collapseAmt  != null ? params.collapseAmt  : 0;   // 0=uniform, 1=mostly gone
+  const collapseFreq= params.collapseFreq != null ? params.collapseFreq : 0.05; // spatial frequency
+  const collapseSeed= (seed * 5 + 23) % 9999 | 0;
+  const OX = Math.max(80, sc * 3);
+
+  // Border filter: displacement → optional grain → optional collapse mask
+  let borderFBody = `
+    <feTurbulence type="fractalNoise" baseFrequency="${fq}" numOctaves="4" seed="${seed}" result="dn"/>
+    <feDisplacementMap in="SourceGraphic" in2="dn" scale="${sc}" xChannelSelector="R" yChannelSelector="G" result="warped"/>`;
+  let borderLast = 'warped';
+  if (grain > 0) {
+    const gSeed = (seed * 3 + 17) % 9999 | 0;
+    const slope = (grain / 100).toFixed(3);
+    borderFBody += `
+      <feTurbulence type="turbulence" baseFrequency="0.80 0.80" numOctaves="3" seed="${gSeed}" result="grn"/>
+      <feColorMatrix in="grn" type="saturate" values="0" result="grnMono"/>
+      <feComponentTransfer in="grnMono" result="grnDim">
+        <feFuncR type="linear" slope="${slope}" intercept="${(0.5*(1-slope)).toFixed(3)}"/>
+        <feFuncG type="linear" slope="${slope}" intercept="${(0.5*(1-slope)).toFixed(3)}"/>
+        <feFuncB type="linear" slope="${slope}" intercept="${(0.5*(1-slope)).toFixed(3)}"/>
+      </feComponentTransfer>
+      <feComposite in="grnDim" in2="warped" operator="in" result="grnMasked"/>
+      <feBlend in="warped" in2="grnMasked" mode="soft-light" result="bBld"/>`;
+    borderLast = 'bBld';
+  }
+  if (collapseAmt > 0 && border && borderW > 0) {
+    // Low-freq horizontal noise → alpha mask that fades the border in/out organically
+    // contrast=4 keeps edges soft; offset shifts how much collapses
+    const cOffset = (0.5 - collapseAmt * 4).toFixed(3);
+    borderFBody += `
+      <feTurbulence type="fractalNoise" baseFrequency="${collapseFreq.toFixed(4)} 0.001" numOctaves="3" seed="${collapseSeed}" result="cNoise"/>
+      <feColorMatrix in="cNoise" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  4 0 0 0 ${cOffset}" result="cMask"/>
+      <feComposite in="${borderLast}" in2="cMask" operator="in"/>`;
+  }
+  const dispOnlyFilter = `<filter id="fd" x="-20%" y="-20%" width="140%" height="140%">${borderFBody}</filter>`;
+
+  // Main fill filter: paper texture (optional) → displacement → grain (optional)
+  let fBody;
+  if (usePaper) {
+    const pSeed = (seed * 7 + 13) % 9999 | 0;
+    fBody = `
+      <feTurbulence type="fractalNoise" baseFrequency="0.10 0.06" numOctaves="5" seed="${pSeed}" result="pn"/>
+      <feDiffuseLighting in="pn" lighting-color="${color}" diffuseConstant="${paperInt}" result="lit">
+        <feDistantLight azimuth="60" elevation="50"/>
+      </feDiffuseLighting>
+      <feComposite in="lit" in2="SourceGraphic" operator="in" result="tex"/>
+      <feTurbulence type="fractalNoise" baseFrequency="${fq}" numOctaves="4" seed="${seed}" result="dn"/>
+      <feDisplacementMap in="tex" in2="dn" scale="${sc}" xChannelSelector="R" yChannelSelector="G" result="warped"/>`;
+  } else {
+    fBody = `
+      <feTurbulence type="fractalNoise" baseFrequency="${fq}" numOctaves="4" seed="${seed}" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="${sc}" xChannelSelector="R" yChannelSelector="G" result="warped"/>`;
+  }
+  let lastResult = 'warped';
+  if (grain > 0) {
+    const gSeed = (seed * 3 + 17) % 9999 | 0;
+    const slope = (grain / 100).toFixed(3);
+    fBody += `
+      <feTurbulence type="turbulence" baseFrequency="0.80 0.80" numOctaves="3" seed="${gSeed}" result="grn"/>
+      <feColorMatrix in="grn" type="saturate" values="0" result="grnMono"/>
+      <feComponentTransfer in="grnMono" result="grnDim">
+        <feFuncR type="linear" slope="${slope}" intercept="${(0.5*(1-slope)).toFixed(3)}"/>
+        <feFuncG type="linear" slope="${slope}" intercept="${(0.5*(1-slope)).toFixed(3)}"/>
+        <feFuncB type="linear" slope="${slope}" intercept="${(0.5*(1-slope)).toFixed(3)}"/>
+      </feComponentTransfer>
+      <feComposite in="grnDim" in2="warped" operator="in" result="grnMasked"/>
+      <feBlend in="warped" in2="grnMasked" mode="soft-light" result="blended"/>`;
+    lastResult = 'blended';
+  }
+
+  const filter = `<filter id="f" x="-10%" y="-10%" width="120%" height="120%">${fBody}</filter>`;
+  const defs = filter + (border && borderW > 0 ? dispOnlyFilter : '');
+
+  function warpRect(y, rectH) {
+    const fillRect = `<rect x="${-OX}" y="${y}" width="${w+OX*2}" height="${rectH}" fill="${color}" filter="url(#f)"/>`;
+    if (border && borderW > 0) {
+      const strokeRect = `<rect x="${-OX}" y="${y}" width="${w+OX*2}" height="${rectH}" fill="none" stroke="${border}" stroke-width="${borderW*2}" stroke-linejoin="round" filter="url(#fd)"/>`;
+      return fillRect + strokeRect;
+    }
+    return fillRect;
+  }
+
+  let rect;
+  if (variant === 'strip') {
+    const pad = Math.max(8, sc + 4);
+    rect = warpRect(pad, h - pad * 2);
+  } else if (variant === 'edge-bottom') {
+    rect = warpRect(-h, h * 2 - sc - 6);
+  } else if (variant === 'edge-top') {
+    rect = warpRect(sc + 6, h * 2);
+  } else if (variant === 'shape') {
+    const shEl = params.shapeEl || '';
+    rect = `<g fill="${color}" filter="url(#f)">${shEl}</g>`;
+    if (border && borderW > 0) {
+      rect += `<g fill="none" stroke="${border}" stroke-width="${borderW * 2}" stroke-linejoin="round" filter="url(#fd)">${shEl}</g>`;
+    }
+  } else return '';
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><defs>${defs}</defs>${rect}</svg>`;
+}
+
+async function addWarpShape(variant) {
+  hideAddModal();
+  const params = { color: '#f5e8c8', distort: 20, freq: 2, seed: Math.random() * 9999 | 0 };
+  let w, h, posLeft, posTop, center;
+  if (variant === 'strip') {
+    w = Math.round(canvasW * 0.9); h = 160; center = true;
+  } else {
+    w = canvasW; h = Math.round(canvasH * 0.38);
+    posLeft = 0; posTop = variant === 'edge-top' ? canvasH - h : 0; center = false;
+  }
+  const svg = _buildWarpShapeSVG(variant, params, w, h);
+  const dataURL = await _svgToDataURL(svg, w, h);
+  if (!dataURL) return;
+  fabric.Image.fromURL(dataURL, img => {
+    img.set({
+      _isWarpShape: true,
+      _warpVariant: variant,
+      _warpParams: { ...params },
+      _warpW: w, _warpH: h,
+      _customName: variant === 'strip' ? 'Warp Strip' : variant === 'edge-bottom' ? 'Warp Edge Top' : 'Warp Edge Bottom',
+      selectable: true, evented: true,
+    });
+    if (!center) img.set({ left: posLeft, top: posTop });
+    canvas.add(img);
+    if (center) canvas.centerObject(img);
+    canvas.setActiveObject(img);
+    canvas.requestRenderAll(); refreshLayers(); updateProps(); saveUndo();
+  });
+}
+
+function setWarpShapeParam(key, val) {
+  const obj = canvas.getActiveObject();
+  if (!obj || !obj._isWarpShape) return;
+  obj._warpParams = { ...obj._warpParams, [key]: val };
+  _rebuildWarpShape(obj);
+}
+
+function resetObjTransform(what) {
+  const obj = canvas.getActiveObject();
+  if (!obj) return;
+  if (what === 'scale')   { obj.set({ scaleX: 1, scaleY: 1 }); }
+  if (what === 'angle')   { obj.set({ angle: 0 }); }
+  if (what === 'opacity') { obj.set({ opacity: 1 }); }
+  if (what === 'center')  { canvas.centerObject(obj); }
+  obj.setCoords();
+  canvas.requestRenderAll(); updateProps(); saveUndo();
+}
+
+function setWarpBlend(mode) {
+  const obj = canvas.getActiveObject();
+  if (!obj || !obj._isWarpShape) return;
+  obj.set('globalCompositeOperation', mode);
+  canvas.requestRenderAll(); updateProps(); saveUndo();
+}
+
+// Convert any eligible fabric shape into a warp-edge image in-place
+function _fabricObjToSVGShape(obj, w, h) {
+  const cx = w / 2, cy = h / 2;
+  const sx = obj.scaleX || 1, sy = obj.scaleY || 1;
+  if (obj.type === 'rect') {
+    const rx = Math.round((obj.rx || 0) * sx);
+    return `<rect x="0" y="0" width="${w}" height="${h}" rx="${rx}" ry="${rx}"/>`;
+  }
+  if (obj.type === 'circle') {
+    const r = (obj.radius * Math.min(sx, sy)).toFixed(1);
+    return `<circle cx="${cx}" cy="${cy}" r="${r}"/>`;
+  }
+  if (obj.type === 'triangle') {
+    return `<polygon points="${cx},0 ${w},${h} 0,${h}"/>`;
+  }
+  if (obj.type === 'polygon') {
+    const pts = obj.points.map(p =>
+      `${(cx + p.x * sx).toFixed(1)},${(cy + p.y * sy).toFixed(1)}`
+    ).join(' ');
+    return `<polygon points="${pts}"/>`;
+  }
+  if (obj.type === 'path') {
+    const d = (obj.path || []).map(seg => seg.join(' ')).join(' ');
+    const po = obj.pathOffset || { x: 0, y: 0 };
+    const tx = (cx - po.x * sx).toFixed(2);
+    const ty = (cy - po.y * sy).toFixed(2);
+    return `<path d="${d}" transform="translate(${tx},${ty}) scale(${sx},${sy})" fill-rule="${obj.fillRule || 'nonzero'}"/>`;
+  }
+  return null;
+}
+
+async function convertToWarpShape() {
+  const obj = canvas.getActiveObject();
+  if (!obj || obj._isWarpShape || obj._isTextureOverlay) return;
+  const eligible = ['rect','circle','triangle','polygon','path'];
+  if (!eligible.includes(obj.type)) return;
+
+  const w = Math.round(obj.getScaledWidth());
+  const h = Math.round(obj.getScaledHeight());
+  const shapeEl = _fabricObjToSVGShape(obj, w, h);
+  if (!shapeEl) return;
+
+  const fillColor = (typeof obj.fill === 'string' && obj.fill && obj.fill !== 'transparent' && obj.fill !== '') ? obj.fill : '#f5e8c8';
+  const params = { color: fillColor, distort: 20, freq: 2, seed: Math.random() * 9999 | 0, shapeEl };
+
+  const svgStr = _buildWarpShapeSVG('shape', params, w, h);
+  const dataURL = await _svgToDataURL(svgStr, w, h);
+  if (!dataURL) return;
+
+  const zIdx = canvas.getObjects().indexOf(obj);
+  const { left, top, angle, originX, originY } = obj;
+  const name = obj._customName || obj.type;
+  canvas.remove(obj);
+
+  fabric.Image.fromURL(dataURL, img => {
+    img.set({
+      left, top, angle, originX: originX || 'left', originY: originY || 'top',
+      _isWarpShape: true, _warpVariant: 'shape',
+      _warpParams: { ...params },
+      _warpW: w, _warpH: h,
+      _customName: 'Warp ' + name,
+      selectable: true, evented: true,
+    });
+    canvas.insertAt(img, zIdx);
+    canvas.setActiveObject(img);
+    canvas.requestRenderAll(); refreshLayers(); updateProps(); saveUndo();
+  });
+}
+
+function reRollWarpShape() {
+  const obj = canvas.getActiveObject();
+  if (!obj || !obj._isWarpShape) return;
+  obj._warpParams = { ...obj._warpParams, seed: Math.random() * 9999 | 0 };
+  _rebuildWarpShape(obj);
+}
+
+async function _rebuildWarpShape(obj) {
+  const svg = _buildWarpShapeSVG(obj._warpVariant, obj._warpParams, obj._warpW, obj._warpH);
+  const dataURL = await _svgToDataURL(svg, obj._warpW, obj._warpH);
+  if (!dataURL) return;
+  obj.setSrc(dataURL, () => { canvas.requestRenderAll(); updateProps(); });
 }
 
 // --- Asset import (drag-drop + modal) ------------------------------------
@@ -6788,7 +7441,7 @@ async function saveSettings() {
 }
 
 // --- JSON Save/Load ---
-const _THUMB_JSON_KEYS = ['_customName','lockUniScaling','lockMovementX','lockMovementY','lockScalingX','lockScalingY','lockRotation','_bannerLeftEnd','_bannerRightEnd','_bannerNotchL','_bannerNotchR','_bannerFlareL','_bannerFlareR','_isBannerGroup','_isHitboxGroup','_isPanelGroup','_panelGap','_selectedLineIdx','_panelLineAlign','_panelLineOffsetX','_panelLineOffsetY','_panelAlignBlock','_visualCenter','_isFrame','_frameOffset','_framePadT','_framePadR','_framePadB','_framePadL','_padL','_padR','_padT','_padB','paintFirst','_shadowSpread','_spreadStrokeBackup','_frameThickness','_frameRadius','_frameInnerRadius','_frameTop','_frameRight','_frameBottom','_frameLeft','_frameTL','_frameTR','_frameBR','_frameBL','_frameCompleteness','_padLinked','_cornerRadius','_innerShadow','_corners','_cornersLinked','_isBorderRing','_borderRingId','_clipShape','_clipRadius','_clipBorderEnabled','_clipBorderColor','_clipBorderWidth','_clipBorderId'];
+const _THUMB_JSON_KEYS = ['_customName','lockUniScaling','lockMovementX','lockMovementY','lockScalingX','lockScalingY','lockRotation','_bannerLeftEnd','_bannerRightEnd','_bannerNotchL','_bannerNotchR','_bannerFlareL','_bannerFlareR','_isBannerGroup','_isHitboxGroup','_isPanelGroup','_panelGap','_selectedLineIdx','_panelLineAlign','_panelLineOffsetX','_panelLineOffsetY','_panelAlignBlock','_visualCenter','_isFrame','_frameOffset','_framePadT','_framePadR','_framePadB','_framePadL','_padL','_padR','_padT','_padB','paintFirst','_shadowSpread','_spreadStrokeBackup','_frameThickness','_frameRadius','_frameInnerRadius','_frameTop','_frameRight','_frameBottom','_frameLeft','_frameTL','_frameTR','_frameBR','_frameBL','_frameCompleteness','_padLinked','_cornerRadius','_innerShadow','_corners','_cornersLinked','_isBorderRing','_borderRingId','_clipShape','_clipRadius','_clipBorderEnabled','_clipBorderColor','_clipBorderWidth','_clipBorderId','_isWarpShape','_warpVariant','_warpParams','_warpW','_warpH','_isTornShape','_tornType','_tornParams','_tornSeed','_tornW','_tornH','_isSVGShape','_isTextureOverlay','_textureType','_textureParams','globalCompositeOperation'];
 
 function _canvasSubfolder() {
   const r = canvasW / canvasH;
@@ -6966,7 +7619,7 @@ function insertPattern(path) {
 // Uses canvas.loadFromJSON (same path as Load JSON) so all types, groups,
 // banner groups, frames, and nested objects are handled correctly.
 function applyPatternData(data, fallbackName) {
-  const EXTRA = ['_customName','lockUniScaling','lockMovementX','lockMovementY','lockScalingX','lockScalingY','lockRotation','_bannerLeftEnd','_bannerRightEnd','_bannerNotchL','_bannerNotchR','_bannerFlareL','_bannerFlareR','_isBannerGroup','_isHitboxGroup','_isFrame','_frameOffset','_framePadT','_framePadR','_framePadB','_framePadL','_padL','_padR','_padT','_padB','paintFirst','_shadowSpread','_spreadStrokeBackup','_frameThickness','_frameRadius','_frameInnerRadius','_frameTop','_frameRight','_frameBottom','_frameLeft','_frameTL','_frameTR','_frameBR','_frameBL','_frameCompleteness','_padLinked','_cornerRadius','_innerShadow','_corners','_cornersLinked'];
+  const EXTRA = ['_customName','lockUniScaling','lockMovementX','lockMovementY','lockScalingX','lockScalingY','lockRotation','_bannerLeftEnd','_bannerRightEnd','_bannerNotchL','_bannerNotchR','_bannerFlareL','_bannerFlareR','_isBannerGroup','_isHitboxGroup','_isFrame','_frameOffset','_framePadT','_framePadR','_framePadB','_framePadL','_padL','_padR','_padT','_padB','paintFirst','_shadowSpread','_spreadStrokeBackup','_frameThickness','_frameRadius','_frameInnerRadius','_frameTop','_frameRight','_frameBottom','_frameLeft','_frameTL','_frameTR','_frameBR','_frameBL','_frameCompleteness','_padLinked','_cornerRadius','_innerShadow','_corners','_cornersLinked','_isWarpShape','_warpVariant','_warpParams','_warpW','_warpH','_isTornShape','_tornType','_tornParams','_tornSeed','_tornW','_tornH','_isSVGShape','_isTextureOverlay','_textureType','_textureParams','globalCompositeOperation'];
   return new Promise((resolve) => {
     const patternObjs = data.objects
       || (data.canvas && data.canvas.objects)
@@ -7073,7 +7726,7 @@ async function showPatternSaveDialog(selected) {
   // Capture object JSON NOW with absolute canvas coordinates.
   // Objects in a multi-object activeSelection have left/top relative to the
   // selection center, not the canvas — so discard+re-select to normalize first.
-  const EXTRA = ['_customName','lockUniScaling','lockMovementX','lockMovementY','lockScalingX','lockScalingY','lockRotation','_bannerLeftEnd','_bannerRightEnd','_bannerNotchL','_bannerNotchR','_bannerFlareL','_bannerFlareR','_isBannerGroup','_isHitboxGroup','_isFrame','_frameOffset','_framePadT','_framePadR','_framePadB','_framePadL','_padL','_padR','_padT','_padB','paintFirst','_shadowSpread','_spreadStrokeBackup','_frameThickness','_frameRadius','_frameInnerRadius','_frameTop','_frameRight','_frameBottom','_frameLeft','_frameTL','_frameTR','_frameBR','_frameBL','_frameCompleteness','_padLinked','_cornerRadius','_innerShadow','_corners','_cornersLinked'];
+  const EXTRA = ['_customName','lockUniScaling','lockMovementX','lockMovementY','lockScalingX','lockScalingY','lockRotation','_bannerLeftEnd','_bannerRightEnd','_bannerNotchL','_bannerNotchR','_bannerFlareL','_bannerFlareR','_isBannerGroup','_isHitboxGroup','_isFrame','_frameOffset','_framePadT','_framePadR','_framePadB','_framePadL','_padL','_padR','_padT','_padB','paintFirst','_shadowSpread','_spreadStrokeBackup','_frameThickness','_frameRadius','_frameInnerRadius','_frameTop','_frameRight','_frameBottom','_frameLeft','_frameTL','_frameTR','_frameBR','_frameBL','_frameCompleteness','_padLinked','_cornerRadius','_innerShadow','_corners','_cornersLinked','_isWarpShape','_warpVariant','_warpParams','_warpW','_warpH','_isTornShape','_tornType','_tornParams','_tornSeed','_tornW','_tornH','_isSVGShape','_isTextureOverlay','_textureType','_textureParams','globalCompositeOperation'];
   const active = canvas.getActiveObject();
   const wasActiveSelection = active && active.type === 'activeSelection';
   if (wasActiveSelection) canvas.discardActiveObject();
@@ -7565,7 +8218,7 @@ const MAX_UNDO = 40;
 
 function saveUndo() {
   if (undoLocked || !canvas) return;
-  const json = JSON.stringify(canvas.toJSON(['_customName','selectable','evented','lockMovementX','lockMovementY','lockScalingX','lockScalingY','lockRotation','_bannerLeftEnd','_bannerRightEnd','_bannerNotchL','_bannerNotchR','_isBannerGroup','_isHitboxGroup','_isFrame','_frameOffset','_framePadT','_framePadR','_framePadB','_framePadL','_padL','_padR','_padT','_padB','paintFirst','_shadowSpread','_spreadStrokeBackup','_frameThickness','_frameRadius','_frameInnerRadius','_padLinked','_cornerRadius','_innerShadow','_corners','_cornersLinked']));
+  const json = JSON.stringify(canvas.toJSON(['_customName','selectable','evented','lockMovementX','lockMovementY','lockScalingX','lockScalingY','lockRotation','_bannerLeftEnd','_bannerRightEnd','_bannerNotchL','_bannerNotchR','_isBannerGroup','_isHitboxGroup','_isFrame','_frameOffset','_framePadT','_framePadR','_framePadB','_framePadL','_padL','_padR','_padT','_padB','paintFirst','_shadowSpread','_spreadStrokeBackup','_frameThickness','_frameRadius','_frameInnerRadius','_padLinked','_cornerRadius','_innerShadow','_corners','_cornersLinked','_isWarpShape','_warpVariant','_warpParams','_warpW','_warpH','_isTornShape','_tornType','_tornParams','_tornSeed','_tornW','_tornH','_isSVGShape','_isTextureOverlay','_textureType','_textureParams','globalCompositeOperation']));
   // Don't push if identical to top of stack
   if (undoStack.length && undoStack[undoStack.length - 1] === json) return;
   undoStack.push(json);
@@ -7582,7 +8235,7 @@ function saveUndo() {
 function undo() {
   if (!canvas || undoStack.length < 1) return;
   // Save current state to redo
-  const cur = JSON.stringify(canvas.toJSON(['_customName','selectable','evented','lockMovementX','lockMovementY','lockScalingX','lockScalingY','lockRotation','_bannerLeftEnd','_bannerRightEnd','_bannerNotchL','_bannerNotchR','_isBannerGroup','_isHitboxGroup','_isFrame','_frameOffset','_framePadT','_framePadR','_framePadB','_framePadL','_padL','_padR','_padT','_padB','paintFirst','_shadowSpread','_spreadStrokeBackup','_frameThickness','_frameRadius','_frameInnerRadius','_padLinked','_cornerRadius','_innerShadow','_corners','_cornersLinked']));
+  const cur = JSON.stringify(canvas.toJSON(['_customName','selectable','evented','lockMovementX','lockMovementY','lockScalingX','lockScalingY','lockRotation','_bannerLeftEnd','_bannerRightEnd','_bannerNotchL','_bannerNotchR','_isBannerGroup','_isHitboxGroup','_isFrame','_frameOffset','_framePadT','_framePadR','_framePadB','_framePadL','_padL','_padR','_padT','_padB','paintFirst','_shadowSpread','_spreadStrokeBackup','_frameThickness','_frameRadius','_frameInnerRadius','_padLinked','_cornerRadius','_innerShadow','_corners','_cornersLinked','_isWarpShape','_warpVariant','_warpParams','_warpW','_warpH','_isTornShape','_tornType','_tornParams','_tornSeed','_tornW','_tornH','_isSVGShape','_isTextureOverlay','_textureType','_textureParams','globalCompositeOperation']));
   redoStack.push(cur);
   const prev = undoStack.pop();
   restoreState(prev);
@@ -7591,7 +8244,7 @@ function undo() {
 function redo() {
   if (!canvas || redoStack.length < 1) return;
   // Save current to undo
-  const cur = JSON.stringify(canvas.toJSON(['_customName','selectable','evented','lockMovementX','lockMovementY','lockScalingX','lockScalingY','lockRotation','_bannerLeftEnd','_bannerRightEnd','_bannerNotchL','_bannerNotchR','_isBannerGroup','_isHitboxGroup','_isFrame','_frameOffset','_framePadT','_framePadR','_framePadB','_framePadL','_padL','_padR','_padT','_padB','paintFirst','_shadowSpread','_spreadStrokeBackup','_frameThickness','_frameRadius','_frameInnerRadius','_padLinked','_cornerRadius','_innerShadow','_corners','_cornersLinked']));
+  const cur = JSON.stringify(canvas.toJSON(['_customName','selectable','evented','lockMovementX','lockMovementY','lockScalingX','lockScalingY','lockRotation','_bannerLeftEnd','_bannerRightEnd','_bannerNotchL','_bannerNotchR','_isBannerGroup','_isHitboxGroup','_isFrame','_frameOffset','_framePadT','_framePadR','_framePadB','_framePadL','_padL','_padR','_padT','_padB','paintFirst','_shadowSpread','_spreadStrokeBackup','_frameThickness','_frameRadius','_frameInnerRadius','_padLinked','_cornerRadius','_innerShadow','_corners','_cornersLinked','_isWarpShape','_warpVariant','_warpParams','_warpW','_warpH','_isTornShape','_tornType','_tornParams','_tornSeed','_tornW','_tornH','_isSVGShape','_isTextureOverlay','_textureType','_textureParams','globalCompositeOperation']));
   undoStack.push(cur);
   const next = redoStack.pop();
   restoreState(next);
@@ -8283,6 +8936,101 @@ function _buildTextureSVG(typeId, w, h, params) {
       <rect width="${w}" height="${h}" fill="white" filter="url(#f)"/>
     </svg>`;
   }
+  if (typeId === 'crosshatch') {
+    const sp = params.spacing || 12;
+    const wt = params.weight  || 1;
+    const ag = params.angle   || 45;
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}">
+      <defs>
+        <pattern id="ch1" patternUnits="userSpaceOnUse" width="${sp}" height="${sp}" patternTransform="rotate(${ag})">
+          <line x1="0" y1="0" x2="0" y2="${sp}" stroke="black" stroke-width="${wt}"/>
+        </pattern>
+        <pattern id="ch2" patternUnits="userSpaceOnUse" width="${sp}" height="${sp}" patternTransform="rotate(${-ag})">
+          <line x1="0" y1="0" x2="0" y2="${sp}" stroke="black" stroke-width="${wt}"/>
+        </pattern>
+      </defs>
+      <rect width="${w}" height="${h}" fill="white"/>
+      <rect width="${w}" height="${h}" fill="url(#ch1)"/>
+      <rect width="${w}" height="${h}" fill="url(#ch2)" opacity="0.75"/>
+    </svg>`;
+  }
+  if (typeId === 'halftone') {
+    const sp = params.spacing || 10;
+    const rr = params.radius  || 3;
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}">
+      <defs>
+        <pattern id="ht" patternUnits="userSpaceOnUse" width="${sp}" height="${sp}">
+          <circle cx="${sp/2}" cy="${sp/2}" r="${rr}" fill="black"/>
+        </pattern>
+      </defs>
+      <rect width="${w}" height="${h}" fill="white"/>
+      <rect width="${w}" height="${h}" fill="url(#ht)"/>
+    </svg>`;
+  }
+  if (typeId === 'linen') {
+    const sc = params.scale    || 6;
+    const ct = params.contrast || 1.2;
+    const fH = sc / 100, fV = fH * 9;
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}">
+      <defs><filter id="f" x="0%" y="0%" width="100%" height="100%">
+        <feTurbulence type="fractalNoise" baseFrequency="${fH} ${fV}" numOctaves="3" result="noise"/>
+        <feDiffuseLighting in="noise" lighting-color="#d4c4a0" diffuseConstant="${ct}" result="lit">
+          <feDistantLight azimuth="90" elevation="65"/>
+        </feDiffuseLighting>
+        <feBlend in="SourceGraphic" in2="lit" mode="multiply"/>
+      </filter></defs>
+      <rect width="${w}" height="${h}" fill="#e8d8b0" filter="url(#f)"/>
+    </svg>`;
+  }
+  if (typeId === 'vignette') {
+    const sp = params.spread || 55;
+    const r0 = (sp / 100).toFixed(2);
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}">
+      <defs>
+        <radialGradient id="vg" cx="50%" cy="50%" r="71%">
+          <stop offset="${r0}" stop-color="black" stop-opacity="0"/>
+          <stop offset="100%" stop-color="black" stop-opacity="1"/>
+        </radialGradient>
+      </defs>
+      <rect width="${w}" height="${h}" fill="url(#vg)"/>
+    </svg>`;
+  }
+  if (typeId === 'aged') {
+    const sc = Math.max(0.001, (params.scratches || 6) / 600);
+    const fd = Math.min(1, (params.fade || 35) / 100);
+    // sepia color matrix blended with identity by fade amount
+    const sr = (0.393 * fd + (1 - fd)).toFixed(3), sg = (0.769 * fd).toFixed(3), sb = (0.189 * fd).toFixed(3);
+    const gr = (0.349 * fd).toFixed(3),             gg = (0.686 * fd + (1 - fd)).toFixed(3), gb = (0.168 * fd).toFixed(3);
+    const br = (0.272 * fd).toFixed(3),             bg = (0.534 * fd).toFixed(3),             bb = (0.131 * fd + (1 - fd)).toFixed(3);
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}">
+      <defs>
+        <filter id="f">
+          <feTurbulence type="turbulence" baseFrequency="${sc} 0" numOctaves="1" seed="42" result="sc"/>
+          <feColorMatrix in="sc" type="matrix" values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 10 -7" result="lines"/>
+          <feComposite in="SourceGraphic" in2="lines" operator="arithmetic" k1="0" k2="1" k3="0.18" k4="0" result="scratched"/>
+          <feColorMatrix in="scratched" type="matrix"
+            values="${sr} ${sg} ${sb} 0 0
+                    ${gr} ${gg} ${gb} 0 0
+                    ${br} ${bg} ${bb} 0 0
+                    0 0 0 1 0"/>
+        </filter>
+      </defs>
+      <rect width="${w}" height="${h}" fill="white" filter="url(#f)"/>
+    </svg>`;
+  }
+  if (typeId === 'warp') {
+    const sc = params.distort || 20;
+    const fq = (params.freq   || 2) / 100;
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}">
+      <defs>
+        <filter id="f" x="-8%" y="-8%" width="116%" height="116%">
+          <feTurbulence type="fractalNoise" baseFrequency="${fq}" numOctaves="3" result="noise"/>
+          <feDisplacementMap in="SourceGraphic" in2="noise" scale="${sc}" xChannelSelector="R" yChannelSelector="G"/>
+        </filter>
+      </defs>
+      <rect x="12" y="12" width="${w-24}" height="${h-24}" fill="rgba(200,160,100,0.75)" filter="url(#f)"/>
+    </svg>`;
+  }
   return null;
 }
 
@@ -8481,6 +9229,43 @@ function clearAutosave() {
     el.className = 'add-option';
     el.innerHTML = `<span class="icon">${t.icon}</span>${t.name}`;
     el.onclick = () => addTextureOverlay(t.id);
+    grid.appendChild(el);
+  });
+})();
+
+// Populate SVG shape options
+(function() {
+  const grid = document.getElementById('svg-shape-options');
+  if (!grid) return;
+  SVG_SHAPES.forEach(s => {
+    const el = document.createElement('div');
+    el.className = 'add-option opt-svg';
+    const fr = s.fillRule ? `style="fill-rule:${s.fillRule}"` : '';
+    el.innerHTML = `<span class="icon"><svg viewBox="${s.vb}" width="26" height="26" fill="currentColor" ${fr}><path d="${s.path}"/></svg></span>${s.name}`;
+    el.onclick = () => { addSVGShape(s.id); hideAddModal(); };
+    grid.appendChild(el);
+  });
+})();
+
+// Populate torn paper options
+(function() {
+  const grid = document.getElementById('torn-paper-options');
+  if (!grid) return;
+  const opts = [
+    { label:'Torn Strip',     icon:'≋', fn: addTornStrip },
+    { label:'Paper Top',      icon:'⌐', fn: () => addPaperEdge('bottom') },
+    { label:'Paper Bottom',   icon:'⌐', fn: () => addPaperEdge('top') },
+    { label:'Torn Corner',    icon:'◸', fn: addTornCorner },
+    { label:'Torn Circle',    icon:'◌', fn: addTornCircle },
+    { label:'Warp Strip',     icon:'〜', fn: () => addWarpShape('strip') },
+    { label:'Warp Edge Top',  icon:'〜', fn: () => addWarpShape('edge-bottom') },
+    { label:'Warp Edge Bot',  icon:'〜', fn: () => addWarpShape('edge-top') },
+  ];
+  opts.forEach(o => {
+    const el = document.createElement('div');
+    el.className = 'add-option opt-torn';
+    el.innerHTML = `<span class="icon" style="font-size:20px">${o.icon}</span>${o.label}`;
+    el.onclick = () => { o.fn(); hideAddModal(); };
     grid.appendChild(el);
   });
 })();
