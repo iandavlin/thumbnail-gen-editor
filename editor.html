@@ -5702,15 +5702,17 @@ const SVG_SHAPES = [
   { id:'dbl-chev',  name:'Dbl Chevron',cat:'deco',  vb:'0 0 200 160',
     path: 'M0,0 L80,80 L0,160 L40,160 L120,80 L40,0 Z M60,0 L140,80 L60,160 L100,160 L180,80 L100,0 Z', fillRule:'evenodd' },
   // ── Macaroni elbows ── 90° pipe bends, opens on the two named edges.
-  // viewBox 100x100, outer radius 60, inner radius 40 → pipe wall 20.
+  // viewBox 100x100, outer radius 60, inner radius 40 → uniform pipe wall 20.
+  // Sweep flags: outer=0 (CCW around named-corner center), inner=1 (CW back).
+  // This keeps both arcs concentric — anything else gives a sail/crescent.
   { id:'elbow-ne',  name:'Elbow ⌐',    cat:'deco',  vb:'0 0 100 100',
-    path: 'M40,0 A60,60 0 0 1 100,60 L100,40 A40,40 0 0 0 60,0 Z' },
+    path: 'M40,0 A60,60 0 0 0 100,60 L100,40 A40,40 0 0 1 60,0 Z' },
   { id:'elbow-se',  name:'Elbow ⌐⤵',   cat:'deco',  vb:'0 0 100 100',
-    path: 'M100,40 A60,60 0 0 1 40,100 L60,100 A40,40 0 0 0 100,60 Z' },
+    path: 'M100,40 A60,60 0 0 0 40,100 L60,100 A40,40 0 0 1 100,60 Z' },
   { id:'elbow-sw',  name:'Elbow ⌙',    cat:'deco',  vb:'0 0 100 100',
-    path: 'M60,100 A60,60 0 0 1 0,40 L0,60 A40,40 0 0 0 40,100 Z' },
+    path: 'M60,100 A60,60 0 0 0 0,40 L0,60 A40,40 0 0 1 40,100 Z' },
   { id:'elbow-nw',  name:'Elbow ⌜',    cat:'deco',  vb:'0 0 100 100',
-    path: 'M0,60 A60,60 0 0 1 60,0 L40,0 A40,40 0 0 0 0,40 Z' },
+    path: 'M0,60 A60,60 0 0 0 60,0 L40,0 A40,40 0 0 1 0,40 Z' },
 ];
 
 function addSVGShape(id) {
