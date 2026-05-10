@@ -5701,6 +5701,16 @@ const SVG_SHAPES = [
     path: 'M0,100 C80,-10 200,130 320,20 L320,120 L0,120 Z' },
   { id:'dbl-chev',  name:'Dbl Chevron',cat:'deco',  vb:'0 0 200 160',
     path: 'M0,0 L80,80 L0,160 L40,160 L120,80 L40,0 Z M60,0 L140,80 L60,160 L100,160 L180,80 L100,0 Z', fillRule:'evenodd' },
+  // ── Macaroni elbows ── 90° bends, opens on the two named edges.
+  // viewBox 100x100, outer radius 70, inner radius 30 → pipe thickness 40.
+  { id:'elbow-ne',  name:'Elbow ⌐',    cat:'deco',  vb:'0 0 100 100',
+    path: 'M30,0 A70,70 0 0 1 100,70 L100,30 A30,30 0 0 0 70,0 Z' },
+  { id:'elbow-se',  name:'Elbow ⌐⤵',   cat:'deco',  vb:'0 0 100 100',
+    path: 'M100,30 A70,70 0 0 1 30,100 L70,100 A30,30 0 0 0 100,70 Z' },
+  { id:'elbow-sw',  name:'Elbow ⌙',    cat:'deco',  vb:'0 0 100 100',
+    path: 'M70,100 A70,70 0 0 1 0,30 L0,70 A30,30 0 0 0 30,100 Z' },
+  { id:'elbow-nw',  name:'Elbow ⌜',    cat:'deco',  vb:'0 0 100 100',
+    path: 'M0,70 A70,70 0 0 1 70,0 L30,0 A30,30 0 0 0 0,30 Z' },
 ];
 
 function addSVGShape(id) {
