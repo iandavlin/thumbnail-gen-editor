@@ -347,6 +347,7 @@
     <div style="flex:1"></div>
     <button class="btn-add" onclick="showAddModal()" data-tip="Add a new text, shape, or image element to the canvas">+ Add Element</button>
     <button class="btn-tips" id="btn-tips" onclick="toggleTips()" data-tip="Toggle hover tooltips on all controls">💡 Tips</button>
+    <button class="btn-tips" id="btn-holdouts" onclick="toggleShowHoldouts()" data-tip="When ON, holdout shapes show as faded ghosts so you can move/edit them. When OFF, they punch real holes.">👻 Holdouts: hidden</button>
     <div class="sep"></div>
     <div class="group">
       <button class="btn-json" onclick="openThumbModal()">Thumbnails</button>
@@ -1018,7 +1019,7 @@ function saveCurrentTabState() {
   clearGuidelines();
   canvas.discardActiveObject();
   canvas.requestRenderAll();
-  tab.canvasJSON = canvas.toJSON(['_customName', 'lockUniScaling', 'lockMovementX', 'lockMovementY', 'lockScalingX', 'lockScalingY', 'lockRotation', '_bannerLeftEnd', '_bannerRightEnd', '_bannerNotchL', '_bannerNotchR', '_bannerFlareL', '_bannerFlareR', '_isBannerGroup','_isHitboxGroup','_isFrame','_frameOffset','_framePadT','_framePadR','_framePadB','_framePadL', '_padL', '_padR', '_padT', '_padB', 'paintFirst','_shadowSpread','_spreadStrokeBackup','_frameThickness','_frameRadius','_frameInnerRadius','_padLinked','_cornerRadius','_innerShadow','_corners','_cornersLinked','_isTextureOverlay','_textureType','_textureParams','globalCompositeOperation','_texFillMetas','_isWarpShape','_warpVariant','_warpParams','_warpW','_warpH','_isTornShape','_tornType','_tornParams','_tornSeed','_tornW','_tornH','_isSVGShape']);
+  tab.canvasJSON = canvas.toJSON(['_customName', 'lockUniScaling', 'lockMovementX', 'lockMovementY', 'lockScalingX', 'lockScalingY', 'lockRotation', '_bannerLeftEnd', '_bannerRightEnd', '_bannerNotchL', '_bannerNotchR', '_bannerFlareL', '_bannerFlareR', '_isBannerGroup','_isHitboxGroup','_isFrame','_frameOffset','_framePadT','_framePadR','_framePadB','_framePadL', '_padL', '_padR', '_padT', '_padB', 'paintFirst','_shadowSpread','_spreadStrokeBackup','_frameThickness','_frameRadius','_frameInnerRadius','_padLinked','_cornerRadius','_innerShadow','_corners','_cornersLinked','_isTextureOverlay','_textureType','_textureParams','globalCompositeOperation','_texFillMetas','_isWarpShape','_warpVariant','_warpParams','_warpW','_warpH','_isTornShape','_tornType','_tornParams','_tornSeed','_tornW','_tornH','_isSVGShape','_isHoldout']);
   tab.canvasW = canvasW;
   tab.canvasH = canvasH;
 }
@@ -2941,6 +2942,8 @@ function updateProps() {
   const shY = (sh && sh.offsetY) || 0;
   const shBlur = (sh && sh.blur) || 6;
 
+  const isHoldout = !!obj._isHoldout;
+  html += `<div class="prop-row" title="Make this shape punch a transparent hole through everything below it. Use the toolbar 👻 toggle to see holdouts while editing."><label>Hole</label><input type="checkbox" ${isHoldout ? 'checked' : ''} onchange="toggleHoldout(this.checked)"> <span style="font-size:11px;color:#888">${isHoldout ? 'Cutout' : 'Off'}</span></div>`;
   html += `<div class="prop-row shadow-toggle"><label>Shad</label><input type="checkbox" ${hasShadow ? 'checked' : ''} onchange="toggleShadow(this.checked)"> <span style="font-size:11px;color:#888">${hasShadow ? 'On' : 'Off'}</span><button type="button" title="Apply bloom/glow preset (0/0 offset, heavy blur, soft color)" onclick="applyGlowPreset()" style="margin-left:auto;padding:2px 8px;font-size:11px;background:#333;color:#ccc;border:1px solid #555;border-radius:3px;cursor:pointer">Glow</button></div>`;
   if (hasShadow) {
     html += `<div class="shadow-fields">`;
@@ -4216,6 +4219,59 @@ function toggleShadow(on) {
   }
   canvas.requestRenderAll();
   updateProps();
+}
+
+// ── Holdouts ────────────────────────────────────────────────────────────────
+// A holdout shape uses globalCompositeOperation='destination-out' to punch a
+// transparent hole through everything below it in z-order. That makes it
+// invisible on canvas, so we also support a "Show Holdouts" editor mode that
+// reverts each holdout to source-over + 40% opacity so you can see and grab it.
+window._showHoldouts = false;
+
+function toggleHoldout(on) {
+  const obj = canvas.getActiveObject();
+  if (!obj) return;
+  obj._isHoldout = !!on;
+  if (on) {
+    // Save the original opacity once so toggling Show Holdouts on/off
+    // never multiplies the opacity reduction.
+    if (obj._holdoutOpacityBackup === undefined) obj._holdoutOpacityBackup = obj.opacity;
+    if (window._showHoldouts) {
+      obj.set({ globalCompositeOperation: 'source-over', opacity: 0.4 });
+    } else {
+      obj.set({ globalCompositeOperation: 'destination-out' });
+    }
+  } else {
+    // Leaving holdout mode: restore opacity and source-over.
+    const restore = obj._holdoutOpacityBackup !== undefined ? obj._holdoutOpacityBackup : 1;
+    obj.set({ globalCompositeOperation: 'source-over', opacity: restore });
+    delete obj._holdoutOpacityBackup;
+  }
+  obj.dirty = true;
+  canvas.requestRenderAll();
+  updateProps();
+  saveUndo();
+}
+
+function toggleShowHoldouts() {
+  window._showHoldouts = !window._showHoldouts;
+  canvas.getObjects().forEach(o => {
+    if (!o._isHoldout) return;
+    if (window._showHoldouts) {
+      if (o._holdoutOpacityBackup === undefined) o._holdoutOpacityBackup = o.opacity;
+      o.set({ globalCompositeOperation: 'source-over', opacity: 0.4 });
+    } else {
+      const restore = o._holdoutOpacityBackup !== undefined ? o._holdoutOpacityBackup : 1;
+      o.set({ globalCompositeOperation: 'destination-out', opacity: restore });
+    }
+    o.dirty = true;
+  });
+  const b = document.getElementById('btn-holdouts');
+  if (b) {
+    b.classList.toggle('on', window._showHoldouts);
+    b.textContent = window._showHoldouts ? '👻 Holdouts: shown' : '👻 Holdouts: hidden';
+  }
+  canvas.requestRenderAll();
 }
 
 function setShadowProp(prop, val) {
@@ -7523,7 +7579,7 @@ async function saveSettings() {
 }
 
 // --- JSON Save/Load ---
-const _THUMB_JSON_KEYS = ['_customName','lockUniScaling','lockMovementX','lockMovementY','lockScalingX','lockScalingY','lockRotation','_bannerLeftEnd','_bannerRightEnd','_bannerNotchL','_bannerNotchR','_bannerFlareL','_bannerFlareR','_isBannerGroup','_isHitboxGroup','_isPanelGroup','_panelGap','_selectedLineIdx','_panelLineAlign','_panelLineOffsetX','_panelLineOffsetY','_panelAlignBlock','_visualCenter','_isFrame','_frameOffset','_framePadT','_framePadR','_framePadB','_framePadL','_padL','_padR','_padT','_padB','paintFirst','_shadowSpread','_spreadStrokeBackup','_frameThickness','_frameRadius','_frameInnerRadius','_frameTop','_frameRight','_frameBottom','_frameLeft','_frameTL','_frameTR','_frameBR','_frameBL','_frameCompleteness','_padLinked','_cornerRadius','_innerShadow','_corners','_cornersLinked','_isBorderRing','_borderRingId','_clipShape','_clipRadius','_clipBorderEnabled','_clipBorderColor','_clipBorderWidth','_clipBorderId','_isWarpShape','_warpVariant','_warpParams','_warpW','_warpH','_isTornShape','_tornType','_tornParams','_tornSeed','_tornW','_tornH','_isSVGShape','_isTextureOverlay','_textureType','_textureParams','globalCompositeOperation'];
+const _THUMB_JSON_KEYS = ['_customName','lockUniScaling','lockMovementX','lockMovementY','lockScalingX','lockScalingY','lockRotation','_bannerLeftEnd','_bannerRightEnd','_bannerNotchL','_bannerNotchR','_bannerFlareL','_bannerFlareR','_isBannerGroup','_isHitboxGroup','_isPanelGroup','_panelGap','_selectedLineIdx','_panelLineAlign','_panelLineOffsetX','_panelLineOffsetY','_panelAlignBlock','_visualCenter','_isFrame','_frameOffset','_framePadT','_framePadR','_framePadB','_framePadL','_padL','_padR','_padT','_padB','paintFirst','_shadowSpread','_spreadStrokeBackup','_frameThickness','_frameRadius','_frameInnerRadius','_frameTop','_frameRight','_frameBottom','_frameLeft','_frameTL','_frameTR','_frameBR','_frameBL','_frameCompleteness','_padLinked','_cornerRadius','_innerShadow','_corners','_cornersLinked','_isBorderRing','_borderRingId','_clipShape','_clipRadius','_clipBorderEnabled','_clipBorderColor','_clipBorderWidth','_clipBorderId','_isWarpShape','_warpVariant','_warpParams','_warpW','_warpH','_isTornShape','_tornType','_tornParams','_tornSeed','_tornW','_tornH','_isSVGShape','_isHoldout','_isTextureOverlay','_textureType','_textureParams','globalCompositeOperation'];
 
 function _canvasSubfolder() {
   const r = canvasW / canvasH;
@@ -7701,7 +7757,7 @@ function insertPattern(path) {
 // Uses canvas.loadFromJSON (same path as Load JSON) so all types, groups,
 // banner groups, frames, and nested objects are handled correctly.
 function applyPatternData(data, fallbackName) {
-  const EXTRA = ['_customName','lockUniScaling','lockMovementX','lockMovementY','lockScalingX','lockScalingY','lockRotation','_bannerLeftEnd','_bannerRightEnd','_bannerNotchL','_bannerNotchR','_bannerFlareL','_bannerFlareR','_isBannerGroup','_isHitboxGroup','_isFrame','_frameOffset','_framePadT','_framePadR','_framePadB','_framePadL','_padL','_padR','_padT','_padB','paintFirst','_shadowSpread','_spreadStrokeBackup','_frameThickness','_frameRadius','_frameInnerRadius','_frameTop','_frameRight','_frameBottom','_frameLeft','_frameTL','_frameTR','_frameBR','_frameBL','_frameCompleteness','_padLinked','_cornerRadius','_innerShadow','_corners','_cornersLinked','_isWarpShape','_warpVariant','_warpParams','_warpW','_warpH','_isTornShape','_tornType','_tornParams','_tornSeed','_tornW','_tornH','_isSVGShape','_isTextureOverlay','_textureType','_textureParams','globalCompositeOperation'];
+  const EXTRA = ['_customName','lockUniScaling','lockMovementX','lockMovementY','lockScalingX','lockScalingY','lockRotation','_bannerLeftEnd','_bannerRightEnd','_bannerNotchL','_bannerNotchR','_bannerFlareL','_bannerFlareR','_isBannerGroup','_isHitboxGroup','_isFrame','_frameOffset','_framePadT','_framePadR','_framePadB','_framePadL','_padL','_padR','_padT','_padB','paintFirst','_shadowSpread','_spreadStrokeBackup','_frameThickness','_frameRadius','_frameInnerRadius','_frameTop','_frameRight','_frameBottom','_frameLeft','_frameTL','_frameTR','_frameBR','_frameBL','_frameCompleteness','_padLinked','_cornerRadius','_innerShadow','_corners','_cornersLinked','_isWarpShape','_warpVariant','_warpParams','_warpW','_warpH','_isTornShape','_tornType','_tornParams','_tornSeed','_tornW','_tornH','_isSVGShape','_isHoldout','_isTextureOverlay','_textureType','_textureParams','globalCompositeOperation'];
   return new Promise((resolve) => {
     const patternObjs = data.objects
       || (data.canvas && data.canvas.objects)
@@ -7808,7 +7864,7 @@ async function showPatternSaveDialog(selected) {
   // Capture object JSON NOW with absolute canvas coordinates.
   // Objects in a multi-object activeSelection have left/top relative to the
   // selection center, not the canvas — so discard+re-select to normalize first.
-  const EXTRA = ['_customName','lockUniScaling','lockMovementX','lockMovementY','lockScalingX','lockScalingY','lockRotation','_bannerLeftEnd','_bannerRightEnd','_bannerNotchL','_bannerNotchR','_bannerFlareL','_bannerFlareR','_isBannerGroup','_isHitboxGroup','_isFrame','_frameOffset','_framePadT','_framePadR','_framePadB','_framePadL','_padL','_padR','_padT','_padB','paintFirst','_shadowSpread','_spreadStrokeBackup','_frameThickness','_frameRadius','_frameInnerRadius','_frameTop','_frameRight','_frameBottom','_frameLeft','_frameTL','_frameTR','_frameBR','_frameBL','_frameCompleteness','_padLinked','_cornerRadius','_innerShadow','_corners','_cornersLinked','_isWarpShape','_warpVariant','_warpParams','_warpW','_warpH','_isTornShape','_tornType','_tornParams','_tornSeed','_tornW','_tornH','_isSVGShape','_isTextureOverlay','_textureType','_textureParams','globalCompositeOperation'];
+  const EXTRA = ['_customName','lockUniScaling','lockMovementX','lockMovementY','lockScalingX','lockScalingY','lockRotation','_bannerLeftEnd','_bannerRightEnd','_bannerNotchL','_bannerNotchR','_bannerFlareL','_bannerFlareR','_isBannerGroup','_isHitboxGroup','_isFrame','_frameOffset','_framePadT','_framePadR','_framePadB','_framePadL','_padL','_padR','_padT','_padB','paintFirst','_shadowSpread','_spreadStrokeBackup','_frameThickness','_frameRadius','_frameInnerRadius','_frameTop','_frameRight','_frameBottom','_frameLeft','_frameTL','_frameTR','_frameBR','_frameBL','_frameCompleteness','_padLinked','_cornerRadius','_innerShadow','_corners','_cornersLinked','_isWarpShape','_warpVariant','_warpParams','_warpW','_warpH','_isTornShape','_tornType','_tornParams','_tornSeed','_tornW','_tornH','_isSVGShape','_isHoldout','_isTextureOverlay','_textureType','_textureParams','globalCompositeOperation'];
   const active = canvas.getActiveObject();
   const wasActiveSelection = active && active.type === 'activeSelection';
   if (wasActiveSelection) canvas.discardActiveObject();
@@ -8300,7 +8356,7 @@ const MAX_UNDO = 40;
 
 function saveUndo() {
   if (undoLocked || !canvas) return;
-  const json = JSON.stringify(canvas.toJSON(['_customName','selectable','evented','lockMovementX','lockMovementY','lockScalingX','lockScalingY','lockRotation','_bannerLeftEnd','_bannerRightEnd','_bannerNotchL','_bannerNotchR','_isBannerGroup','_isHitboxGroup','_isFrame','_frameOffset','_framePadT','_framePadR','_framePadB','_framePadL','_padL','_padR','_padT','_padB','paintFirst','_shadowSpread','_spreadStrokeBackup','_frameThickness','_frameRadius','_frameInnerRadius','_padLinked','_cornerRadius','_innerShadow','_corners','_cornersLinked','_isWarpShape','_warpVariant','_warpParams','_warpW','_warpH','_isTornShape','_tornType','_tornParams','_tornSeed','_tornW','_tornH','_isSVGShape','_isTextureOverlay','_textureType','_textureParams','globalCompositeOperation']));
+  const json = JSON.stringify(canvas.toJSON(['_customName','selectable','evented','lockMovementX','lockMovementY','lockScalingX','lockScalingY','lockRotation','_bannerLeftEnd','_bannerRightEnd','_bannerNotchL','_bannerNotchR','_isBannerGroup','_isHitboxGroup','_isFrame','_frameOffset','_framePadT','_framePadR','_framePadB','_framePadL','_padL','_padR','_padT','_padB','paintFirst','_shadowSpread','_spreadStrokeBackup','_frameThickness','_frameRadius','_frameInnerRadius','_padLinked','_cornerRadius','_innerShadow','_corners','_cornersLinked','_isWarpShape','_warpVariant','_warpParams','_warpW','_warpH','_isTornShape','_tornType','_tornParams','_tornSeed','_tornW','_tornH','_isSVGShape','_isHoldout','_isTextureOverlay','_textureType','_textureParams','globalCompositeOperation']));
   // Don't push if identical to top of stack
   if (undoStack.length && undoStack[undoStack.length - 1] === json) return;
   undoStack.push(json);
@@ -8317,7 +8373,7 @@ function saveUndo() {
 function undo() {
   if (!canvas || undoStack.length < 1) return;
   // Save current state to redo
-  const cur = JSON.stringify(canvas.toJSON(['_customName','selectable','evented','lockMovementX','lockMovementY','lockScalingX','lockScalingY','lockRotation','_bannerLeftEnd','_bannerRightEnd','_bannerNotchL','_bannerNotchR','_isBannerGroup','_isHitboxGroup','_isFrame','_frameOffset','_framePadT','_framePadR','_framePadB','_framePadL','_padL','_padR','_padT','_padB','paintFirst','_shadowSpread','_spreadStrokeBackup','_frameThickness','_frameRadius','_frameInnerRadius','_padLinked','_cornerRadius','_innerShadow','_corners','_cornersLinked','_isWarpShape','_warpVariant','_warpParams','_warpW','_warpH','_isTornShape','_tornType','_tornParams','_tornSeed','_tornW','_tornH','_isSVGShape','_isTextureOverlay','_textureType','_textureParams','globalCompositeOperation']));
+  const cur = JSON.stringify(canvas.toJSON(['_customName','selectable','evented','lockMovementX','lockMovementY','lockScalingX','lockScalingY','lockRotation','_bannerLeftEnd','_bannerRightEnd','_bannerNotchL','_bannerNotchR','_isBannerGroup','_isHitboxGroup','_isFrame','_frameOffset','_framePadT','_framePadR','_framePadB','_framePadL','_padL','_padR','_padT','_padB','paintFirst','_shadowSpread','_spreadStrokeBackup','_frameThickness','_frameRadius','_frameInnerRadius','_padLinked','_cornerRadius','_innerShadow','_corners','_cornersLinked','_isWarpShape','_warpVariant','_warpParams','_warpW','_warpH','_isTornShape','_tornType','_tornParams','_tornSeed','_tornW','_tornH','_isSVGShape','_isHoldout','_isTextureOverlay','_textureType','_textureParams','globalCompositeOperation']));
   redoStack.push(cur);
   const prev = undoStack.pop();
   restoreState(prev);
@@ -8326,7 +8382,7 @@ function undo() {
 function redo() {
   if (!canvas || redoStack.length < 1) return;
   // Save current to undo
-  const cur = JSON.stringify(canvas.toJSON(['_customName','selectable','evented','lockMovementX','lockMovementY','lockScalingX','lockScalingY','lockRotation','_bannerLeftEnd','_bannerRightEnd','_bannerNotchL','_bannerNotchR','_isBannerGroup','_isHitboxGroup','_isFrame','_frameOffset','_framePadT','_framePadR','_framePadB','_framePadL','_padL','_padR','_padT','_padB','paintFirst','_shadowSpread','_spreadStrokeBackup','_frameThickness','_frameRadius','_frameInnerRadius','_padLinked','_cornerRadius','_innerShadow','_corners','_cornersLinked','_isWarpShape','_warpVariant','_warpParams','_warpW','_warpH','_isTornShape','_tornType','_tornParams','_tornSeed','_tornW','_tornH','_isSVGShape','_isTextureOverlay','_textureType','_textureParams','globalCompositeOperation']));
+  const cur = JSON.stringify(canvas.toJSON(['_customName','selectable','evented','lockMovementX','lockMovementY','lockScalingX','lockScalingY','lockRotation','_bannerLeftEnd','_bannerRightEnd','_bannerNotchL','_bannerNotchR','_isBannerGroup','_isHitboxGroup','_isFrame','_frameOffset','_framePadT','_framePadR','_framePadB','_framePadL','_padL','_padR','_padT','_padB','paintFirst','_shadowSpread','_spreadStrokeBackup','_frameThickness','_frameRadius','_frameInnerRadius','_padLinked','_cornerRadius','_innerShadow','_corners','_cornersLinked','_isWarpShape','_warpVariant','_warpParams','_warpW','_warpH','_isTornShape','_tornType','_tornParams','_tornSeed','_tornW','_tornH','_isSVGShape','_isHoldout','_isTextureOverlay','_textureType','_textureParams','globalCompositeOperation']));
   undoStack.push(cur);
   const next = redoStack.pop();
   restoreState(next);
