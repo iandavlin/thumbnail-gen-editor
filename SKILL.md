@@ -20,7 +20,9 @@ One primary path: **HTML Editor (`editor.html`)** — interactive Fabric.js canv
 
 Legacy: the `generate.js` / `generate_1x1.js` scripts emit `.pptx` via pptxgenjs — **deprecated**. Only reach for this path if the final asset genuinely needs to be editable in Google Slides. PNG-in-deck is almost always better (`slide.addImage`).
 
-Layouts live on disk as JSON. Sample layouts: `output/16x9/*.json`. Reusable templates: `templates/*.json` (see `templates/README.md`).
+Layouts live on disk as JSON. Sample layouts: `output/16x9/*.json`. Reusable patterns: `patterns/*.json` (see `patterns/README.md`).
+
+> **Building thumbnails in JSON?** Read `JSON_TOOLBOX.md` first — it catalogs every object type, custom flag (`_isBannerGroup`, `_isFrame`, `_isWarpShape`, `_isTornShape`, `_isTextureOverlay`, etc.), texture preset, SVG shape, and image-clip option the editor supports. That's the menu of what's at your disposal.
 
 ### The generator/editor handoff
 
@@ -39,8 +41,8 @@ Thumbnails/
   serve.js                      # Static file server for local dev (port 8080 via launch.json)
   assets/                       # Persistent assets (logos, branding, recurring graphics)
   assets/<YYYY-MM-DD>_<slug>/   # Per-episode assets — one folder per episode, ISO date prefixed
-  templates/                    # Reusable JSON layouts (slot-based + remix-copy — see templates/README.md)
-  templates/components/         # Reusable sub-elements (banner shapes, frames, logos)
+  patterns/                    # Reusable JSON layouts (slot-based + remix-copy — see patterns/README.md)
+  patterns/components/         # Reusable sub-elements (banner shapes, frames, logos)
   output/
     16x9/                       # Saved JSON layouts (16:9)
     1x1/                        # Saved JSON layouts (1:1)
@@ -71,7 +73,7 @@ Files that ship in the deploy package:
 - `serve.js`
 - `SKILL.md`
 - `package.json`, `package-lock.json` (if dependencies changed)
-- `templates/` (entire tree — including `components/` and `patterns/`)
+- `patterns/` (entire tree — including `components/` and `patterns/`)
 - `generate*.js` (only if the user actually runs them on the deploy target — usually not)
 
 Files that **do NOT** ship (stay local only):
@@ -88,7 +90,7 @@ When the user asks to push:
 # From the working dir, copy curated files into the deploy snapshot
 cp editor.html serve.js SKILL.md dist/thumbnails-app/
 cp package.json package-lock.json dist/thumbnails-app/
-cp -r templates/* dist/thumbnails-app/templates/
+cp -r patterns/* dist/thumbnails-app/patterns/
 
 # Then commit + push from the deploy snapshot
 cd dist/thumbnails-app
@@ -189,18 +191,18 @@ Once layout and images are approved:
 4. Load the JSON in the editor for last-mile tweaks; user exports PNG when satisfied
 5. For a one-off, skip the generator `.js` entirely — edit JSON directly. Generator pattern only pays off when you need programmatic variants or reproducibility
 
-Before starting from scratch, check `templates/*.json` for a successful layout worth reskinning (see `templates/README.md` → `toReskin` / `useWhen` notes on each).
+Before starting from scratch, check `patterns/*.json` for a successful layout worth reskinning (see `patterns/README.md` → `toReskin` / `useWhen` notes on each).
 
 ### Pattern / frame generators
 
-Reusable decorative patterns (frames, borders, banners, badges) live under `templates/patterns/<Category>/` and are loaded via **Insert Pattern** in the editor. Build them the same way as full layouts — via a `generate_*.js` that emits Fabric JSON, not by drawing in the editor.
+Reusable decorative patterns (frames, borders, banners, badges) live under `patterns/<Category>/` and are loaded via **Insert Pattern** in the editor. Build them the same way as full layouts — via a `generate_*.js` that emits Fabric JSON, not by drawing in the editor.
 
-Existing example: `generate_border_deco_16x9.js` → `templates/patterns/Frames/Deco_Border_16x9.json`. Art-deco geometric border (double frame, corner brackets with gold inlays, midpoint chevrons, corner diamond clusters, side dashes). Palette pulls from the show's sage/gold/dark scheme.
+Existing example: `generate_border_deco_16x9.js` → `patterns/Frames/Deco_Border_16x9.json`. Art-deco geometric border (double frame, corner brackets with gold inlays, midpoint chevrons, corner diamond clusters, side dashes). Palette pulls from the show's sage/gold/dark scheme.
 
 Conventions for pattern generators:
 - Filename: `generate_<what>_<ratio>.js` (ratio only if the pattern is aspect-specific; otherwise just `generate_<what>.js`)
-- Output path: `templates/patterns/<Category>/<Name>_<ratio>.json`
-- JSON shape: `{ name, description, canvasRef: {w,h}, objects: [...] }` — same as other templates, Fabric-compatible
+- Output path: `patterns/<Category>/<Name>_<ratio>.json`
+- JSON shape: `{ name, description, canvasRef: {w,h}, objects: [...] }` — same as other patterns, Fabric-compatible
 - Use `rect` and `polygon` objects with full Fabric field set (see `generate_thorell.js` or `generate_border_deco_16x9.js` for a boilerplate helper). Include `_customName` on every object so layers are readable.
 - When a generator ships: add it to `generate*.js` sync glob in the push procedure if the user wants to run it on the deploy box (usually not — generators stay local, only the resulting JSON ships).
 

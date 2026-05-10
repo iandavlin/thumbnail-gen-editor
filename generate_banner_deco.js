@@ -1,6 +1,6 @@
 // Deco banner/plaque — standalone decorative title plate, brand palette.
 // Drawn at a canonical size/position; drag/reposition in the editor after Insert.
-// Output: templates/patterns/Banners/Banner_Deco.json
+// Output: patterns/Banners/Banner_Deco.json
 
 const fs = require('fs');
 const path = require('path');
@@ -136,7 +136,7 @@ const doc = {
   objects: objs,
 };
 
-const outDir = path.join(__dirname, 'templates', 'patterns', 'Banners');
+const outDir = path.join(__dirname, 'patterns', 'Banners');
 if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
 const outPath = path.join(outDir, 'Banner_Deco.json');
 fs.writeFileSync(outPath, JSON.stringify(doc, null, 2) + '\n');

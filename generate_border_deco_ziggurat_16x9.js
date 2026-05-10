@@ -1,7 +1,7 @@
 // Deco variant — "Ziggurat & Reeds" — for 16:9 (1280x720).
 // Stepped pyramid corners, parallel reed lines, sunburst fans at midpoints.
 // Brand palette. Lean generator (Fabric defaults omitted).
-// Output: templates/patterns/Frames/Deco_Ziggurat_16x9.json
+// Output: patterns/Frames/Deco_Ziggurat_16x9.json
 
 const fs = require('fs');
 const path = require('path');
@@ -168,7 +168,7 @@ const doc = {
   objects: objs,
 };
 
-const outDir = path.join(__dirname, 'templates', 'patterns', 'Frames');
+const outDir = path.join(__dirname, 'patterns', 'Frames');
 if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
 const outPath = path.join(outDir, 'Deco_Ziggurat_16x9.json');
 fs.writeFileSync(outPath, JSON.stringify(doc, null, 2) + '\n');

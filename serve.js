@@ -40,14 +40,14 @@ function resolveDir(value, ...fallbackSegments) {
 }
 function getAssetsDir()   { return resolveDir(cfg.assetsDir,    "assets"); }
 function getPermDir()     { return resolveDir(cfg.permanentDir, "assets", "_permanent"); }
-function getPatternsDir() { return resolveDir(cfg.patternsDir,  "templates", "patterns"); }
+function getPatternsDir() { return resolveDir(cfg.patternsDir,  "patterns"); }
 function getOutputDir()   { return resolveDir(cfg.outputDir,    "output"); }
 
 // Default values shown in the UI (relative paths from ROOT)
 const DEFAULTS = {
   assetsDir:    "assets",
   permanentDir: "assets/_permanent",
-  patternsDir:  "templates/patterns",
+  patternsDir:  "patterns",
   outputDir:    "output",
 };
 
@@ -116,7 +116,7 @@ function safeSegment(s, max = 60) {
 // Returns null if the path escapes its allowed directory.
 function resolveStaticPath(urlPath) {
   const ASSETS_PREFIX   = "/assets/";
-  const PATTERNS_PREFIX = "/templates/patterns/";
+  const PATTERNS_PREFIX = "/patterns/";
 
   let fsPath, allowedBase;
 
@@ -125,8 +125,8 @@ function resolveStaticPath(urlPath) {
     const rel = urlPath === "/assets" ? "" : urlPath.slice(ASSETS_PREFIX.length);
     fsPath = path.join(getAssetsDir(), rel);
     allowedBase = getAssetsDir();
-  } else if (urlPath === "/templates/patterns" || urlPath.startsWith(PATTERNS_PREFIX)) {
-    const rel = urlPath === "/templates/patterns" ? "" : urlPath.slice(PATTERNS_PREFIX.length);
+  } else if (urlPath === "/patterns" || urlPath.startsWith(PATTERNS_PREFIX)) {
+    const rel = urlPath === "/patterns" ? "" : urlPath.slice(PATTERNS_PREFIX.length);
     fsPath = path.join(getPatternsDir(), rel);
     allowedBase = getPatternsDir();
   } else if (urlPath === "/output" || urlPath.startsWith(OUTPUT_PREFIX)) {
@@ -187,11 +187,11 @@ async function handleRequest(req, res, pathname, url) {
           try {
             const data = JSON.parse(fs.readFileSync(path.join(patternsDir, e.name), "utf8"));
             allPatterns.push({ file: e.name, path: e.name, folder: null,
-              url: `/templates/patterns/${e.name}`,
+              url: `/patterns/${e.name}`,
               name: data.name || e.name.replace(/\.json$/, ""),
               description: data.description || "", canvasRef: data.canvasRef || null, thumbnail: data.thumbnail || null });
           } catch {
-            allPatterns.push({ file: e.name, path: e.name, folder: null, url: `/templates/patterns/${e.name}`, name: e.name.replace(/\.json$/, "") });
+            allPatterns.push({ file: e.name, path: e.name, folder: null, url: `/patterns/${e.name}`, name: e.name.replace(/\.json$/, "") });
           }
         }
       }
@@ -204,11 +204,11 @@ async function handleRequest(req, res, pathname, url) {
               try {
                 const data = JSON.parse(fs.readFileSync(path.join(subDir, f), "utf8"));
                 allPatterns.push({ file: f, path: `${e.name}/${f}`, folder: e.name,
-                  url: `/templates/patterns/${e.name}/${f}`,
+                  url: `/patterns/${e.name}/${f}`,
                   name: data.name || f.replace(/\.json$/, ""),
                   description: data.description || "", canvasRef: data.canvasRef || null, thumbnail: data.thumbnail || null });
               } catch {
-                allPatterns.push({ file: f, path: `${e.name}/${f}`, folder: e.name, url: `/templates/patterns/${e.name}/${f}`, name: f.replace(/\.json$/, "") });
+                allPatterns.push({ file: f, path: `${e.name}/${f}`, folder: e.name, url: `/patterns/${e.name}/${f}`, name: f.replace(/\.json$/, "") });
               }
             }
           } catch {}

@@ -1,6 +1,6 @@
 // Bauhaus-style geometric border for 16:9 (1280x720).
 // Primary colors + black, asymmetric primitives. Cheap-factory generator.
-// Output: templates/patterns/Frames/Bauhaus_Border_16x9.json
+// Output: patterns/Frames/Bauhaus_Border_16x9.json
 
 const fs = require('fs');
 const path = require('path');
@@ -133,7 +133,7 @@ const doc = {
   objects: objs,
 };
 
-const outDir = path.join(__dirname, 'templates', 'patterns', 'Frames');
+const outDir = path.join(__dirname, 'patterns', 'Frames');
 if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
 const outPath = path.join(outDir, 'Bauhaus_Border_16x9.json');
 fs.writeFileSync(outPath, JSON.stringify(doc, null, 2) + '\n');

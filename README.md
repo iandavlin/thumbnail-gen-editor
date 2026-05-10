@@ -67,7 +67,7 @@ editor.html              # the editor (Fabric.js, single-page)
 serve.js                 # static file server (HOST/PORT env)
 generate*.js             # JSON layout generators
 process_episode.js       # episode pipeline
-templates/               # reusable layout JSON + components
+patterns/               # reusable layout JSON + components
 output/                  # generated thumbnail JSON (empty in this package)
 assets/                  # static images (empty in this package)
 SKILL.md                 # workflow notes

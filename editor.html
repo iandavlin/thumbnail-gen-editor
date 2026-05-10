@@ -316,8 +316,15 @@
       <label>Preset:</label>
       <select id="preset-select" onchange="loadPreset(this.value)">
         <option value="">-- Load preset --</option>
-        <option value="16x9">16:9 (1280x720)</option>
-        <option value="1x1">1:1 (800x800)</option>
+        <option value="16x9">16:9 (1280×720) — YouTube</option>
+        <option value="1x1">1:1 (1080×1080) — IG square</option>
+        <option value="9x16">9:16 (1080×1920) — Reels/Shorts</option>
+        <option value="4x5">4:5 (1080×1350) — IG portrait</option>
+        <option value="2x3">2:3 (1080×1620) — Pinterest</option>
+        <option value="3x2">3:2 (1200×800)</option>
+        <option value="4x3">4:3 (1200×900)</option>
+        <option value="21x9">21:9 (2560×1080) — ultrawide</option>
+        <option value="custom">Custom…</option>
       </select>
     </div>
     <div class="sep"></div>
@@ -638,7 +645,7 @@
       </div>
       <label style="color:#ECB351;font-weight:600">Patterns</label>
       <div>
-        <input id="cfg-patternsDir" placeholder="templates/patterns" style="width:100%;box-sizing:border-box;background:#0e0e0e;border:1px solid #333;color:#eee;padding:5px 8px;border-radius:3px;font-size:12px">
+        <input id="cfg-patternsDir" placeholder="patterns" style="width:100%;box-sizing:border-box;background:#0e0e0e;border:1px solid #333;color:#eee;padding:5px 8px;border-radius:3px;font-size:12px">
         <div id="cfg-patternsDir-hint" style="font-size:10px;color:#666;margin-top:2px"></div>
       </div>
       <label style="color:#7aa2f7;font-weight:600">JSON output</label>
@@ -7066,14 +7073,37 @@ function onMouseMove(e) {
 }
 
 // --- Presets ---
+const PRESETS = {
+  '16x9': { w: 1280, h: 720,  label: '16:9' },
+  '1x1':  { w: 1080, h: 1080, label: '1:1'  },
+  '9x16': { w: 1080, h: 1920, label: '9:16' },
+  '4x5':  { w: 1080, h: 1350, label: '4:5'  },
+  '2x3':  { w: 1080, h: 1620, label: '2:3'  },
+  '3x2':  { w: 1200, h: 800,  label: '3:2'  },
+  '4x3':  { w: 1200, h: 900,  label: '4:3'  },
+  '21x9': { w: 2560, h: 1080, label: '21:9' },
+};
+
 function loadPreset(preset) {
   if (!preset) return;
-  const w = preset === '16x9' ? 1280 : 800;
-  const h = preset === '16x9' ? 720 : 800;
-  const name = preset === '16x9' ? 'New 16:9' : 'New 1:1';
+  const sel = document.getElementById('preset-select');
+  let w, h, label;
+
+  if (preset === 'custom') {
+    const input = window.prompt('Custom canvas size (WxH or W:H)\n\nExamples:\n  1920x1080  → exact pixels\n  16:9       → asks for one dimension\n  16:9 1080  → 16:9 with 1080 as the long side', '1920x1080');
+    sel.value = '';
+    if (!input) return;
+    const parsed = _parseCustomSize(input.trim());
+    if (!parsed) { alert('Could not parse "' + input + '". Try "1920x1080" or "16:9 1080".'); return; }
+    ({ w, h, label } = parsed);
+  } else {
+    const p = PRESETS[preset];
+    if (!p) return;
+    w = p.w; h = p.h; label = p.label;
+  }
 
   saveCurrentTabState();
-  const id = createTab(name, w, h);
+  const id = createTab('New ' + label, w, h);
   activeTabId = id;
   initCanvas(w, h);
 
@@ -7082,7 +7112,38 @@ function loadPreset(preset) {
   canvas.requestRenderAll();
   refreshLayers();
   renderTabs();
-  document.getElementById('preset-select').value = '';
+  sel.value = '';
+}
+
+// Parse "1920x1080", "1920X1080", "1920,1080", "16:9 1080", "16:9".
+// Returns { w, h, label } or null.
+function _parseCustomSize(s) {
+  // exact pixels: WxH
+  let m = s.match(/^(\d+)\s*[x×,]\s*(\d+)$/i);
+  if (m) {
+    const w = +m[1], h = +m[2];
+    if (w > 0 && h > 0) return { w, h, label: _gcdLabel(w, h) };
+  }
+  // ratio with optional long-side: "16:9" or "16:9 1080"
+  m = s.match(/^(\d+)\s*:\s*(\d+)(?:\s+(\d+))?$/);
+  if (m) {
+    const rw = +m[1], rh = +m[2];
+    if (rw > 0 && rh > 0) {
+      const longSide = m[3] ? +m[3] : +(window.prompt(`Long side in pixels for ${rw}:${rh}?`, '1080') || 0);
+      if (longSide > 0) {
+        const isLandscape = rw >= rh;
+        const w = isLandscape ? longSide : Math.round(longSide * rw / rh);
+        const h = isLandscape ? Math.round(longSide * rh / rw) : longSide;
+        return { w, h, label: `${rw}:${rh}` };
+      }
+    }
+  }
+  return null;
+}
+function _gcdLabel(w, h) {
+  const gcd = (a, b) => b ? gcd(b, a % b) : a;
+  const g = gcd(w, h);
+  return `${w/g}:${h/g}`;
 }
 
 // --- Export ---
@@ -7588,7 +7649,7 @@ function loadJSONFiles(files, idx) {
 }
 
 // Insert a pattern into the CURRENT canvas (merge, not replace).
-// Patterns are JSON files at templates/patterns/*.json with shape:
+// Patterns are JSON files at patterns/*.json with shape:
 //   { name, description, canvasRef, tweakable, objects: [ ... fabric objects ... ] }
 // Two call forms:
 //   insertPattern()         — opens a file picker (user flow)
@@ -7972,7 +8033,7 @@ function _renderPatternGrid() {
     );
   }
   if (!patterns.length) {
-    const msg = query ? `No patterns match "${query}".` : (_ppAllPatterns.length ? 'No patterns in this folder.' : 'No patterns found in templates/patterns/.');
+    const msg = query ? `No patterns match "${query}".` : (_ppAllPatterns.length ? 'No patterns in this folder.' : 'No patterns found in patterns/.');
     grid.innerHTML = `<div class="pp-empty">${msg}</div>`;
     grid._patterns = [];
     _ppRenderPagination(0);
@@ -8060,7 +8121,7 @@ async function _ppMoveConfirm(patternPath, newFolder, picker) {
     if (p) {
       p.folder = newFolder || null;
       p.path = newFolder ? `${newFolder}/${p.file}` : p.file;
-      p.url = `/templates/patterns/${p.path}`;
+      p.url = `/patterns/${p.path}`;
     }
     _renderFolderTabs();
     _renderPatternGrid();

@@ -1,6 +1,6 @@
 // Generates an art-deco geometric border for 16:9 (1280x720).
 // Concentric frames, stepped corner brackets, midpoint chevron+diamond accents.
-// Output: templates/patterns/Frames/Deco_Border_16x9.json
+// Output: patterns/Frames/Deco_Border_16x9.json
 
 const fs = require('fs');
 const path = require('path');
@@ -228,7 +228,7 @@ const doc = {
   objects: objs,
 };
 
-const outDir = path.join(__dirname, 'templates', 'patterns', 'Frames');
+const outDir = path.join(__dirname, 'patterns', 'Frames');
 if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
 const outPath = path.join(outDir, 'Deco_Border_16x9.json');
 fs.writeFileSync(outPath, JSON.stringify(doc, null, 2) + '\n');
