@@ -347,8 +347,8 @@
     <div style="flex:1"></div>
     <button class="btn-add" onclick="showAddModal()" data-tip="Add a new text, shape, or image element to the canvas">+ Add Element</button>
     <button class="btn-tips" id="btn-tips" onclick="toggleTips()" data-tip="Toggle hover tooltips on all controls">💡 Tips</button>
-    <button class="btn-tips" id="btn-holdouts" onclick="toggleShowHoldouts()" data-tip="When ON, holdout shapes show as faded ghosts so you can move/edit them. When OFF, they punch real holes.">👻 Holdouts: hidden</button>
-    <button class="btn-tips" id="btn-cutout-group" onclick="groupOrUngroupCutout()" data-tip="With 2+ items selected (including a holdout), groups them so the hole only cuts inside the group. When a cutout group is selected, ungroups it.">🔗 Cutout Group</button>
+    <button class="btn-tips" id="btn-holdouts" onclick="toggleShowHoldouts()" title="Show Holdouts (toggle): make holdout shapes visible as 40% ghosts" data-tip="When ON, holdout shapes show as faded ghosts so you can move/edit them. When OFF, they punch real holes.">👻</button>
+    <button class="btn-tips" id="btn-cutout-group" onclick="groupOrUngroupCutout()" title="Cutout Group: with 2+ items selected (including a holdout), wrap them so the hole only cuts inside the group. Click again on a cutout group to ungroup." data-tip="With 2+ items selected (including a holdout), groups them so the hole only cuts inside the group. When a cutout group is selected, ungroups it.">🔗</button>
     <div class="sep"></div>
     <div class="group">
       <button class="btn-json" onclick="openThumbModal()">Thumbnails</button>
@@ -4280,7 +4280,9 @@ function toggleShowHoldouts() {
   const b = document.getElementById('btn-holdouts');
   if (b) {
     b.classList.toggle('on', window._showHoldouts);
-    b.textContent = window._showHoldouts ? '👻 Holdouts: shown' : '👻 Holdouts: hidden';
+    b.title = window._showHoldouts
+      ? 'Holdouts: SHOWN as 40% ghosts (click to hide → real cutouts)'
+      : 'Holdouts: HIDDEN as real cutouts (click to show as ghosts)';
   }
   canvas.requestRenderAll();
 }
