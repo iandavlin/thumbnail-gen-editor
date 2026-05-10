@@ -32,6 +32,15 @@ assets/_permanent/logos/*
 assets/_permanent/misc/*
 !assets/_permanent/misc/.gitkeep
 
+# Also ignore the manifest — regenerated locally by rebuild-manifest
+assets/_permanent/manifest.json
+
+# ── Patterns ─────────────────────────────────────────────────────────────────
+# User-saved patterns and layouts are local only. Clean slate on boot.
+patterns/*
+!patterns/.gitkeep
+!patterns/README.md
+
 # ── OS / editor cruft ────────────────────────────────────────────────────────
 .DS_Store
 Thumbs.db
