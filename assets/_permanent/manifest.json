@@ -9,20 +9,6 @@
     "background"
   ],
   "assets": {
-    "misc-1080spng": {
-      "path": "misc/1080spng.jpg",
-      "width": 1080,
-      "height": 1080,
-      "aspectRatio": 1,
-      "format": "jpg",
-      "fileSize": 155128,
-      "hasAlpha": false,
-      "hash": "124f3fc4023131bb",
-      "addedAt": "2026-04-28",
-      "tags": [
-        "logo"
-      ]
-    },
     "misc-facebook-post-mock": {
       "path": "misc/facebook-post-mock.png",
       "width": 240,
@@ -30,11 +16,39 @@
       "aspectRatio": 0.5621,
       "format": "png",
       "fileSize": 176102,
-      "hasAlpha": true,
-      "addedAt": "2026-04-28",
+      "hasAlpha": false,
+      "hash": "95b02a7e768ad6ca",
       "tags": [
         "photo"
-      ]
+      ],
+      "addedAt": "2026-04-28"
+    },
+    "misc-loothgrouphighrez-cropped": {
+      "path": "misc/loothgrouphighrez-cropped.png",
+      "width": 1200,
+      "height": 1040,
+      "aspectRatio": 1.1538,
+      "format": "png",
+      "fileSize": 652148,
+      "hasAlpha": true,
+      "hash": "9afd6e08dbf26a9a",
+      "addedAt": "2026-05-02",
+      "tags": [
+        "logo"
+      ],
+      "description": "loothgroup logo"
+    },
+    "misc-optimum": {
+      "path": "misc/optimum.png",
+      "width": 1000,
+      "height": 1000,
+      "aspectRatio": 1,
+      "format": "png",
+      "fileSize": 109024,
+      "hasAlpha": true,
+      "hash": "b0857c96a9aeb225",
+      "addedAt": "2026-05-02",
+      "tags": []
     }
   }
 }

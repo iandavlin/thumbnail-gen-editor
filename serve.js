@@ -54,19 +54,36 @@ const DEFAULTS = {
 // -----------------------------------------------------------------------------
 
 function jsonResp(res, data, status = 200) {
-  res.writeHead(status, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
+  res.writeHead(status, { "Content-Type": "application/json; charset=utf-8", "Access-Control-Allow-Origin": "*" });
   res.end(JSON.stringify(data));
 }
+
+const MAX_BODY_BYTES = 50 * 1024 * 1024; // 50 MB — base64-encoded thumbnail uploads run large
 
 function readBody(req) {
   return new Promise((resolve, reject) => {
     const chunks = [];
-    req.on("data", c => chunks.push(c));
+    let size = 0;
+    let aborted = false;
+    req.on("data", c => {
+      if (aborted) return;
+      size += c.length;
+      if (size > MAX_BODY_BYTES) {
+        aborted = true;
+        const err = new Error("payload too large");
+        err.code = "PAYLOAD_TOO_LARGE";
+        req.destroy(err);
+        reject(err);
+        return;
+      }
+      chunks.push(c);
+    });
     req.on("end", () => {
+      if (aborted) return;
       try { resolve(JSON.parse(Buffer.concat(chunks).toString())); }
       catch { resolve({}); }
     });
-    req.on("error", reject);
+    req.on("error", e => { if (!aborted) reject(e); });
   });
 }
 
@@ -132,6 +149,18 @@ const server = http.createServer(async (req, res) => {
 
   res.setHeader("Access-Control-Allow-Origin", "*");
   if (req.method === "OPTIONS") { res.writeHead(204); res.end(); return; }
+
+  try {
+    await handleRequest(req, res, pathname, url);
+  } catch (e) {
+    if (res.headersSent) { try { res.end(); } catch {} return; }
+    if (e && e.code === "PAYLOAD_TOO_LARGE") return jsonResp(res, { error: "payload too large" }, 413);
+    console.error("request error:", e && e.stack || e);
+    return jsonResp(res, { error: "internal error" }, 500);
+  }
+});
+
+async function handleRequest(req, res, pathname, url) {
 
   // --- Config -----------------------------------------------------------------
   if (pathname === "/api/config") {
@@ -232,7 +261,7 @@ const server = http.createServer(async (req, res) => {
       return jsonResp(res, { error: "invalid from path" }, 400);
     const patternsDir = getPatternsDir();
     const fromAbs = path.join(patternsDir, fromPath);
-    if (!fromAbs.startsWith(patternsDir)) return jsonResp(res, { error: "forbidden" }, 403);
+    if (!fromAbs.startsWith(patternsDir + path.sep)) return jsonResp(res, { error: "forbidden" }, 403);
     if (!fs.existsSync(fromAbs)) return jsonResp(res, { error: "not found" }, 404);
     const filename = path.basename(fromPath);
     let toDir = patternsDir;
@@ -269,7 +298,7 @@ const server = http.createServer(async (req, res) => {
       return jsonResp(res, { error: "invalid path" }, 400);
     const patternsDir = getPatternsDir();
     const filePath2 = path.join(patternsDir, relPath);
-    if (!filePath2.startsWith(patternsDir)) return jsonResp(res, { error: "forbidden" }, 403);
+    if (!filePath2.startsWith(patternsDir + path.sep)) return jsonResp(res, { error: "forbidden" }, 403);
     if (!fs.existsSync(filePath2)) return jsonResp(res, { error: "not found" }, 404);
     fs.unlinkSync(filePath2);
     return jsonResp(res, { ok: true });
@@ -473,7 +502,7 @@ const server = http.createServer(async (req, res) => {
   if (ext === ".html") headers["Cache-Control"] = "no-store";
   res.writeHead(200, headers);
   fs.createReadStream(filePath).pipe(res);
-});
+}
 
 server.listen(PORT, "127.0.0.1", () => {
   console.log(`Editor server running at http://127.0.0.1:${PORT}`);

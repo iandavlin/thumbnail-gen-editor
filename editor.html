@@ -93,7 +93,8 @@
   /* Snap guides rendered on canvas by fabric */
 
   /* Export modal */
-  #export-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; align-items: center; justify-content: center; }
+  /* z-index tiers: in-flow:1 | drop-overlay:9000 | modals:1000 | modal-on-modal & crop:1100 | context/popover:2000 | tooltip:10000 */
+  #export-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center; }
   #export-modal.show { display: flex; }
   #export-modal .modal { background: #2a2a2a; border: 1px solid #444; border-radius: 8px; padding: 24px; width: 400px; }
   #export-modal h3 { margin-bottom: 16px; }
@@ -107,7 +108,7 @@
   #quality-display { width: 40px; text-align: center; color: #aaa; font-size: 13px; }
 
   /* Add element modal */
-  #add-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; align-items: center; justify-content: center; }
+  #add-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center; }
   #add-modal.show { display: flex; }
   #add-modal .modal { background: #2a2a2a; border: 1px solid #444; border-radius: 8px; padding: 24px; width: 480px; max-height: 88vh; overflow-y: auto; }
   #add-modal h3 { margin-bottom: 16px; }
@@ -152,7 +153,7 @@
   .grad-stop-row input[type="range"] { flex:1; min-width:0; }
 
   /* Texture fill modal */
-  #tex-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:200; align-items:center; justify-content:center; }
+  #tex-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:1000; align-items:center; justify-content:center; }
   #tex-modal.show { display:flex; }
   #tex-modal .modal { background:#2a2a2a; border:1px solid #444; border-radius:8px; padding:20px; width:520px; }
   #tex-modal h3 { margin:0 0 14px; font-size:14px; color:#e0e0e0; }
@@ -168,7 +169,7 @@
   #tex-modal .tex-actions { display:flex; gap:8px; margin-top:14px; justify-content:flex-end; }
 
   /* Floating brand panel */
-  #brand-panel { display:none; position:fixed; z-index:9999; background:#1e1e1e; border:1px solid #555; border-radius:7px; padding:10px; box-shadow:0 6px 24px rgba(0,0,0,0.7); width:160px; }
+  #brand-panel { display:none; position:fixed; z-index:2000; background:#1e1e1e; border:1px solid #555; border-radius:7px; padding:10px; box-shadow:0 6px 24px rgba(0,0,0,0.7); width:160px; }
   #brand-panel .bp-title { font-size:10px; color:#777; margin-bottom:6px; text-transform:uppercase; letter-spacing:.05em; }
   #brand-panel .bp-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:4px; }
   #brand-panel .bp-swatch { width:22px; height:22px; border-radius:4px; cursor:pointer; border:1px solid rgba(255,255,255,0.12); transition:transform .1s; }
@@ -195,7 +196,7 @@
   .tab.tab-add:hover { color: #7aa2f7; background: #2f2f2f; }
 
   /* Right-click context menu */
-  #context-menu { display: none; position: fixed; z-index: 200; background: #2a2a2a; border: 1px solid #444; border-radius: 6px; padding: 4px 0; min-width: 180px; box-shadow: 0 4px 16px rgba(0,0,0,0.5); }
+  #context-menu { display: none; position: fixed; z-index: 2000; background: #2a2a2a; border: 1px solid #444; border-radius: 6px; padding: 4px 0; min-width: 180px; box-shadow: 0 4px 16px rgba(0,0,0,0.5); }
   #context-menu.show { display: block; }
   #context-menu .ctx-item { padding: 6px 16px; font-size: 12px; color: #ccc; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
   #context-menu .ctx-item:hover { background: #3a3a5a; color: #fff; }
@@ -208,11 +209,11 @@
   #statusbar { height: 28px; background: #242424; border-top: 1px solid #333; display: flex; align-items: center; padding: 0 16px; font-size: 11px; color: #666; gap: 16px; flex-shrink: 0; }
 
   /* Pattern picker modal */
-  #pattern-picker-modal, #asset-picker-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:100; align-items:center; justify-content:center; }
+  #pattern-picker-modal, #asset-picker-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:1000; align-items:center; justify-content:center; }
   #pattern-picker-modal.show, #asset-picker-modal.show { display:flex; }
   #asset-edit-modal { display:none; }
   #asset-edit-modal.show { display:flex; }
-  #term-manager-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:102; align-items:center; justify-content:center; }
+  #term-manager-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:1100; align-items:center; justify-content:center; }
   #term-manager-modal.show { display:flex; }
   .pp-thumb.asset { object-fit:contain; background:repeating-conic-gradient(#222 0% 25%, #181818 0% 50%) 0 0/16px 16px; }
   .pp-card:hover .ap-actions { opacity:1 !important; }
@@ -260,7 +261,7 @@
   .pp-search { width:100%; box-sizing:border-box; background:#1a1a1a; border:1px solid #3a3a3a; border-radius:6px; padding:7px 11px; color:#e0e0e0; font-size:12px; font-family:inherit; }
   .pp-search:focus { outline:none; border-color:#7aa2f7; }
   /* Pattern card move picker */
-  .pp-move-picker { position:fixed; background:#252525; border:1px solid #555; border-radius:6px; padding:8px; display:flex; gap:6px; align-items:center; z-index:300; box-shadow:0 4px 16px rgba(0,0,0,0.6); }
+  .pp-move-picker { position:fixed; background:#252525; border:1px solid #555; border-radius:6px; padding:8px; display:flex; gap:6px; align-items:center; z-index:2000; box-shadow:0 4px 16px rgba(0,0,0,0.6); }
   .pp-move-sel { background:#1a1a1a; border:1px solid #444; border-radius:4px; color:#e0e0e0; font-size:12px; padding:4px 8px; max-width:160px; }
   .pp-move-ok { background:#7aa2f7; border:none; border-radius:4px; color:#111; font-size:12px; padding:4px 10px; cursor:pointer; font-weight:600; }
   .pp-move-btn { font-size:11px; color:#555; line-height:1; padding:0 2px; }
@@ -268,11 +269,11 @@
   .pp-move-btn:hover { color:#7aa2f7 !important; }
   /* Pattern save modal */
   /* Custom tooltip */
-  #custom-tooltip { position:fixed; z-index:9999; background:#111; color:#eee; border:1px solid #444; border-radius:4px; padding:5px 9px; font-size:11px; line-height:1.3; max-width:240px; pointer-events:none; box-shadow:0 2px 6px rgba(0,0,0,0.4); display:none; }
+  #custom-tooltip { position:fixed; z-index:10000; background:#111; color:#eee; border:1px solid #444; border-radius:4px; padding:5px 9px; font-size:11px; line-height:1.3; max-width:240px; pointer-events:none; box-shadow:0 2px 6px rgba(0,0,0,0.4); display:none; }
   #custom-tooltip.show { display:block; }
   #toolbar .btn-tips { background:#2a2a2a; border-color:#444; color:#bbb; }
   #toolbar .btn-tips.on { background:#2a3a25; border-color:#4a6a3a; color:#c8e0b4; }
-  #pattern-save-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:101; align-items:center; justify-content:center; }
+  #pattern-save-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:1100; align-items:center; justify-content:center; }
   #pattern-save-modal.show { display:flex; }
   .ps-modal { background:#1e1e1e; border:1px solid #3a3a3a; border-radius:10px; padding:22px; width:400px; max-width:94vw; display:flex; flex-direction:column; gap:13px; }
   .ps-modal h3 { margin:0; font-size:14px; color:#e0e0e0; }
@@ -514,12 +515,12 @@
 <input type="file" id="pattern-input" accept=".json" style="display:none">
 
 <!-- Drop overlay -->
-<div id="drop-overlay" style="display:none;position:fixed;inset:0;background:rgba(122,162,247,0.15);border:3px dashed #7aa2f7;z-index:9998;pointer-events:none;align-items:center;justify-content:center;">
+<div id="drop-overlay" style="display:none;position:fixed;inset:0;background:rgba(122,162,247,0.15);border:3px dashed #7aa2f7;z-index:9000;pointer-events:none;align-items:center;justify-content:center;">
   <div style="background:#1a1a1a;color:#eee;padding:20px 28px;border-radius:8px;font-size:16px;font-weight:600;">Drop image to import</div>
 </div>
 
 <!-- Asset import modal -->
-<div id="asset-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;align-items:center;justify-content:center;">
+<div id="asset-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;align-items:center;justify-content:center;">
   <div style="background:#1a1a1a;color:#eee;padding:24px;border-radius:8px;width:520px;max-width:92vw;border:1px solid #333;">
     <div style="font-size:16px;font-weight:600;margin-bottom:4px;">Import image</div>
     <div style="font-size:12px;color:#888;margin-bottom:14px;" id="asset-modal-filename"></div>
@@ -589,7 +590,7 @@
 </div>
 
 <!-- Crop Modal -->
-<div id="crop-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:10000;align-items:center;justify-content:center;">
+<div id="crop-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:1100;align-items:center;justify-content:center;">
   <div style="background:#1a1a1a;color:#eee;border-radius:8px;border:1px solid #333;display:flex;flex-direction:column;max-width:96vw;">
     <div style="padding:14px 18px 8px;font-size:15px;font-weight:600;">Crop Image</div>
     <canvas id="crop-canvas" width="740" height="460" style="display:block;background:#0d0d0d;cursor:crosshair;" onmousedown="cropMouseDown(event)"></canvas>
@@ -620,7 +621,7 @@
 </div>
 
 <!-- Settings Modal -->
-<div id="settings-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;align-items:center;justify-content:center;">
+<div id="settings-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;align-items:center;justify-content:center;">
   <div style="background:#1a1a1a;color:#eee;padding:24px;border-radius:8px;width:500px;max-width:94vw;border:1px solid #333;">
     <div style="font-size:16px;font-weight:600;margin-bottom:4px;">⚙ Folder Settings</div>
     <div style="font-size:12px;color:#888;margin-bottom:16px;">Paths can be absolute or relative to the project root. Leave blank to use the default.</div>
@@ -655,7 +656,7 @@
 </div>
 
 <!-- Thumbnails Modal -->
-<div id="thumb-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:9999;align-items:center;justify-content:center;" onkeydown="if(event.key==='Escape')closeThumbModal()">
+<div id="thumb-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:1000;align-items:center;justify-content:center;">
   <div class="pp-modal" style="width:920px;max-width:96vw;max-height:86vh;">
     <h3>Thumbnails</h3>
     <div class="pp-tabs" id="th-tabs"></div>
@@ -2049,7 +2050,16 @@ function buildLayerRow(obj, idx, active, isChild, groupObj, childIdx) {
   return div;
 }
 
+let _refreshLayersScheduled = 0;
 function refreshLayers() {
+  // Coalesce bursts of mutation into one rAF-scheduled render.
+  if (_refreshLayersScheduled) return;
+  _refreshLayersScheduled = requestAnimationFrame(() => {
+    _refreshLayersScheduled = 0;
+    _refreshLayersImpl();
+  });
+}
+function _refreshLayersImpl() {
   const panel = document.getElementById('layers-panel');
   const objects = canvas.getObjects().filter(o => !o._isGuideline && !o._isSpreadGhost);
   const active = canvas.getActiveObject();
@@ -2355,7 +2365,7 @@ function updateProps() {
       html += `<div class="prop-row"><label>Bdr</label><input type="checkbox" ${bStroke?'checked':''} onchange="toggleBannerGroupPolyStroke(this.checked)"> <span style="font-size:11px;color:#888">${bStroke?'On':'Off'}</span></div>`;
       if (bStroke) {
         html += `<div class="prop-row"><label>BCol</label>${brandColorPicker('_bgBannerStroke', getColorHex(bgPoly.stroke) || '#fff')}</div>`;
-        html += `<div class="prop-row"><label>BWid</label><input type="number" min="1" max="20" value="${bgPoly.strokeWidth||2}" onchange="setBannerGroupPolyProp('strokeWidth', +this.value)"></div>`;
+        { const _bw = bgPoly.strokeWidth || 2; html += `<div class="prop-row"><label>BWid</label><input type="number" min="0.1" max="20" step="${_bw < 1.5 ? '0.1' : '1'}" value="${_bw}" onchange="setBannerGroupPolyProp('strokeWidth', +this.value)"></div>`; }
         html += strokeOpacityRow('_bgBannerStrokeAlpha', getColorAlpha(bgPoly.stroke));
       }
     }
@@ -2543,7 +2553,7 @@ function updateProps() {
       html += `<div class="prop-row"><label>Bdr</label><input type="checkbox" ${hbBdr?'checked':''} onchange="toggleHitboxShapeStroke(this.checked)"> <span style="font-size:11px;color:#888">${hbBdr?'On':'Off'}</span></div>`;
       if (hbBdr) {
         html += `<div class="prop-row"><label>BCol</label>${brandColorPicker('_hbShapeStroke', getColorHex(primary.stroke) || '#FFFFFF')}</div>`;
-        html += `<div class="prop-row"><label>BWid</label><input type="number" min="1" max="50" value="${primary.strokeWidth||2}" onchange="setHitboxShapeStrokeWidth(+this.value)"></div>`;
+        { const _bw = primary.strokeWidth || 2; html += `<div class="prop-row"><label>BWid</label><input type="number" min="0.1" max="50" step="${_bw < 1.5 ? '0.1' : '1'}" value="${_bw}" onchange="setHitboxShapeStrokeWidth(+this.value)"></div>`; }
         html += strokeOpacityRow('_hbShapeStrokeAlpha', getColorAlpha(primary.stroke));
       }
       if (hgShapes.length > 1) {
@@ -2724,7 +2734,7 @@ function updateProps() {
     html += `<div class="prop-row"><label>Border</label><input type="checkbox" ${hasBorder?'checked':''} onchange="setWarpShapeParam('borderColor', this.checked ? '${borderColor}' : '')"> <span style="font-size:11px;color:#888">${hasBorder?'On':'Off'}</span></div>`;
     if (hasBorder) {
       html += `<div class="prop-row"><label>BCol</label><input type="color" value="${toHex6(borderColor)}" oninput="setWarpShapeParam('borderColor',this.value)" style="width:28px;height:24px;padding:0;border:none;cursor:pointer;flex-shrink:0"><input type="text" value="${toHex6(borderColor)}" onchange="setWarpShapeParam('borderColor',this.value)" style="width:68px;background:#333;border:1px solid #444;color:#e0e0e0;padding:3px 5px;border-radius:3px;font-size:11px;font-family:monospace"></div>`;
-      html += `<div class="prop-row"><label>BWidth</label><input type="range" min="1" max="30" step="1" value="${borderW}" oninput="setWarpShapeParam('borderW',+this.value)"><input type="number" min="1" max="30" step="1" value="${borderW}" onchange="setWarpShapeParam('borderW',+this.value)" style="width:44px"></div>`;
+      html += `<div class="prop-row"><label>BWidth</label><input type="range" min="0.1" max="30" step="${borderW < 1.5 ? '0.1' : '1'}" value="${borderW}" oninput="setWarpShapeParam('borderW',+this.value)"><input type="number" min="0.1" max="30" step="${borderW < 1.5 ? '0.1' : '1'}" value="${borderW}" onchange="setWarpShapeParam('borderW',+this.value)" style="width:48px"></div>`;
       const collapseAmt  = wp.collapseAmt  != null ? wp.collapseAmt  : 0;
       const collapseFreq = wp.collapseFreq != null ? wp.collapseFreq : 0.05;
       html += `<div class="prop-row"><label title="How much the border fades back into the element">Collapse</label><input type="range" min="0" max="1" step="0.02" value="${collapseAmt}" oninput="setWarpShapeParam('collapseAmt',+this.value)"><input type="number" min="0" max="1" step="0.02" value="${collapseAmt.toFixed(2)}" onchange="setWarpShapeParam('collapseAmt',+this.value)" style="width:44px"></div>`;
@@ -2903,7 +2913,7 @@ function updateProps() {
     html += `<div class="prop-row"><label>Bdr</label><input type="checkbox" ${hasStroke ? 'checked' : ''} onchange="toggleStroke(this.checked)"> <span style="font-size:11px;color:#888">${hasStroke ? 'On' : 'Off'}</span></div>`;
     if (hasStroke) {
       html += `<div class="prop-row"><label>BCol</label>${brandColorPicker('stroke', getColorHex(obj.stroke) || '#FFFFFF')}</div>`;
-      html += `<div class="prop-row"><label>BWid</label><input type="number" min="1" max="50" value="${obj.strokeWidth || 2}" onchange="setObjProp('strokeWidth', +this.value)"></div>`;
+      { const _bw = obj.strokeWidth || 2; html += `<div class="prop-row"><label>BWid</label><input type="number" min="0.1" max="50" step="${_bw < 1.5 ? '0.1' : '1'}" value="${_bw}" onchange="setObjProp('strokeWidth', +this.value)"></div>`; }
       html += strokeOpacityRow('_strokeAlpha', getColorAlpha(obj.stroke));
     }
     // One-shot: add a centered text on top and auto-link (banner group if polygon, hitbox otherwise)
@@ -5733,7 +5743,7 @@ function _tornEdgePts(rng, w, baseY, params) {
 }
 
 // Build path string from points. Smooth/sharp is decided per-point via pts[i][2].
-function _tornSeg(pts, _unused, isStart) {
+function _tornSeg(pts, isStart) {
   if (!pts.length) return '';
   let d = isStart ? `M${pts[0][0]},${pts[0][1]}` : '';
   const arr = isStart ? pts.slice(1) : pts;
@@ -5754,25 +5764,24 @@ function _tornSeg(pts, _unused, isStart) {
 
 function _buildTornPath(type, params, seed, w, h) {
   const rng = _seededRNG(seed);
-  const sm = params.smooth || 0;
 
   if (type === 'strip') {
     const top = _tornEdgePts(rng, w, h * 0.28, params);
     const bot = _tornEdgePts(rng, w, h * 0.72, params);
-    let d = _tornSeg(top, sm, true);
+    let d = _tornSeg(top, true);
     d += ` L${w},${bot[bot.length-1][1]}`;
-    d += _tornSeg([...bot].reverse().slice(1), sm, false);
+    d += _tornSeg([...bot].reverse().slice(1), false);
     return d + ' Z';
   }
   if (type === 'edge-bottom') {
     const bot = _tornEdgePts(rng, w, h - (params.amp || 22), params);
     let d = `M0,0 L${w},0 L${w},${bot[bot.length-1][1]}`;
-    d += _tornSeg([...bot].reverse().slice(1), sm, false);
+    d += _tornSeg([...bot].reverse().slice(1), false);
     return d + ' Z';
   }
   if (type === 'edge-top') {
     const top = _tornEdgePts(rng, w, params.amp || 22, params);
-    let d = _tornSeg(top, sm, true);
+    let d = _tornSeg(top, true);
     d += ` L${w},${h} L0,${h}`;
     return d + ' Z';
   }
@@ -5793,7 +5802,7 @@ function _buildTornPath(type, params, seed, w, h) {
     }
     pts.push([0, h, false]);
     let d = `M0,0 L${w},0`;
-    d += _tornSeg(pts.slice(1), sm, false);
+    d += _tornSeg(pts.slice(1), false);
     return d + ' Z';
   }
   if (type === 'circle') {
@@ -5809,7 +5818,7 @@ function _buildTornPath(type, params, seed, w, h) {
       const useSmooth = smooth > 0.02 && rng() < smooth;
       pts.push([+(cx + jag * Math.cos(a)).toFixed(1), +(cy + jag * Math.sin(a)).toFixed(1), useSmooth]);
     }
-    return _tornSeg(pts, sm, true) + ' Z';
+    return _tornSeg(pts, true) + ' Z';
   }
   return '';
 }
@@ -6719,7 +6728,6 @@ async function showAssetPicker() {
   _apActiveFolder = null;
   _apActiveTags = new Set();
   document.getElementById('ap-search').value = '';
-  _apRenderTabs();
   _apRenderTagFilter();
   _apRender();
   document.getElementById('asset-picker-modal').classList.add('show');
@@ -6728,8 +6736,6 @@ async function showAssetPicker() {
 function hideAssetPicker() {
   document.getElementById('asset-picker-modal').classList.remove('show');
 }
-
-function _apRenderTabs() {}  // folder tabs removed — unified into tag filter row
 
 function _apRenderTagFilter() {
   const row = document.getElementById('ap-tag-filter');
@@ -6846,7 +6852,6 @@ async function _apDelete(id) {
     if (!r.ok) throw new Error(j.error || 'delete failed');
     _apAssets = _apAssets.filter(x => x.id !== id);
     if (_apSelectedId === id) _apSelectedId = null;
-    _apRenderTabs();
     _apRenderTagFilter();
     _apRender();
   } catch (e) { alert('Delete failed: ' + e.message); }
@@ -8375,6 +8380,42 @@ document.addEventListener('mousedown', function(e) {
   if (!document.getElementById('context-menu').contains(e.target)) hideContextMenu();
 });
 
+// --- Modal registry (used by global Escape handler) ---
+// Order = priority; first open modal in the list is dismissed.
+// Modal-on-modal (asset-edit, pattern-save) come first so they unwind before their parents.
+const _MODALS = [
+  { id: 'asset-edit-modal',     hide: () => _aeCancel() },
+  { id: 'pattern-save-modal',   hide: () => hidePatternSaveDialog() },
+  { id: 'term-manager-modal',   hide: () => _tmClose() },
+  { id: 'crop-modal',           hide: () => { const el = document.getElementById('crop-modal'); if (el) el.style.display = 'none'; } },
+  { id: 'thumb-modal',          hide: () => closeThumbModal() },
+  { id: 'asset-picker-modal',   hide: () => hideAssetPicker() },
+  { id: 'pattern-picker-modal', hide: () => hidePatternPicker() },
+  { id: 'asset-modal',          hide: () => { const el = document.getElementById('asset-modal'); if (el) el.style.display = 'none'; } },
+  { id: 'settings-modal',       hide: () => { const el = document.getElementById('settings-modal'); if (el) el.style.display = 'none'; } },
+  { id: 'tex-modal',            hide: () => { const el = document.getElementById('tex-modal'); if (el) el.classList.remove('show'); } },
+  { id: 'export-modal',         hide: () => hideExportModal() },
+  { id: 'add-modal',            hide: () => hideAddModal() },
+];
+function _isModalOpen(el) {
+  if (!el) return false;
+  if (el.classList.contains('show')) return true;
+  const d = (el.style.display || '').toLowerCase();
+  if (d === 'flex' || d === 'block') return true;
+  if (!d) {
+    const cs = getComputedStyle(el);
+    return cs.display !== 'none';
+  }
+  return false;
+}
+function dismissTopModal() {
+  for (const m of _MODALS) {
+    const el = document.getElementById(m.id);
+    if (_isModalOpen(el)) { try { m.hide(); } catch (err) { console.error(err); } return true; }
+  }
+  return false;
+}
+
 // --- Keyboard Shortcuts ---
 document.addEventListener('keydown', function(e) {
   // Delete
@@ -8430,15 +8471,17 @@ document.addEventListener('keydown', function(e) {
     e.preventDefault();
     showExportModal();
   }
-  // Escape
+  // Escape — dismiss the topmost open modal first; if none open, clear selection.
   if (e.key === 'Escape') {
+    if (dismissTopModal()) {
+      e.preventDefault();
+      return;
+    }
     canvas.discardActiveObject();
     clearGuidelines();
     canvas.requestRenderAll();
     refreshLayers();
     updateProps();
-    hideExportModal();
-    hideAddModal();
   }
   // Arrow keys for nudging
   if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key) && document.activeElement.tagName !== 'INPUT') {
@@ -8470,7 +8513,6 @@ async function autoLoadFromURL() {
   const paths = loadParam.split(',').map(p => p.trim()).filter(Boolean);
   if (!paths.length) return;
 
-  console.log(`Auto-loading ${paths.length} JSON file(s)...`);
   for (const filePath of paths) {
     try {
       const resp = await fetch(filePath);
@@ -8502,7 +8544,6 @@ async function autoLoadFromURL() {
         // loadObjectsSequentially path silently skipped `group` types.
         canvas.loadFromJSON(canvasData, onDone);
       });
-      console.log(`  Loaded: ${tabName}`);
     } catch (err) {
       console.error(`Failed to load ${filePath}:`, err);
     }
@@ -9272,7 +9313,7 @@ function clearAutosave() {
 </script>
 
 <!-- Pattern picker modal -->
-<div id="pattern-picker-modal" onkeydown="if(event.key==='Escape')hidePatternPicker()">
+<div id="pattern-picker-modal">
   <div class="pp-modal">
     <h3>Insert Pattern</h3>
     <div class="pp-tabs" id="pp-tabs"></div>
@@ -9292,7 +9333,7 @@ function clearAutosave() {
 </div>
 
 <!-- Asset picker modal -->
-<div id="asset-picker-modal" onkeydown="if(event.key==='Escape')hideAssetPicker()">
+<div id="asset-picker-modal">
   <div class="pp-modal">
     <h3>Insert Asset</h3>
     <div id="ap-tag-filter" style="display:flex;flex-wrap:wrap;gap:4px;margin:6px 0;align-items:center;"></div>
@@ -9312,7 +9353,7 @@ function clearAutosave() {
 </div>
 
 <!-- Term manager modal -->
-<div id="term-manager-modal" onkeydown="if(event.key==='Escape')_tmClose()">
+<div id="term-manager-modal">
   <div class="pp-modal" style="width:520px;max-height:80vh;display:flex;flex-direction:column;">
     <h3>Manage Terms</h3>
     <div style="font-size:11px;color:#888;margin-bottom:8px;">Rename or delete tags across all assets. Changes apply immediately.</div>
@@ -9329,7 +9370,7 @@ function clearAutosave() {
 </div>
 
 <!-- Asset edit modal -->
-<div id="asset-edit-modal" style="position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:101;align-items:center;justify-content:center;" onkeydown="if(event.key==='Escape')_aeCancel()">
+<div id="asset-edit-modal" style="position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:1100;align-items:center;justify-content:center;">
   <div class="pp-modal" style="width:480px;">
     <h3>Edit Asset</h3>
     <div style="font-size:11px;color:#666;margin-bottom:10px;">
@@ -9364,7 +9405,7 @@ function clearAutosave() {
 </div>
 
 <!-- Pattern save dialog -->
-<div id="pattern-save-modal" onkeydown="if(event.key==='Escape')hidePatternSaveDialog()">
+<div id="pattern-save-modal">
   <div class="ps-modal">
     <h3>Save as Pattern</h3>
     <div class="ps-row">
