@@ -596,7 +596,12 @@
         <label>Filename</label>
         <input id="asset-modal-name" style="background:#0e0e0e;border:1px solid #333;color:#eee;padding:5px 7px;border-radius:3px;">
         <label>Tags</label>
-        <input id="asset-modal-tags" placeholder="logo, brand" style="background:#0e0e0e;border:1px solid #333;color:#eee;padding:5px 7px;border-radius:3px;">
+        <div style="position:relative">
+          <div id="asset-modal-tags-chips" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:4px;min-height:0"></div>
+          <input id="asset-modal-tags-search" autocomplete="off" placeholder="Type to search tags or add new…" style="background:#0e0e0e;border:1px solid #333;color:#eee;padding:5px 7px;border-radius:3px;width:100%;box-sizing:border-box;">
+          <div id="asset-modal-tags-suggest" style="display:none;position:absolute;left:0;right:0;top:100%;background:#1a1a1a;border:1px solid #444;border-top:none;max-height:180px;overflow-y:auto;z-index:10;border-radius:0 0 3px 3px"></div>
+          <input id="asset-modal-tags" type="hidden">
+        </div>
         <label>Description</label>
         <input id="asset-modal-desc" placeholder="One sentence for AI/humans" style="background:#0e0e0e;border:1px solid #333;color:#eee;padding:5px 7px;border-radius:3px;">
         <label>Usage</label>
@@ -6453,6 +6458,7 @@ function saveSelectionAsAsset() {
     document.querySelector('input[name="asset-dest"][value="permanent"]').checked = true;
     updateAssetModalFields();
     document.getElementById('asset-modal').style.display = 'flex';
+    _amTagsInit();
   } catch (e) {
     alert('Could not capture image (may be tainted by CORS): ' + e.message);
   }
@@ -6682,6 +6688,7 @@ function applyCropModal() {
     onEpisodeSelectChange();
   }).catch(()=>{});
   document.getElementById('asset-modal').style.display='flex';
+  _amTagsInit();
   updateAssetModalFields();
 }
 
@@ -6747,6 +6754,7 @@ function openAssetModal(file) {
         onEpisodeSelectChange();
       }).catch(() => {});
       document.getElementById('asset-modal').style.display = 'flex';
+    _amTagsInit();
       updateAssetModalFields();
     };
 
@@ -7113,6 +7121,99 @@ async function _tmDelete(tag) {
   if (!confirm(`Delete tag "${tag}" from ${c} asset(s)?`)) return;
   _pendingTerms.delete(tag);
   await _tmApplyChange(t => t === tag ? null : t, 'Delete');
+}
+
+// ── Tag autocomplete (Import Image modal) ──────────────────────────────────
+// Multi-select autocomplete: type to filter known tags, click a suggestion to
+// add as chip, click chip × to remove. Hits Enter on a non-matching string to
+// add it as a brand-new tag.
+let _amTagsKnown = [];
+let _amTagsSelected = [];
+
+function _amTagsAllKnown() {
+  // Union of known tags from manifest + assets, plus any currently-selected.
+  const s = new Set(_amTagsKnown);
+  _amTagsSelected.forEach(t => s.add(t));
+  return [...s].sort();
+}
+async function _amTagsLoad() {
+  try {
+    const r = await fetch('api/assets');
+    const d = await r.json();
+    const set = new Set(d.tagVocabulary || []);
+    Object.values(d.assets || {}).forEach(a => (a.tags || []).forEach(t => set.add(t)));
+    _amTagsKnown = [...set];
+  } catch { _amTagsKnown = []; }
+}
+function _amTagsRenderChips() {
+  const c = document.getElementById('asset-modal-tags-chips');
+  if (!c) return;
+  c.innerHTML = _amTagsSelected.map((t, i) => {
+    const safe = t.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    return `<span style="background:#2a5a8a;border:1px solid #4a8ac0;color:#fff;border-radius:10px;padding:2px 4px 2px 8px;font-size:11px;display:inline-flex;align-items:center;gap:4px">${safe}<button type="button" onclick="_amTagsRemove(${i})" style="background:none;border:none;color:#fff;cursor:pointer;font-size:14px;line-height:1;padding:0 2px">×</button></span>`;
+  }).join('');
+  // Sync hidden field for legacy submitters that still read from #asset-modal-tags
+  document.getElementById('asset-modal-tags').value = _amTagsSelected.join(',');
+}
+function _amTagsAdd(tag) {
+  tag = String(tag || '').trim();
+  if (!tag) return;
+  if (_amTagsSelected.includes(tag)) return;
+  _amTagsSelected.push(tag);
+  if (!_amTagsKnown.includes(tag)) _amTagsKnown.push(tag);
+  _amTagsRenderChips();
+  const input = document.getElementById('asset-modal-tags-search');
+  if (input) { input.value = ''; _amTagsRenderSuggest(''); input.focus(); }
+}
+function _amTagsRemove(i) {
+  _amTagsSelected.splice(i, 1);
+  _amTagsRenderChips();
+}
+function _amTagsRenderSuggest(query) {
+  const sug = document.getElementById('asset-modal-tags-suggest');
+  if (!sug) return;
+  const q = (query || '').trim().toLowerCase();
+  const selected = new Set(_amTagsSelected);
+  const matches = _amTagsAllKnown()
+    .filter(t => !selected.has(t) && (q === '' || t.toLowerCase().includes(q)))
+    .slice(0, 12);
+  const exactKnown = _amTagsKnown.some(t => t.toLowerCase() === q);
+  const items = [];
+  matches.forEach(t => {
+    const safe = t.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    items.push(`<div onclick="_amTagsAdd('${safe}')" style="padding:5px 8px;cursor:pointer;font-size:12px;color:#ccc" onmouseover="this.style.background='#2a3a5a';this.style.color='#fff'" onmouseout="this.style.background='';this.style.color='#ccc'">${t}</div>`);
+  });
+  if (q && !exactKnown && !selected.has(q)) {
+    const safe = q.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    items.push(`<div onclick="_amTagsAdd('${safe}')" style="padding:5px 8px;cursor:pointer;font-size:12px;color:#7a8;border-top:1px solid #333" onmouseover="this.style.background='#1a3a2a'" onmouseout="this.style.background=''">+ Add new tag “${q}”</div>`);
+  }
+  if (!items.length) {
+    sug.style.display = 'none';
+    sug.innerHTML = '';
+    return;
+  }
+  sug.innerHTML = items.join('');
+  sug.style.display = 'block';
+}
+function _amTagsInit() {
+  _amTagsSelected = [];
+  _amTagsRenderChips();
+  _amTagsLoad().then(() => _amTagsRenderSuggest(''));
+  const input = document.getElementById('asset-modal-tags-search');
+  if (!input || input._amWired) return;
+  input._amWired = true;
+  input.addEventListener('input', () => _amTagsRenderSuggest(input.value));
+  input.addEventListener('focus', () => _amTagsRenderSuggest(input.value));
+  input.addEventListener('blur',  () => setTimeout(() => {
+    const sug = document.getElementById('asset-modal-tags-suggest');
+    if (sug) sug.style.display = 'none';
+  }, 150));   // delay so click on a suggestion still registers
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); _amTagsAdd(input.value); }
+    else if (e.key === 'Backspace' && !input.value && _amTagsSelected.length) {
+      _amTagsRemove(_amTagsSelected.length - 1);
+    }
+  });
 }
 
 function _aeGetTags() {
