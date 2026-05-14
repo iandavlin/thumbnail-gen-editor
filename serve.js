@@ -483,6 +483,21 @@ async function handleRequest(req, res, pathname, url) {
     } catch { return jsonResp(res, []); }
   }
 
+  // POST /api/bug-report — write a JSON file under ./bugs/ for review.
+  if (pathname === "/api/bug-report" && req.method === "POST") {
+    const body = await readBody(req);
+    const title = String(body.title || "").trim();
+    if (!title) return jsonResp(res, { error: "title required" }, 400);
+    const bugsDir = path.join(__dirname, "bugs");
+    if (!fs.existsSync(bugsDir)) fs.mkdirSync(bugsDir, { recursive: true });
+    const slug = (title.toLowerCase().replace(/[^a-z0-9_-]+/g, "-").replace(/^-+|-+$/g, "") || "bug").slice(0, 50);
+    const stamp = new Date().toISOString().replace(/[-:T.Z]/g, "").slice(0, 15); // YYYYMMDDhhmmss
+    const file = `${stamp.slice(0,8)}-${stamp.slice(8,14)}-${slug}.json`;
+    const payload = { ...body, _receivedAt: new Date().toISOString() };
+    fs.writeFileSync(path.join(bugsDir, file), JSON.stringify(payload, null, 2));
+    return jsonResp(res, { ok: true, file });
+  }
+
   // --- Static file fallback ---------------------------------------------------
   let urlPath = pathname;
   if (urlPath === "/") urlPath = "/editor.html";

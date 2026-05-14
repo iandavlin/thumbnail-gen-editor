@@ -483,4 +483,23 @@ if ($path === 'outputs' && $method === 'GET') {
   jr($out);
 }
 
+// --- Bug reports -------------------------------------------------------------
+// POST /api/bug-report  { title, description, canvasState?, ... }
+// Writes a JSON file to ./bugs/ for review. Title required; rest free-form.
+if ($path === 'bug-report' && $method === 'POST') {
+  $body = read_body();
+  $title = trim((string)($body['title'] ?? ''));
+  if ($title === '') jr(['error' => 'title required'], 400);
+  $bugsDir = "$BASE/bugs";
+  if (!is_dir($bugsDir)) mkdir($bugsDir, 0775, true);
+  $slug = strtolower(preg_replace('/[^a-zA-Z0-9_-]+/', '-', $title));
+  $slug = trim(preg_replace('/-+/', '-', $slug ?? ''), '-');
+  $slug = substr($slug ?: 'bug', 0, 50);
+  $stamp = date('Ymd-His');
+  $file = "$stamp-$slug.json";
+  $payload = $body + ['_receivedAt' => date('c'), '_remoteIp' => $_SERVER['REMOTE_ADDR'] ?? null];
+  file_put_contents("$bugsDir/$file", json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+  jr(['ok' => true, 'file' => $file]);
+}
+
 jr(['error' => 'unknown route', 'path' => $path, 'method' => $method], 404);

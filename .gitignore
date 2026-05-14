@@ -59,3 +59,6 @@ skills/
 *.bak
 *.bak.*
 .htpasswd
+
+# Bug reports — server-side per-environment, not for the repo
+bugs/
