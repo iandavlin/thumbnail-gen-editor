@@ -187,11 +187,11 @@ async function handleRequest(req, res, pathname, url) {
           try {
             const data = JSON.parse(fs.readFileSync(path.join(patternsDir, e.name), "utf8"));
             allPatterns.push({ file: e.name, path: e.name, folder: null,
-              url: `/patterns/${e.name}`,
+              url: `patterns/${e.name}`,
               name: data.name || e.name.replace(/\.json$/, ""),
               description: data.description || "", canvasRef: data.canvasRef || null, thumbnail: data.thumbnail || null });
           } catch {
-            allPatterns.push({ file: e.name, path: e.name, folder: null, url: `/patterns/${e.name}`, name: e.name.replace(/\.json$/, "") });
+            allPatterns.push({ file: e.name, path: e.name, folder: null, url: `patterns/${e.name}`, name: e.name.replace(/\.json$/, "") });
           }
         }
       }
@@ -204,11 +204,11 @@ async function handleRequest(req, res, pathname, url) {
               try {
                 const data = JSON.parse(fs.readFileSync(path.join(subDir, f), "utf8"));
                 allPatterns.push({ file: f, path: `${e.name}/${f}`, folder: e.name,
-                  url: `/patterns/${e.name}/${f}`,
+                  url: `patterns/${e.name}/${f}`,
                   name: data.name || f.replace(/\.json$/, ""),
                   description: data.description || "", canvasRef: data.canvasRef || null, thumbnail: data.thumbnail || null });
               } catch {
-                allPatterns.push({ file: f, path: `${e.name}/${f}`, folder: e.name, url: `/patterns/${e.name}/${f}`, name: f.replace(/\.json$/, "") });
+                allPatterns.push({ file: f, path: `${e.name}/${f}`, folder: e.name, url: `patterns/${e.name}/${f}`, name: f.replace(/\.json$/, "") });
               }
             }
           } catch {}
@@ -311,7 +311,7 @@ async function handleRequest(req, res, pathname, url) {
     try {
       const data = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
       for (const id of Object.keys(data.assets || {})) {
-        data.assets[id].url = `/assets/_permanent/${data.assets[id].path}`;
+        data.assets[id].url = `assets/_permanent/${data.assets[id].path}`;
       }
       return jsonResp(res, data);
     } catch (e) { return jsonResp(res, { error: e.message }, 500); }
@@ -336,7 +336,7 @@ async function handleRequest(req, res, pathname, url) {
       const IMAGE_RE = /\.(png|jpe?g|webp|gif|svg|avif)$/i;
       const files = fs.readdirSync(epDir, { withFileTypes: true })
         .filter(e => e.isFile() && IMAGE_RE.test(e.name))
-        .map(e => ({ name: e.name, url: `/assets/${episode}/${e.name}` }));
+        .map(e => ({ name: e.name, url: `assets/${episode}/${e.name}` }));
       return jsonResp(res, { episode, files });
     } catch { return jsonResp(res, { episode, files: [] }); }
   }
@@ -369,7 +369,7 @@ async function handleRequest(req, res, pathname, url) {
         if (body.usage) manifest.assets[id].usage = body.usage;
         fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + "\n");
       }
-      return jsonResp(res, { ok: true, id, path: relPath, url: `/assets/_permanent/${relPath}` });
+      return jsonResp(res, { ok: true, id, path: relPath, url: `assets/_permanent/${relPath}` });
     }
 
     if (dest === "episode") {
@@ -381,7 +381,7 @@ async function handleRequest(req, res, pathname, url) {
       const destPath = path.join(destDir, finalName);
       if (!destPath.startsWith(assetsDir + path.sep)) return jsonResp(res, { error: "forbidden" }, 403);
       fs.writeFileSync(destPath, decoded.buffer);
-      return jsonResp(res, { ok: true, path: `${episode}/${finalName}`, url: `/assets/${episode}/${finalName}` });
+      return jsonResp(res, { ok: true, path: `${episode}/${finalName}`, url: `assets/${episode}/${finalName}` });
     }
     return jsonResp(res, { error: "invalid destination" }, 400);
   }

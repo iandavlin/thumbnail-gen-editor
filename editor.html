@@ -6651,7 +6651,7 @@ function applyCropModal() {
   document.getElementById('asset-modal-meta').innerHTML = `<div>${out.width} × ${out.height}</div><div>${(_pendingAsset.size/1024).toFixed(1)} KB</div><div>png (cropped)</div>`;
   document.getElementById('asset-modal-name').value = baseName+'-cropped';
   document.getElementById('asset-modal-episode-name').value = baseName+'-cropped.png';
-  fetch('/api/episodes').then(r=>r.json()).then(eps=>{
+  fetch('api/episodes').then(r=>r.json()).then(eps=>{
     const sel=document.getElementById('asset-modal-episode');
     sel.innerHTML=eps.map(e=>`<option value="${e}">${e}</option>`).join('')+`<option value="__new__">＋ New episode folder…</option>`;
     onEpisodeSelectChange();
@@ -6715,7 +6715,7 @@ function openAssetModal(file) {
       const baseName = file.name.replace(/\.[^.]+$/, '').replace(/[^a-zA-Z0-9_\-]/g, '-').toLowerCase();
       document.getElementById('asset-modal-name').value = baseName;
       document.getElementById('asset-modal-episode-name').value = file.name;
-      fetch('/api/episodes').then(r => r.json()).then(eps => {
+      fetch('api/episodes').then(r => r.json()).then(eps => {
         const sel = document.getElementById('asset-modal-episode');
         sel.innerHTML = eps.map(e => `<option value="${e}">${e}</option>`).join('') +
           `<option value="__new__">＋ New episode folder…</option>`;
@@ -6769,7 +6769,7 @@ async function confirmAssetModal() {
       const tags = document.getElementById('asset-modal-tags').value.split(',').map(s => s.trim()).filter(Boolean);
       const description = document.getElementById('asset-modal-desc').value.trim();
       const usage = document.getElementById('asset-modal-usage').value.trim();
-      const r = await fetch('/api/assets', {
+      const r = await fetch('api/assets', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ dataUrl: asset.dataUrl, destination: 'permanent', filename, subfolder, tags, description, usage }),
       });
@@ -6785,7 +6785,7 @@ async function confirmAssetModal() {
       }
       const filename = document.getElementById('asset-modal-episode-name').value.trim() || asset.filename;
       if (!episode) { alert('No episode selected'); return; }
-      const r = await fetch('/api/assets', {
+      const r = await fetch('api/assets', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ dataUrl: asset.dataUrl, destination: 'episode', episode, filename }),
       });
@@ -6837,13 +6837,13 @@ const _AP_PAGE_SIZE = 16;
 
 async function showAssetPicker() {
   try {
-    const [assetsResp, episodesResp] = await Promise.all([fetch('/api/assets'), fetch('/api/episodes')]);
+    const [assetsResp, episodesResp] = await Promise.all([fetch('api/assets'), fetch('api/episodes')]);
     const data = await assetsResp.json();
     const episodes = await episodesResp.json().catch(() => []);
     _apAssets = Object.entries(data.assets || {}).map(([id, a]) => ({ id, ...a, folder: (a.path.includes('/') ? a.path.split('/')[0] : '') }));
     // Load files from each episode folder and inject as synthetic assets tagged with the folder name
     const epResults = await Promise.all((Array.isArray(episodes) ? episodes : []).map(ep =>
-      fetch(`/api/episode-files/${encodeURIComponent(ep)}`).then(r => r.json()).catch(() => ({ episode: ep, files: [] }))
+      fetch(`api/episode-files/${encodeURIComponent(ep)}`).then(r => r.json()).catch(() => ({ episode: ep, files: [] }))
     ));
     for (const { episode, files } of epResults) {
       for (const f of (files || [])) {
@@ -6980,7 +6980,7 @@ async function _apDelete(id) {
   if (!a) return;
   if (!confirm(`Delete "${a.displayName || a.id}"?\n\nThis removes the file and its manifest entry. Thumbnails that already reference the URL will break.`)) return;
   try {
-    const r = await fetch(`/api/assets/${encodeURIComponent(id)}`, { method: 'DELETE' });
+    const r = await fetch(`api/assets/${encodeURIComponent(id)}`, { method: 'DELETE' });
     const text = await r.text(); let j; try { j = JSON.parse(text); } catch { throw new Error(`status ${r.status}: ${text.slice(0,120)}`); }
     if (!r.ok) throw new Error(j.error || 'delete failed');
     _apAssets = _apAssets.filter(x => x.id !== id);
@@ -7059,7 +7059,7 @@ async function _tmApplyChange(transform, verb) {
   for (const a of affected) {
     const newTags = [...new Set((a.tags || []).map(transform).filter(t => t !== null && t !== ''))];
     try {
-      const r = await fetch(`/api/assets/${encodeURIComponent(a.id)}`, {
+      const r = await fetch(`api/assets/${encodeURIComponent(a.id)}`, {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tags: newTags }),
       });
@@ -7151,7 +7151,7 @@ async function _aeSave() {
   };
   if (newBase && newBase !== currentBase) body.rename = newBase;
   try {
-    const r = await fetch(`/api/assets/${encodeURIComponent(id)}`, {
+    const r = await fetch(`api/assets/${encodeURIComponent(id)}`, {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
@@ -7324,7 +7324,7 @@ let _appConfig = {};
 
 async function loadAppConfig() {
   try {
-    const r = await fetch('/api/config');
+    const r = await fetch('api/config');
     _appConfig = await r.json();
   } catch { _appConfig = {}; }
 }
@@ -7401,14 +7401,14 @@ async function _thLoadFiles() {
   const grid = document.getElementById('th-grid');
   grid.innerHTML = '<div style="grid-column:1/-1;color:#555;padding:24px;text-align:center;font-size:12px;">Loading…</div>';
   try {
-    const r = await fetch('/api/outputs');
+    const r = await fetch('api/outputs');
     const paths = await r.json();
     _thFiles = paths.map(p => {
       const norm = p.replace(/\\/g, '/');
       const slash = norm.lastIndexOf('/');
       const name = slash >= 0 ? norm.slice(slash + 1).replace(/\.json$/i, '') : norm.replace(/\.json$/i, '');
       const folder = slash >= 0 ? norm.slice(0, slash) : '(root)';
-      const url = '/output/' + norm;
+      const url = 'output/' + norm;
       const previewUrl = url.replace(/\.json$/i, '.preview.jpg');
       return { name, folder, relPath: norm, url, previewUrl };
     });
@@ -7616,7 +7616,7 @@ async function saveSettings() {
   status.textContent = 'Saving…';
   status.style.color = '#888';
   try {
-    const r = await fetch('/api/config', {
+    const r = await fetch('api/config', {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
@@ -7708,7 +7708,7 @@ async function saveJSONToServer() {
     const body = { filename, data };
     if (subfolder) body.subfolder = subfolder;
     if (preview)   body.preview   = preview;
-    const r = await fetch('/api/save-json', {
+    const r = await fetch('api/save-json', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
@@ -7933,7 +7933,7 @@ async function showPatternSaveDialog(selected) {
   const folderSel = document.getElementById('ps-folder');
   folderSel.innerHTML = '<option value="">— uncategorized —</option>';
   try {
-    const folders = await fetch('/api/patterns-folders').then(r => r.json());
+    const folders = await fetch('api/patterns-folders').then(r => r.json());
     folders.forEach(f => {
       const opt = document.createElement('option');
       opt.value = f; opt.textContent = f;
@@ -7999,7 +7999,7 @@ async function _psSave() {
   const filename = `${name}_${ratioTag}.json`;
 
   try {
-    const r = await fetch('/api/patterns', {
+    const r = await fetch('api/patterns', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ filename, folder: folder || null, pattern: {
@@ -8046,7 +8046,7 @@ async function _loadPatternGrid() {
   grid.innerHTML = '<div class="pp-empty">Loading…</div>';
   tabsEl.innerHTML = '';
   try {
-    const [pR, fR] = await Promise.all([fetch('/api/patterns'), fetch('/api/patterns-folders')]);
+    const [pR, fR] = await Promise.all([fetch('api/patterns'), fetch('api/patterns-folders')]);
     _ppAllPatterns = await pR.json();
     _ppAllFolders = await fR.json();
   } catch {
@@ -8083,7 +8083,7 @@ async function _ppCreateFolder() {
   const safe = name.trim().toLowerCase().replace(/[^a-z0-9\-_]/g, '-');
   if (!safe) return;
   try {
-    const r = await fetch('/api/patterns-folder', {
+    const r = await fetch('api/patterns-folder', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ folder: safe }),
@@ -8106,7 +8106,7 @@ async function _ppDeleteFolder(folder) {
   const warn = count > 0 ? ` This will also delete ${count} pattern${count > 1 ? 's' : ''} inside it.` : '';
   if (!confirm(`Delete folder "${folder}"?${warn}`)) return;
   try {
-    const r = await fetch('/api/patterns-folder/' + encodeURIComponent(folder), { method: 'DELETE' });
+    const r = await fetch('api/patterns-folder/' + encodeURIComponent(folder), { method: 'DELETE' });
     const result = await r.json();
     if (!result.ok) throw new Error(result.error || 'unknown');
     _ppAllFolders = _ppAllFolders.filter(f => f !== folder);
@@ -8235,7 +8235,7 @@ function _ppMovePattern(patternPath, btn) {
 async function _ppMoveConfirm(patternPath, newFolder, picker) {
   picker.remove();
   try {
-    const r = await fetch('/api/patterns-move', {
+    const r = await fetch('api/patterns-move', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ from: patternPath, folder: newFolder || null }),
@@ -8247,7 +8247,7 @@ async function _ppMoveConfirm(patternPath, newFolder, picker) {
     if (p) {
       p.folder = newFolder || null;
       p.path = newFolder ? `${newFolder}/${p.file}` : p.file;
-      p.url = `/patterns/${p.path}`;
+      p.url = `patterns/${p.path}`;
     }
     _renderFolderTabs();
     _renderPatternGrid();
@@ -8258,7 +8258,7 @@ async function _ppMoveConfirm(patternPath, newFolder, picker) {
 
 async function _ppDelete(patternPath, btn) {
   if (!confirm(`Delete pattern "${patternPath}"?`)) return;
-  const r = await fetch('/api/patterns/' + encodeURIComponent(patternPath), { method: 'DELETE' });
+  const r = await fetch('api/patterns/' + encodeURIComponent(patternPath), { method: 'DELETE' });
   const result = await r.json();
   if (result.ok) {
     _ppAllPatterns = _ppAllPatterns.filter(p => p.path !== patternPath);
