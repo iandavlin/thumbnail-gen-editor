@@ -8352,19 +8352,26 @@ function _renderPatternGrid() {
   grid.innerHTML = pageItems.map((p, i) => {
     const sq = isSquare(p);
     const ratio = p.canvasRef ? `${p.canvasRef.w}×${p.canvasRef.h}` : '';
-    const folderBadge = p.folder ? `<span style="font-size:9px;color:#5a7a9a;margin-top:2px;display:block">${p.folder}</span>` : '';
+    const folderBadge = p.folder ? `<span style="font-size:9px;color:#5a7a9a">${p.folder}</span>` : '';
+    const sourceBadge = p.source === 'mine'
+      ? `<span title="Yours — saved by you" style="font-size:9px;color:#7aa2f7;padding:1px 5px;border:1px solid #2a4a7a;border-radius:8px;background:#1a2438">👤 mine</span>`
+      : `<span title="Team-shared" style="font-size:9px;color:#9aa380;padding:1px 5px;border:1px solid #5c5e3a;border-radius:8px;background:#262920">👥 shared</span>`;
     const thumb = p.thumbnail
       ? `<img class="pp-thumb${sq?' sq':''}" src="${p.thumbnail}" alt="${p.name}">`
       : `<div class="pp-thumb-placeholder${sq?' sq':''}">&#128444;</div>`;
+    const promoteOrFork = p.source === 'mine'
+      ? `<button data-path="${p.path}" onclick="event.stopPropagation();_ppPromote(this.dataset.path,this)" title="Promote to team-shared library" style="background:none;border:none;color:#9aa380;cursor:pointer;font-size:11px;padding:0;flex-shrink:0">⭐</button>`
+      : `<button data-path="${p.path}" onclick="event.stopPropagation();_ppFork(this.dataset.path,this)" title="Copy to your library so you can edit safely" style="background:none;border:none;color:#7aa2f7;cursor:pointer;font-size:11px;padding:0;flex-shrink:0">📋</button>`;
     return `<div class="pp-card" data-idx="${i}" onclick="_ppSelect(this,${i})" ondblclick="_ppInsert()" title="${p.name}${p.folder ? ' — ' + p.folder : ''}">
       ${thumb}
       <div class="pp-info">
         <div class="pp-name" style="display:flex;align-items:center;gap:4px">
           <span style="flex:1;overflow:hidden;text-overflow:ellipsis">${p.name}</span>
+          ${promoteOrFork}
           <button data-path="${p.path}" onclick="event.stopPropagation();_ppMovePattern(this.dataset.path,this)" title="Move to folder" class="pp-move-btn" style="background:none;border:none;cursor:pointer;padding:0;flex-shrink:0">⤵</button>
           <button data-path="${p.path}" onclick="event.stopPropagation();_ppDelete(this.dataset.path,this)" title="Delete pattern" style="background:none;border:none;color:#555;cursor:pointer;font-size:13px;padding:0;flex-shrink:0">✕</button>
         </div>
-        ${folderBadge}
+        <div style="display:flex;align-items:center;gap:6px;margin-top:2px;flex-wrap:wrap">${sourceBadge}${folderBadge}</div>
         <div class="pp-desc">${p.description || ''}</div>
         ${ratio ? `<div class="pp-ratio">${ratio}</div>` : ''}
       </div>
@@ -8447,6 +8454,43 @@ async function _ppDelete(patternPath, btn) {
     btn.closest('.pp-card').remove();
   } else {
     alert('Delete failed: ' + (result.error || 'unknown'));
+  }
+}
+
+// Promote a personal pattern into the team-shared library.
+async function _ppPromote(patternPath, btn) {
+  if (!confirm(`Promote "${patternPath}" to the team-shared library?\n\nOther devs will see it.`)) return;
+  const r = await fetch('api/patterns-promote', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ from: patternPath, move: false })
+  });
+  const result = await r.json();
+  if (result.ok) {
+    const fresh = await fetch('api/patterns').then(r => r.json());
+    _ppAllPatterns = fresh;
+    _renderPatternGrid();
+  } else {
+    alert('Promote failed: ' + (result.error || 'unknown'));
+  }
+}
+
+// Fork a shared pattern into the user's namespace so they can edit safely.
+async function _ppFork(patternPath, btn) {
+  const r = await fetch('api/patterns-fork', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ from: patternPath, overwrite: false })
+  });
+  const result = await r.json();
+  if (result.ok) {
+    const fresh = await fetch('api/patterns').then(r => r.json());
+    _ppAllPatterns = fresh;
+    _renderPatternGrid();
+  } else if (result.error && result.error.includes('exists')) {
+    alert('You already have a copy with that filename. Delete or rename yours first.');
+  } else {
+    alert('Fork failed: ' + (result.error || 'unknown'));
   }
 }
 
