@@ -7585,14 +7585,18 @@ async function _thLoadFiles() {
   try {
     const r = await fetch('api/outputs');
     const paths = await r.json();
+    // api/outputs returns [{path, source}] since per-user namespacing landed.
+    // Tolerate the legacy plain-string form too.
     _thFiles = paths.map(p => {
-      const norm = p.replace(/\\/g, '/');
+      const path = typeof p === 'string' ? p : p.path;
+      const source = typeof p === 'string' ? null : p.source;
+      const norm = path.replace(/\\/g, '/');
       const slash = norm.lastIndexOf('/');
       const name = slash >= 0 ? norm.slice(slash + 1).replace(/\.json$/i, '') : norm.replace(/\.json$/i, '');
       const folder = slash >= 0 ? norm.slice(0, slash) : '(root)';
       const url = 'output/' + norm;
       const previewUrl = url.replace(/\.json$/i, '.preview.jpg');
-      return { name, folder, relPath: norm, url, previewUrl };
+      return { name, folder, relPath: norm, url, previewUrl, source };
     });
     _thActiveFolder = 'all';
     _thRenderTabs();
