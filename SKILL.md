@@ -599,6 +599,53 @@ fs.writeFileSync(OUTPUT, JSON.stringify({meta:{canvasW:DW,canvasH:DH,exportVersi
 
 Output file goes in `output/1x1/` with a `_1x1` suffix. Note: uniform fit-scale will leave empty space in the new aspect ratio — background images may need repositioning in the editor to fill the canvas.
 
+## Generator field shape — DO NOT skimp
+
+When emitting a layout as JSON for the editor's `loadFromJSON` to ingest, every
+object MUST carry the full Fabric default field set, and image `src` MUST be
+base64-inlined. Skip either and every object in the imported layout will be
+half-initialized: drag-and-release breaks, escape doesn't free the selection,
+clicking other layers doesn't either. The editor feels broken; it isn't — your
+JSON is.
+
+Symptom that diagnoses this exact bug: after importing, **every** element
+behaves the same way (not one specific object). Fresh elements added via "+ Add
+Element" on a blank canvas work fine. That asymmetry = generator JSON problem.
+
+**Do this:**
+
+1. Use the primitive helpers from `generate_thorell.js` or `generate_gluboost.js`
+   (`image()`, `rect()`, `textbox()`, `bannerPolygon()`, `bannerText()`,
+   `bannerGroup()`). They emit the ~30-field-per-object shape that matches what
+   the editor's Save JSON produces. Copy-paste-modify, do not invent shorter
+   versions.
+2. Base64-inline every image:
+   ```js
+   const fs = require('fs');
+   const b64 = (file, mime='image/png') =>
+     `data:${mime};base64,${fs.readFileSync(file).toString('base64')}`;
+   const SRC = b64('assets/_user_<you>/<ep>/bottle.png');
+   ```
+   Pass `src: SRC` to `image()`. Never ship JSON with a relative-path src like
+   `assets/.../foo.png` — Fabric loads it async, and the canvas hits
+   interactive state before the image element is real.
+3. Field-parity check before handing off: diff your output against
+   `output/_user_ian/16x9/Live_Testing.json` (or any other editor-saved
+   reference). For image/textbox/rect the only acceptable missing fields are
+   `_shadowSpread` and the `_frame*` / `_isHoldout` family (frame-rect-only).
+   Anything else missing — go back and add it to the primitive.
+
+**Do not:**
+
+- Hand-write JSON object literals with 8 fields ("Fabric will fill defaults").
+  It won't fill enough to keep interaction alive on every shape.
+- Use `assets/.../*.png` src for "portability" — the working JSONs use data
+  URLs. Output size goes from ~5KB to ~500KB; that's correct, not a bug.
+- Set `selectable: true` and skip `lockMovementX/Y`, `lockRotation`,
+  `lockScalingX/Y`, `originX/Y` — those are the load-time interaction fields.
+
+Don't trust this list to be exhaustive; trust the diff.
+
 ## Known Pitfalls
 
 - **Date bar wrapping**: Keep date text short. If it wraps, widen the text box, not shrink the font.
